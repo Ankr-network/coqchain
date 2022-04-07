@@ -35,7 +35,7 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/common/math"
 	"github.com/ethereum/go-ethereum/consensus/clique"
-	"github.com/ethereum/go-ethereum/consensus/dpos"
+	"github.com/ethereum/go-ethereum/consensus/pos"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/rlp"
@@ -315,13 +315,13 @@ func cliqueHeaderHashAndRlp(header *types.Header) (hash, rlp []byte, err error) 
 	return hash, rlp, err
 }
 
-func dposHeaderHashAndRlp(header *types.Header) (hash, rlp []byte, err error) {
+func posHeaderHashAndRlp(header *types.Header) (hash, rlp []byte, err error) {
 	if len(header.Extra) < 65 {
-		err = fmt.Errorf("dpos header extradata too short, %d < 65", len(header.Extra))
+		err = fmt.Errorf("pos header extradata too short, %d < 65", len(header.Extra))
 		return
 	}
-	rlp = dpos.RLP(header)
-	hash = dpos.SealHash(header).Bytes()
+	rlp = pos.RLP(header)
+	hash = pos.SealHash(header).Bytes()
 	return hash, rlp, err
 }
 

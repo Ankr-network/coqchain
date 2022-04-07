@@ -515,11 +515,7 @@ func (lc *LightChain) SyncCheckpoint(ctx context.Context, checkpoint *params.Tru
 	latest := (checkpoint.SectionIndex+1)*lc.indexerConfig.ChtSize - 1
 	if clique := lc.hc.Config().Clique; clique != nil {
 		latest -= latest % clique.Epoch // epoch snapshot for clique
-	} else if dpos := lc.hc.Config().Dpos; dpos != nil {
-		//在checkpoint同步时，第一个块必须是epoch块，这是为了方便验证
-		latest -= latest % dpos.EpochInterval // dpos epoch块
 	}
-	
 	if head >= latest {
 		return true
 	}

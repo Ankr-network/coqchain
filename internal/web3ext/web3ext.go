@@ -22,7 +22,7 @@ var Modules = map[string]string{
 	"admin":      AdminJs,
 	"chequebook": ChequebookJs,
 	"clique":     CliqueJs,
-	"dpos":       DposJs,
+	"pos":        PosJs,
 	"ethash":     EthashJs,
 	"debug":      DebugJs,
 	"eth":        EthJs,
@@ -63,68 +63,6 @@ web3._extend({
 		}),
 	]
 });
-`
-
-const DposJs = `
-web3._extend({
-	property: 'dpos',
-	methods: [
-		new web3._extend.Method({
-			name: 'getSnapshot',
-			call: 'dpos_getSnapshot',
-			params: 1,
-			inputFormatter: [web3._extend.formatters.inputBlockNumberFormatter]
-		}),
-		new web3._extend.Method({
-			name: 'getSnapshotAtHash',
-			call: 'dpos_getSnapshotAtHash',
-			params: 1
-		}),
-		new web3._extend.Method({
-			name: 'getSigners',
-			call: 'dpos_getSigners',
-			params: 1,
-			inputFormatter: [web3._extend.formatters.inputBlockNumberFormatter]
-		}),
-		new web3._extend.Method({
-			name: 'getSignersAtHash',
-			call: 'dpos_getSignersAtHash',
-			params: 1
-		}),
-		new web3._extend.Method({
-			name: 'propose',
-			call: 'dpos_propose',
-			params: 2
-		}),
-		new web3._extend.Method({
-			name: 'discard',
-			call: 'dpos_discard',
-			params: 1
-		}),
-		new web3._extend.Method({
-			name: 'status',
-			call: 'dpos_status',
-			params: 0
-		}),
-		new web3._extend.Method({
-			name: 'version',
-			call: 'dpos_version',
-			params: 0
-		}),
-		new web3._extend.Method({
-			name: 'test',
-			call: 'dpos_test',
-			params: 1
-		}),
-	],
-	properties: [
-		new web3._extend.Property({
-			name: 'proposals',
-			getter: 'dpos_proposals'
-		}),
-	]
-});
-
 `
 
 const CliqueJs = `
@@ -173,6 +111,56 @@ web3._extend({
 		new web3._extend.Property({
 			name: 'proposals',
 			getter: 'clique_proposals'
+		}),
+	]
+});
+`
+const PosJs = `
+web3._extend({
+	property: 'pos',
+	methods: [
+		new web3._extend.Method({
+			name: 'getSnapshot',
+			call: 'pos_getSnapshot',
+			params: 1,
+			inputFormatter: [web3._extend.formatters.inputBlockNumberFormatter]
+		}),
+		new web3._extend.Method({
+			name: 'getSnapshotAtHash',
+			call: 'pos_getSnapshotAtHash',
+			params: 1
+		}),
+		new web3._extend.Method({
+			name: 'getSigners',
+			call: 'pos_getSigners',
+			params: 1,
+			inputFormatter: [web3._extend.formatters.inputBlockNumberFormatter]
+		}),
+		new web3._extend.Method({
+			name: 'getSignersAtHash',
+			call: 'pos_getSignersAtHash',
+			params: 1
+		}),
+		new web3._extend.Method({
+			name: 'propose',
+			call: 'pos_propose',
+			params: 2
+		}),
+		new web3._extend.Method({
+			name: 'discard',
+			call: 'pos_discard',
+			params: 1
+		}),
+		new web3._extend.Method({
+			name: 'status',
+			call: 'pos_status',
+			params: 0
+		}),
+	],
+	properties: [
+		new web3._extend.Property({
+			name: 'proposals',
+			getter: 'pos_proposals'
 		}),
 	]
 });

@@ -260,8 +260,7 @@ var (
 	// adding flags to the config to also have to set these fields.
 	AllCliqueProtocolChanges = &ChainConfig{big.NewInt(1337), big.NewInt(0), nil, false, big.NewInt(0), common.Hash{}, big.NewInt(0), big.NewInt(0), big.NewInt(0), big.NewInt(0), big.NewInt(0), big.NewInt(0), nil, nil, nil, nil, &CliqueConfig{Period: 0, Epoch: 30000}, nil}
 
-	//测试用途
-	AllDposProtocolChanges = &ChainConfig{big.NewInt(1337), big.NewInt(0), nil, false, big.NewInt(0), common.Hash{}, big.NewInt(0), big.NewInt(0), big.NewInt(0), big.NewInt(0), big.NewInt(0), big.NewInt(0), nil, nil, nil, nil, nil, &DposConfig{SlotInterval: 10, EpochInterval: 86400}}
+	AllPosProtocolChanges = &ChainConfig{big.NewInt(1337), big.NewInt(0), nil, false, big.NewInt(0), common.Hash{}, big.NewInt(0), big.NewInt(0), big.NewInt(0), big.NewInt(0), big.NewInt(0), big.NewInt(0), nil, nil, nil, nil, nil, &PosConfig{Period: 3, Epoch: 54000}}
 
 	TestChainConfig = &ChainConfig{big.NewInt(1), big.NewInt(0), nil, false, big.NewInt(0), common.Hash{}, big.NewInt(0), big.NewInt(0), big.NewInt(0), big.NewInt(0), big.NewInt(0), big.NewInt(0), nil, nil, nil, new(EthashConfig), nil, nil}
 	TestRules       = TestChainConfig.Rules(new(big.Int))
@@ -342,8 +341,7 @@ type ChainConfig struct {
 	Ethash *EthashConfig `json:"ethash,omitempty"`
 	Clique *CliqueConfig `json:"clique,omitempty"`
 
-	//ChainConfig (链配置), 储存在创世块, 这里新加个Dpos字段
-	Dpos *DposConfig `json:"dpos,omitempty"`
+	Pos *PosConfig `json:"pos,omitempty"`
 }
 
 // EthashConfig is the consensus engine configs for proof-of-work based sealing.
@@ -365,16 +363,15 @@ func (c *CliqueConfig) String() string {
 	return "clique"
 }
 
-// DposConfig is the consensus engine configs for DPOS based sealing.
-type DposConfig struct {
-	SlotInterval  uint64 `json:"slotInterval"`
-	EpochInterval uint64 `json:"epochInterval"`
+// CliqueConfig is the consensus engine configs for proof-of-authority based sealing.
+type PosConfig struct {
+	Period uint64 `json:"period"` // Number of seconds between blocks to enforce
+	Epoch  uint64 `json:"epoch"`  // Epoch length to reset votes and checkpoint
 }
 
 // String implements the stringer interface, returning the consensus engine details.
-//implements stringer接口，只是打印共识引擎的名字
-func (c *DposConfig) String() string {
-	return "dpos"
+func (p *PosConfig) String() string {
+	return "pos"
 }
 
 // String implements the fmt.Stringer interface.
@@ -385,8 +382,8 @@ func (c *ChainConfig) String() string {
 		engine = c.Ethash
 	case c.Clique != nil:
 		engine = c.Clique
-	case c.Dpos != nil:
-		engine = c.Dpos
+	case c.Pos != nil:
+		engine = c.Pos
 	default:
 		engine = "unknown"
 	}

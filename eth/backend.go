@@ -30,8 +30,8 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/consensus"
 	"github.com/ethereum/go-ethereum/consensus/clique"
-	"github.com/ethereum/go-ethereum/consensus/dpos"
 	"github.com/ethereum/go-ethereum/consensus/ethash"
+	"github.com/ethereum/go-ethereum/consensus/pos"
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/bloombits"
 	"github.com/ethereum/go-ethereum/core/rawdb"
@@ -139,7 +139,7 @@ func New(stack *node.Node, config *Config) (*Ethereum, error) {
 		bloomIndexer:      NewBloomIndexer(chainDb, params.BloomBitsBlocks, params.BloomConfirms),
 		p2pServer:         stack.Server(),
 	}
-	
+
 	bcVersion := rawdb.ReadDatabaseVersion(chainDb)
 	var dbVer = "<nil>"
 	if bcVersion != nil {
@@ -218,7 +218,7 @@ func New(stack *node.Node, config *Config) (*Ethereum, error) {
 	eth.netRPCService = ethapi.NewPublicNetAPI(eth.p2pServer, eth.NetVersion())
 
 	// Register the backend on the node
-	
+
 	stack.RegisterAPIs(eth.APIs())
 	stack.RegisterProtocols(eth.Protocols())
 	stack.RegisterLifecycle(eth)
@@ -244,18 +244,16 @@ func makeExtraData(extra []byte) []byte {
 
 // CreateConsensusEngine creates the required type of consensus engine instance for an Ethereum service
 func CreateConsensusEngine(stack *node.Node, chainConfig *params.ChainConfig, config *ethash.Config, notify []string, noverify bool, db ethdb.Database) consensus.Engine {
-	
-	
-	//共识引擎设置成dpos
-	if chainConfig.Dpos != nil {
-		return dpos.New(chainConfig.Dpos, db)
+
+	if chainConfig.Pos != nil {
+		return pos.New(chainConfig.Pos, db)
 	}
-	
+
 	// If proof-of-authority is requested, set it up
 	if chainConfig.Clique != nil {
 		return clique.New(chainConfig.Clique, db)
 	}
-	
+
 	// Otherwise assume proof-of-work
 	switch config.PowMode {
 	case ethash.ModeFake:
@@ -289,8 +287,7 @@ func (s *Ethereum) APIs() []rpc.API {
 	apis := ethapi.GetAPIs(s.APIBackend)
 
 	// Append any APIs exposed explicitly by the consensus engine
-	
-	//这里将从共识引擎包的APIs()读取专属于这个引擎的RPC API
+
 	apis = append(apis, s.engine.APIs(s.BlockChain())...)
 
 	// Append all the local APIs and return
@@ -417,11 +414,11 @@ func (s *Ethereum) shouldPreserve(block *types.Block) bool {
 	// is A, F and G sign the block of round5 and reject the block of opponents
 	// and in the round6, the last available signer B is offline, the whole
 	// network is stuck.
-	
-	if _, ok := s.engine.(*dpos.Dpos); ok {
+
+	if _, ok := s.engine.(*pos.POS); ok {
 		return false
-	} 
-	
+	}
+
 	if _, ok := s.engine.(*clique.Clique); ok {
 		return false
 	}
@@ -466,7 +463,7 @@ func (s *Ethereum) StartMining(threads int) error {
 			log.Error("Cannot start mining without etherbase", "err", err)
 			return fmt.Errorf("etherbase missing: %v", err)
 		}
-		
+
 		if clique, ok := s.engine.(*clique.Clique); ok {
 			wallet, err := s.accountManager.Find(accounts.Account{Address: eb})
 			if wallet == nil || err != nil {
@@ -475,16 +472,16 @@ func (s *Ethereum) StartMining(threads int) error {
 			}
 			clique.Authorize(eb, wallet.SignData)
 		}
-		
-		if dpos, ok := s.engine.(*dpos.Dpos); ok {
+
+		if pos, ok := s.engine.(*pos.POS); ok {
 			wallet, err := s.accountManager.Find(accounts.Account{Address: eb})
 			if wallet == nil || err != nil {
 				log.Error("Etherbase account unavailable locally", "err", err)
 				return fmt.Errorf("signer missing: %v", err)
 			}
-			dpos.Authorize(eb, wallet.SignData)
+			pos.Authorize(eb, wallet.SignData)
 		}
-		
+
 		// If mining is started, we can disable the transaction rejection mechanism
 		// introduced to speed sync times.
 		atomic.StoreUint32(&s.protocolManager.acceptTxs, 1)
@@ -521,11 +518,11 @@ func (s *Ethereum) IsListening() bool                  { return true } // Always
 func (s *Ethereum) EthVersion() int                    { return int(ProtocolVersions[0]) }
 func (s *Ethereum) NetVersion() uint64                 { return s.networkID }
 func (s *Ethereum) Downloader() *downloader.Downloader { return s.protocolManager.downloader }
-func (s *Ethereum) Synced() bool                       { 
+func (s *Ethereum) Synced() bool {
 	return atomic.LoadUint32(&s.protocolManager.acceptTxs) == 1
 }
-func (s *Ethereum) ArchiveMode() bool                  { return s.config.NoPruning }
-func (s *Ethereum) BloomIndexer() *core.ChainIndexer   { return s.bloomIndexer }
+func (s *Ethereum) ArchiveMode() bool                { return s.config.NoPruning }
+func (s *Ethereum) BloomIndexer() *core.ChainIndexer { return s.bloomIndexer }
 
 // Protocols returns all the currently configured
 // network protocols to start.
