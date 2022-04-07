@@ -27,7 +27,7 @@ var Proposals map[uint8]*Proposal = map[uint8]*Proposal{
 	AnkrProposal: {
 		Id:          AnkrProposal,
 		Values:      make([]interface{}, 0),
-		Description: "This is test proposal by dpos",
+		Description: "proposal by dpos",
 
 		ValidateValuesFn: func(id uint8, values []interface{}) error {
 			value := values[0].(uint8)
@@ -56,7 +56,9 @@ var Proposals map[uint8]*Proposal = map[uint8]*Proposal{
 		ToBytesFn: func(values []interface{}) []byte {
 			value := values[0].(uint8)
 
-			buf := new(bytes.Buffer)
+			buf := bytesBufferPool.Get().(*bytes.Buffer)
+			defer bytesBufferPool.Put(buf)
+
 			binary.Write(buf, binary.BigEndian, value)
 
 			return buf.Bytes()
@@ -78,23 +80,20 @@ func getProposal(id uint8) (*Proposal, error) {
 	}
 }
 
-/*
-编码的值代表proposal信息并记录在block.header.mixdigest
-*/
-func (self *Proposal) toBytes() (common.Hash, error) {
+func (this *Proposal) toBytes() (common.Hash, error) {
 
-	if err := self.ValidateValuesFn(self.Id, self.Values); err != nil {
+	if err := this.ValidateValuesFn(this.Id, this.Values); err != nil {
 		return common.Hash{}, err
 	}
 
-	result := []byte{uint8(self.Id)}
-	result = append(result, self.ToBytesFn(self.Values)...)
+	result := []byte{uint8(this.Id)}
+	result = append(result, this.ToBytesFn(this.Values)...)
 	result = append(result, bytes.Repeat([]byte{0x00}, common.HashLength-len(result))...)
 
 	return common.BytesToHash(result), nil
 }
 
-func (self *Proposal) fromBytes(proposalBytes common.Hash) error {
+func (this *Proposal) fromBytes(proposalBytes common.Hash) error {
 
 	id := proposalBytes[0]
 
@@ -102,18 +101,18 @@ func (self *Proposal) fromBytes(proposalBytes common.Hash) error {
 
 	if err == nil {
 
-		self.ValidateBytesFn = proposal.ValidateBytesFn
+		this.ValidateBytesFn = proposal.ValidateBytesFn
 
-		if err := self.ValidateBytesFn(proposalBytes); err != nil {
+		if err := this.ValidateBytesFn(proposalBytes); err != nil {
 			return err
 		}
 
-		self.Id = proposal.Id
-		self.Description = proposal.Description
-		self.ValidateValuesFn = proposal.ValidateValuesFn
-		self.ToBytesFn = proposal.ToBytesFn
-		self.FromBytesFn = proposal.FromBytesFn
-		self.Values = self.FromBytesFn(proposalBytes)
+		this.Id = proposal.Id
+		this.Description = proposal.Description
+		this.ValidateValuesFn = proposal.ValidateValuesFn
+		this.ToBytesFn = proposal.ToBytesFn
+		this.FromBytesFn = proposal.FromBytesFn
+		this.Values = this.FromBytesFn(proposalBytes)
 
 	} else {
 		return errors.New("Proposal not found")

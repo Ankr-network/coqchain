@@ -7,6 +7,7 @@ import (
 	_ "fmt"
 	"io"
 	"math"
+	"sync"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -14,6 +15,14 @@ import (
 	"github.com/ethereum/go-ethereum/rlp"
 	lru "github.com/hashicorp/golang-lru"
 	"golang.org/x/crypto/sha3"
+)
+
+var (
+	bytesBufferPool = sync.Pool{
+		New: func() interface{} {
+			return &bytes.Buffer{}
+		},
+	}
 )
 
 func parseEpochExtra(header *types.Header) ([]common.Address, []*Proposal, [][]ElectedDelegator) {
