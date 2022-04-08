@@ -42,6 +42,7 @@ import (
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/ethereum/go-ethereum/trie"
 	lru "github.com/hashicorp/golang-lru"
+	"github.com/sunvim/utils/workpool"
 	"golang.org/x/crypto/sha3"
 )
 
@@ -50,6 +51,7 @@ const (
 	inmemorySnapshots  = 1024 // Number of recent vote snapshots to keep in memory
 	inmemorySignatures = 4096 // Number of recent block signatures to keep in memory
 	maxSignersSize     = 5
+	max_worker_size    = 32
 
 	wiggleTime = 500 * time.Millisecond // Random delay (per signer) to allow concurrent signers
 )
@@ -183,9 +185,10 @@ type POSA struct {
 
 	proposals map[common.Address]bool // Current list of proposals we are pushing
 
-	signer common.Address // Ethereum address of the signing key
-	signFn SignerFn       // Signer function to authorize hashes with
-	lock   sync.RWMutex   // Protects the signer fields
+	signer   common.Address // Ethereum address of the signing key
+	signFn   SignerFn       // Signer function to authorize hashes with
+	lock     sync.RWMutex   // Protects the signer fields
+	taskPool *workpool.WorkPool
 
 	// The fields below are for testing only
 	fakeDiff bool // Skip difficulty verifications
@@ -209,6 +212,7 @@ func New(config *params.PosaConfig, db ethdb.Database) *POSA {
 		recents:    recents,
 		signatures: signatures,
 		proposals:  make(map[common.Address]bool),
+		taskPool:   workpool.New(max_worker_size),
 	}
 }
 
@@ -504,7 +508,7 @@ func (c *POSA) Prepare(chain consensus.ChainHeaderReader, header *types.Header) 
 	if err != nil {
 		return err
 	}
-	if number%c.config.Epoch != 0 {
+	if number%c.config.Epoch != 0 && len(snap.Signers) < maxSignersSize {
 		c.lock.RLock()
 
 		// Gather all the proposals that make sense voting on
@@ -561,13 +565,14 @@ func (c *POSA) Finalize(chain consensus.ChainHeaderReader, header *types.Header,
 
 	// assign mine reward
 	signer, err := ecrecover(header, c.signatures)
-	if err != nil { // if error not nil, that means mine by local node
+	if err != nil { // if error not nil, that means mined by local node
 		signer = c.signer
 	}
 	accumulateRewards(state, signer)
 
 	header.Root = state.IntermediateRoot(chain.Config().IsEIP158(header.Number))
 	header.UncleHash = types.CalcUncleHash(nil)
+
 }
 
 // FinalizeAndAssemble implements consensus.Engine, ensuring no uncles are set,
@@ -719,7 +724,7 @@ func (c *POSA) Close() error {
 // controlling the signer voting.
 func (c *POSA) APIs(chain consensus.ChainHeaderReader) []rpc.API {
 	return []rpc.API{{
-		Namespace: "pos",
+		Namespace: "posa",
 		Version:   "1.0",
 		Service:   &API{chain: chain, pos: c},
 		Public:    false,

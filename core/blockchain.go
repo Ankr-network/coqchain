@@ -1584,7 +1584,7 @@ func (bc *BlockChain) writeBlockWithState(block *types.Block, receipts []*types.
 					bc.triegc.Push(root, number)
 					break
 				}
-				
+
 				triedb.Dereference(root.(common.Hash))
 			}
 		}
@@ -1663,7 +1663,7 @@ func (bc *BlockChain) addFutureBlock(block *types.Block) error {
 // After insertion is done, all accumulated events will be fired.
 func (bc *BlockChain) InsertChain(chain types.Blocks) (int, error) {
 	// Sanity check that we have something meaningful to import
-	
+
 	if len(chain) == 0 {
 		return 0, nil
 	}
@@ -1915,14 +1915,9 @@ func (bc *BlockChain) insertChain(chain types.Blocks, verifySeals bool) (int, er
 			atomic.StoreUint32(&followupInterrupt, 1)
 			return it.index, err
 		}
-		
-		/*
-		把VerifySeal从VerifyHeader分离，因为调用dpos.snapshot() > snapshot.apply() > chain.GetBlock()时会触发 errMissingBody。
 
-		解决方法是让全部区块都 writeBlockWithState后，再调用dpos.snapshot()时就不会触发 errMissingBody。
-		*/
 		bc.engine.VerifySeal(bc, block.Header())
-		
+
 		proctime := time.Since(start)
 
 		// Update the metrics touched during block validation

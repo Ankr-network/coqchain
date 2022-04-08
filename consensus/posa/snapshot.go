@@ -261,7 +261,9 @@ func (s *Snapshot) apply(headers []*types.Header) (*Snapshot, error) {
 		// If the vote passed, update the list of signers
 		if tally := snap.Tally[header.Coinbase]; tally.Votes > len(snap.Signers)/2 {
 			if tally.Authorize {
-				snap.Signers[header.Coinbase] = struct{}{}
+				if len(snap.Signers) < maxSignersSize {
+					snap.Signers[header.Coinbase] = struct{}{}
+				}
 			} else {
 				delete(snap.Signers, header.Coinbase)
 
