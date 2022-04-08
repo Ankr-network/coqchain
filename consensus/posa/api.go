@@ -29,7 +29,7 @@ import (
 // mechanisms of the proof-of-authority scheme.
 type API struct {
 	chain consensus.ChainHeaderReader
-	pos   *POSA
+	posa  *Posa
 }
 
 // GetSnapshot retrieves the state snapshot at a given block.
@@ -45,7 +45,7 @@ func (api *API) GetSnapshot(number *rpc.BlockNumber) (*Snapshot, error) {
 	if header == nil {
 		return nil, errUnknownBlock
 	}
-	return api.pos.snapshot(api.chain, header.Number.Uint64(), header.Hash(), nil)
+	return api.posa.snapshot(api.chain, header.Number.Uint64(), header.Hash(), nil)
 }
 
 // GetSnapshotAtHash retrieves the state snapshot at a given block.
@@ -54,7 +54,7 @@ func (api *API) GetSnapshotAtHash(hash common.Hash) (*Snapshot, error) {
 	if header == nil {
 		return nil, errUnknownBlock
 	}
-	return api.pos.snapshot(api.chain, header.Number.Uint64(), header.Hash(), nil)
+	return api.posa.snapshot(api.chain, header.Number.Uint64(), header.Hash(), nil)
 }
 
 // GetSigners retrieves the list of authorized signers at the specified block.
@@ -70,7 +70,7 @@ func (api *API) GetSigners(number *rpc.BlockNumber) ([]common.Address, error) {
 	if header == nil {
 		return nil, errUnknownBlock
 	}
-	snap, err := api.pos.snapshot(api.chain, header.Number.Uint64(), header.Hash(), nil)
+	snap, err := api.posa.snapshot(api.chain, header.Number.Uint64(), header.Hash(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -83,7 +83,7 @@ func (api *API) GetSignersAtHash(hash common.Hash) ([]common.Address, error) {
 	if header == nil {
 		return nil, errUnknownBlock
 	}
-	snap, err := api.pos.snapshot(api.chain, header.Number.Uint64(), header.Hash(), nil)
+	snap, err := api.posa.snapshot(api.chain, header.Number.Uint64(), header.Hash(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -92,11 +92,11 @@ func (api *API) GetSignersAtHash(hash common.Hash) ([]common.Address, error) {
 
 // Proposals returns the current proposals the node tries to uphold and vote on.
 func (api *API) Proposals() map[common.Address]bool {
-	api.pos.lock.RLock()
-	defer api.pos.lock.RUnlock()
+	api.posa.lock.RLock()
+	defer api.posa.lock.RUnlock()
 
 	proposals := make(map[common.Address]bool)
-	for address, auth := range api.pos.proposals {
+	for address, auth := range api.posa.proposals {
 		proposals[address] = auth
 	}
 	return proposals
@@ -105,19 +105,19 @@ func (api *API) Proposals() map[common.Address]bool {
 // Propose injects a new authorization proposal that the signer will attempt to
 // push through.
 func (api *API) Propose(address common.Address, auth bool) {
-	api.pos.lock.Lock()
-	defer api.pos.lock.Unlock()
+	api.posa.lock.Lock()
+	defer api.posa.lock.Unlock()
 
-	api.pos.proposals[address] = auth
+	api.posa.proposals[address] = auth
 }
 
 // Discard drops a currently running proposal, stopping the signer from casting
 // further votes (either for or against).
 func (api *API) Discard(address common.Address) {
-	api.pos.lock.Lock()
-	defer api.pos.lock.Unlock()
+	api.posa.lock.Lock()
+	defer api.posa.lock.Unlock()
 
-	delete(api.pos.proposals, address)
+	delete(api.posa.proposals, address)
 }
 
 type status struct {
@@ -137,7 +137,7 @@ func (api *API) Status() (*status, error) {
 		diff      = uint64(0)
 		optimals  = 0
 	)
-	snap, err := api.pos.snapshot(api.chain, header.Number.Uint64(), header.Hash(), nil)
+	snap, err := api.posa.snapshot(api.chain, header.Number.Uint64(), header.Hash(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -163,7 +163,7 @@ func (api *API) Status() (*status, error) {
 			optimals++
 		}
 		diff += h.Difficulty.Uint64()
-		sealer, err := api.pos.Author(h)
+		sealer, err := api.posa.Author(h)
 		if err != nil {
 			return nil, err
 		}

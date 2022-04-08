@@ -415,7 +415,7 @@ func (s *Ethereum) shouldPreserve(block *types.Block) bool {
 	// and in the round6, the last available signer B is offline, the whole
 	// network is stuck.
 
-	if _, ok := s.engine.(*posa.POSA); ok {
+	if _, ok := s.engine.(*posa.Posa); ok {
 		return false
 	}
 
@@ -473,7 +473,7 @@ func (s *Ethereum) StartMining(threads int) error {
 			clique.Authorize(eb, wallet.SignData)
 		}
 
-		if posa, ok := s.engine.(*posa.POSA); ok {
+		if posa, ok := s.engine.(*posa.Posa); ok {
 			wallet, err := s.accountManager.Find(accounts.Account{Address: eb})
 			if wallet == nil || err != nil {
 				log.Error("Etherbase account unavailable locally", "err", err)

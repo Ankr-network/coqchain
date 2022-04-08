@@ -33,9 +33,6 @@ var (
 	GoerliGenesisHash  = common.HexToHash("0xbf7e331f7f7c1dd2e05159666b3bf8bc7a8a3a9eb1d518969eab529dd9b88c1a")
 	// TODO: update with yolov2 values
 	YoloV2GenesisHash = common.HexToHash("0x498a7239036dd2cd09e2bb8a80922b78632017958c332b42044c250d603a8a3e")
-
-	//DPOS，测试用途
-	DposGenesisHash = common.HexToHash("0x578a68eb10627242c1ac7c24df1adfe878c04bb23c4679bda0d6976af2bc1a73")
 )
 
 // TrustedCheckpoints associates each known checkpoint with the genesis hash of
@@ -45,7 +42,6 @@ var TrustedCheckpoints = map[common.Hash]*TrustedCheckpoint{
 	RopstenGenesisHash: RopstenTrustedCheckpoint,
 	RinkebyGenesisHash: RinkebyTrustedCheckpoint,
 	GoerliGenesisHash:  GoerliTrustedCheckpoint,
-	DposGenesisHash:    DposTrustedCheckpoint,
 }
 
 // CheckpointOracles associates each known checkpoint oracles with the genesis hash of
@@ -340,8 +336,7 @@ type ChainConfig struct {
 	// Various consensus engines
 	Ethash *EthashConfig `json:"ethash,omitempty"`
 	Clique *CliqueConfig `json:"clique,omitempty"`
-
-	Posa *PosaConfig `json:"pos,omitempty"`
+	Posa   *PosaConfig   `json:"posa,omitempty"`
 }
 
 // EthashConfig is the consensus engine configs for proof-of-work based sealing.
@@ -371,7 +366,7 @@ type PosaConfig struct {
 
 // String implements the stringer interface, returning the consensus engine details.
 func (p *PosaConfig) String() string {
-	return "pos"
+	return "posa"
 }
 
 // String implements the fmt.Stringer interface.
