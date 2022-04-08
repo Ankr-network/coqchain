@@ -241,17 +241,19 @@ func (c *Posa) VerifyHeaders(chain consensus.ChainHeaderReader, headers []*types
 	abort := make(chan struct{})
 	results := make(chan error, len(headers))
 
-	go func() {
+	c.taskPool.Do(func() error {
 		for i, header := range headers {
 			err := c.verifyHeader(chain, header, headers[:i])
 
 			select {
 			case <-abort:
-				return
+				return nil
 			case results <- err:
 			}
 		}
-	}()
+		return nil
+	})
+
 	return abort, results
 }
 
@@ -587,8 +589,15 @@ func (c *Posa) Finalize(chain consensus.ChainHeaderReader, header *types.Header,
 		if err != nil {
 			return
 		}
+		// remove the signer which didn't mine block in one epoch
 		for signer = range snap.Signers {
 			if _, ok := c.recentSigners[signer]; !ok {
+				delete(snap.Signers, signer)
+			}
+		}
+		// check the signer balance, if it less than at least balance, then it will be kicked out
+		for signer = range snap.Signers {
+			if state.GetBalance(signer).Cmp(big.NewInt(atLeastBalance*params.Ether)) < 0 {
 				delete(snap.Signers, signer)
 			}
 		}
@@ -695,10 +704,10 @@ func (c *Posa) Seal(chain consensus.ChainHeaderReader, block *types.Block, resul
 	copy(header.Extra[len(header.Extra)-extraSeal:], sighash)
 	// Wait until sealing is terminated or delay timeout.
 	log.Trace("Waiting for slot to sign and propagate", "delay", common.PrettyDuration(delay))
-	go func() {
+	c.taskPool.Do(func() error {
 		select {
 		case <-stop:
-			return
+			return nil
 		case <-time.After(delay):
 		}
 
@@ -708,7 +717,9 @@ func (c *Posa) Seal(chain consensus.ChainHeaderReader, block *types.Block, resul
 		default:
 			log.Warn("Sealing result is not read by miner", "sealhash", SealHash(header))
 		}
-	}()
+
+		return nil
+	})
 
 	return nil
 }
