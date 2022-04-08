@@ -42,6 +42,7 @@ import (
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/ethereum/go-ethereum/trie"
 	lru "github.com/hashicorp/golang-lru"
+	"github.com/sunvim/utils/workpool"
 	"golang.org/x/crypto/sha3"
 )
 
@@ -50,7 +51,7 @@ const (
 	inmemorySnapshots  = 1024 // Number of recent vote snapshots to keep in memory
 	inmemorySignatures = 4096 // Number of recent block signatures to keep in memory
 	maxSignersSize     = 5
-	max_worker_size    = 32
+	max_worker_size    = 16
 
 	wiggleTime = 500 * time.Millisecond // Random delay (per signer) to allow concurrent signers
 )
@@ -182,14 +183,22 @@ type Posa struct {
 	recents    *lru.ARCCache // Snapshots for recent block to speed up reorgs
 	signatures *lru.ARCCache // Signatures of recent blocks to speed up mining
 
-	proposals map[common.Address]bool // Current list of proposals we are pushing
+	proposals     map[common.Address]bool // Current list of proposals we are pushing
+	recentSigners map[common.Address]struct{}
 
-	signer common.Address // Ethereum address of the signing key
-	signFn SignerFn       // Signer function to authorize hashes with
-	lock   sync.RWMutex   // Protects the signer fields
+	signer   common.Address // Ethereum address of the signing key
+	signFn   SignerFn       // Signer function to authorize hashes with
+	lock     sync.RWMutex   // Protects the signer fields
+	taskPool *workpool.WorkPool
 
 	// The fields below are for testing only
 	fakeDiff bool // Skip difficulty verifications
+}
+
+func (c *Posa) clearRecentSigners() {
+	for signer := range c.recentSigners {
+		delete(c.recentSigners, signer)
+	}
 }
 
 // New creates a POS proof-of-stake consensus engine with the initial
@@ -210,6 +219,7 @@ func New(config *params.PosaConfig, db ethdb.Database) *Posa {
 		recents:    recents,
 		signatures: signatures,
 		proposals:  make(map[common.Address]bool),
+		taskPool:   workpool.New(max_worker_size),
 	}
 }
 
@@ -566,9 +576,24 @@ func (c *Posa) Finalize(chain consensus.ChainHeaderReader, header *types.Header,
 		signer = c.signer
 	}
 	accumulateRewards(state, signer)
+	c.recentSigners[signer] = struct{}{}
 
 	header.Root = state.IntermediateRoot(chain.Config().IsEIP158(header.Number))
 	header.UncleHash = types.CalcUncleHash(nil)
+
+	number := header.Number.Uint64()
+	if number%c.config.Epoch == 0 {
+		snap, err := c.snapshot(chain, number-1, header.ParentHash, nil)
+		if err != nil {
+			return
+		}
+		for signer = range snap.Signers {
+			if _, ok := c.recentSigners[signer]; !ok {
+				delete(snap.Signers, signer)
+			}
+		}
+		c.clearRecentSigners()
+	}
 
 }
 
