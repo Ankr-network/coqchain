@@ -49,7 +49,7 @@ const (
 	checkpointInterval = 1024 // Number of blocks after which to save the vote snapshot to the database
 	inmemorySnapshots  = 1024 // Number of recent vote snapshots to keep in memory
 	inmemorySignatures = 4096 // Number of recent block signatures to keep in memory
-	maxSignersSize     = 17
+	maxSignersSize     = 5
 
 	wiggleTime = 500 * time.Millisecond // Random delay (per signer) to allow concurrent signers
 )
@@ -541,7 +541,6 @@ func (c *POSA) Prepare(chain consensus.ChainHeaderReader, header *types.Header) 
 	}
 	header.Extra = append(header.Extra, make([]byte, extraSeal)...)
 
-	// Mix digest is current signer address
 	header.MixDigest = common.Hash{}
 
 	// Ensure the timestamp has the correct delay
@@ -576,10 +575,17 @@ func (c *POSA) Finalize(chain consensus.ChainHeaderReader, header *types.Header,
 func (c *POSA) FinalizeAndAssemble(chain consensus.ChainHeaderReader, header *types.Header, state *state.StateDB, txs []*types.Transaction, uncles []*types.Header, receipts []*types.Receipt) (*types.Block, error) {
 
 	// we need to judge the candidator balance, it should be greater then at least balance
-	// else it should be removed, clear header coinbase and nonce
+	// else it should be removed
 	if len(header.Coinbase) != 0 && state.GetBalance(header.Coinbase).Cmp(big.NewInt(atLeastBalance*params.Ether)) < 0 {
-		header.Coinbase = common.Address{}
 		copy(header.Nonce[:], nonceDropVote)
+	} else { // max signers is 17
+		snap, err := c.snapshot(chain, header.Nonce.Uint64()-1, header.ParentHash, nil)
+		if err != nil {
+			log.Error("FinalizeAndAssemble", "add new signer error", err)
+		}
+		if len(snap.Signers) >= maxSignersSize {
+			copy(header.Nonce[:], nonceDropVote)
+		}
 	}
 
 	c.Finalize(chain, header, state, txs, uncles)
