@@ -35,7 +35,7 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/common/math"
 	"github.com/ethereum/go-ethereum/consensus/clique"
-	"github.com/ethereum/go-ethereum/consensus/pos"
+	"github.com/ethereum/go-ethereum/consensus/posa"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/rlp"
@@ -59,8 +59,8 @@ var (
 		accounts.MimetypeClique,
 		0x02,
 	}
-	ApplicationDpos = SigFormat{
-		accounts.MimetypeDpos,
+	ApplicationPosa = SigFormat{
+		accounts.MimetypePosa,
 		0x03,
 	}
 	TextPlain = SigFormat{
@@ -317,11 +317,11 @@ func cliqueHeaderHashAndRlp(header *types.Header) (hash, rlp []byte, err error) 
 
 func posHeaderHashAndRlp(header *types.Header) (hash, rlp []byte, err error) {
 	if len(header.Extra) < 65 {
-		err = fmt.Errorf("pos header extradata too short, %d < 65", len(header.Extra))
+		err = fmt.Errorf("posa header extradata too short, %d < 65", len(header.Extra))
 		return
 	}
-	rlp = pos.RLP(header)
-	hash = pos.SealHash(header).Bytes()
+	rlp = posa.RLP(header)
+	hash = posa.SealHash(header).Bytes()
 	return hash, rlp, err
 }
 

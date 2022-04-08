@@ -22,7 +22,7 @@ var Modules = map[string]string{
 	"admin":      AdminJs,
 	"chequebook": ChequebookJs,
 	"clique":     CliqueJs,
-	"pos":        PosJs,
+	"posa":       PosaJs,
 	"ethash":     EthashJs,
 	"debug":      DebugJs,
 	"eth":        EthJs,
@@ -115,52 +115,52 @@ web3._extend({
 	]
 });
 `
-const PosJs = `
+const PosaJs = `
 web3._extend({
-	property: 'pos',
+	property: 'posa',
 	methods: [
 		new web3._extend.Method({
 			name: 'getSnapshot',
-			call: 'pos_getSnapshot',
+			call: 'posa_getSnapshot',
 			params: 1,
 			inputFormatter: [web3._extend.formatters.inputBlockNumberFormatter]
 		}),
 		new web3._extend.Method({
 			name: 'getSnapshotAtHash',
-			call: 'pos_getSnapshotAtHash',
+			call: 'posa_getSnapshotAtHash',
 			params: 1
 		}),
 		new web3._extend.Method({
 			name: 'getSigners',
-			call: 'pos_getSigners',
+			call: 'posa_getSigners',
 			params: 1,
 			inputFormatter: [web3._extend.formatters.inputBlockNumberFormatter]
 		}),
 		new web3._extend.Method({
 			name: 'getSignersAtHash',
-			call: 'pos_getSignersAtHash',
+			call: 'posa_getSignersAtHash',
 			params: 1
 		}),
 		new web3._extend.Method({
 			name: 'propose',
-			call: 'pos_propose',
+			call: 'posa_propose',
 			params: 2
 		}),
 		new web3._extend.Method({
 			name: 'discard',
-			call: 'pos_discard',
+			call: 'posa_discard',
 			params: 1
 		}),
 		new web3._extend.Method({
 			name: 'status',
-			call: 'pos_status',
+			call: 'posa_status',
 			params: 0
 		}),
 	],
 	properties: [
 		new web3._extend.Property({
 			name: 'proposals',
-			getter: 'pos_proposals'
+			getter: 'posa_proposals'
 		}),
 	]
 });

@@ -14,9 +14,9 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the go-ethereum library. If not, see <http://www.gnu.org/licenses/>.
 
-// Package pos implements the proof-of-stake consensus engine base on clique.
+// Package posa implements the proof-of-stake-authority consensus engine base on clique.
 
-package pos
+package posa
 
 import (
 	"bytes"
@@ -173,10 +173,10 @@ func ecrecover(header *types.Header, sigcache *lru.ARCCache) (common.Address, er
 	return signer, nil
 }
 
-// POS is the proof-of-stake consensus engine
-type POS struct {
-	config *params.PosConfig // Consensus engine configuration parameters
-	db     ethdb.Database    // Database to store and retrieve snapshot checkpoints
+// POSA is the proof-of-stake-authority consensus engine
+type POSA struct {
+	config *params.PosaConfig // Consensus engine configuration parameters
+	db     ethdb.Database     // Database to store and retrieve snapshot checkpoints
 
 	recents    *lru.ARCCache // Snapshots for recent block to speed up reorgs
 	signatures *lru.ARCCache // Signatures of recent blocks to speed up mining
@@ -193,7 +193,7 @@ type POS struct {
 
 // New creates a POS proof-of-stake consensus engine with the initial
 // signers set to the ones provided by the user.
-func New(config *params.PosConfig, db ethdb.Database) *POS {
+func New(config *params.PosaConfig, db ethdb.Database) *POSA {
 	// Set any missing consensus parameters to their defaults
 	conf := *config
 	if conf.Epoch == 0 {
@@ -203,7 +203,7 @@ func New(config *params.PosConfig, db ethdb.Database) *POS {
 	recents, _ := lru.NewARC(inmemorySnapshots)
 	signatures, _ := lru.NewARC(inmemorySignatures)
 
-	return &POS{
+	return &POSA{
 		config:     &conf,
 		db:         db,
 		recents:    recents,
@@ -214,19 +214,19 @@ func New(config *params.PosConfig, db ethdb.Database) *POS {
 
 // Author implements consensus.Engine, returning the Ethereum address recovered
 // from the signature in the header's extra-data section.
-func (c *POS) Author(header *types.Header) (common.Address, error) {
+func (c *POSA) Author(header *types.Header) (common.Address, error) {
 	return ecrecover(header, c.signatures)
 }
 
 // VerifyHeader checks whether a header conforms to the consensus rules.
-func (c *POS) VerifyHeader(chain consensus.ChainHeaderReader, header *types.Header, seal bool) error {
+func (c *POSA) VerifyHeader(chain consensus.ChainHeaderReader, header *types.Header, seal bool) error {
 	return c.verifyHeader(chain, header, nil)
 }
 
 // VerifyHeaders is similar to VerifyHeader, but verifies a batch of headers. The
 // method returns a quit channel to abort the operations and a results channel to
 // retrieve the async verifications (the order is that of the input slice).
-func (c *POS) VerifyHeaders(chain consensus.ChainHeaderReader, headers []*types.Header, seals []bool) (chan<- struct{}, <-chan error) {
+func (c *POSA) VerifyHeaders(chain consensus.ChainHeaderReader, headers []*types.Header, seals []bool) (chan<- struct{}, <-chan error) {
 	abort := make(chan struct{})
 	results := make(chan error, len(headers))
 
@@ -248,7 +248,7 @@ func (c *POS) VerifyHeaders(chain consensus.ChainHeaderReader, headers []*types.
 // caller may optionally pass in a batch of parents (ascending order) to avoid
 // looking those up from the database. This is useful for concurrently verifying
 // a batch of new headers.
-func (c *POS) verifyHeader(chain consensus.ChainHeaderReader, header *types.Header, parents []*types.Header) error {
+func (c *POSA) verifyHeader(chain consensus.ChainHeaderReader, header *types.Header, parents []*types.Header) error {
 	if header.Number == nil {
 		return errUnknownBlock
 	}
@@ -311,7 +311,7 @@ func (c *POS) verifyHeader(chain consensus.ChainHeaderReader, header *types.Head
 // rather depend on a batch of previous headers. The caller may optionally pass
 // in a batch of parents (ascending order) to avoid looking those up from the
 // database. This is useful for concurrently verifying a batch of new headers.
-func (c *POS) verifyCascadingFields(chain consensus.ChainHeaderReader, header *types.Header, parents []*types.Header) error {
+func (c *POSA) verifyCascadingFields(chain consensus.ChainHeaderReader, header *types.Header, parents []*types.Header) error {
 	// The genesis block is the always valid dead-end
 	number := header.Number.Uint64()
 	if number == 0 {
@@ -351,7 +351,7 @@ func (c *POS) verifyCascadingFields(chain consensus.ChainHeaderReader, header *t
 }
 
 // snapshot retrieves the authorization snapshot at a given point in time.
-func (c *POS) snapshot(chain consensus.ChainHeaderReader, number uint64, hash common.Hash, parents []*types.Header) (*Snapshot, error) {
+func (c *POSA) snapshot(chain consensus.ChainHeaderReader, number uint64, hash common.Hash, parents []*types.Header) (*Snapshot, error) {
 	// Search for a snapshot in memory or on disk for checkpoints
 	var (
 		headers []*types.Header
@@ -433,7 +433,7 @@ func (c *POS) snapshot(chain consensus.ChainHeaderReader, number uint64, hash co
 
 // VerifyUncles implements consensus.Engine, always returning an error for any
 // uncles as this consensus mechanism doesn't permit uncles.
-func (c *POS) VerifyUncles(chain consensus.ChainReader, block *types.Block) error {
+func (c *POSA) VerifyUncles(chain consensus.ChainReader, block *types.Block) error {
 	if len(block.Uncles()) > 0 {
 		return errors.New("uncles not allowed")
 	}
@@ -442,7 +442,7 @@ func (c *POS) VerifyUncles(chain consensus.ChainReader, block *types.Block) erro
 
 // VerifySeal implements consensus.Engine, checking whether the signature contained
 // in the header satisfies the consensus protocol requirements.
-func (c *POS) VerifySeal(chain consensus.ChainHeaderReader, header *types.Header) error {
+func (c *POSA) VerifySeal(chain consensus.ChainHeaderReader, header *types.Header) error {
 	return c.verifySeal(chain, header, nil)
 }
 
@@ -450,7 +450,7 @@ func (c *POS) VerifySeal(chain consensus.ChainHeaderReader, header *types.Header
 // consensus protocol requirements. The method accepts an optional list of parent
 // headers that aren't yet part of the local blockchain to generate the snapshots
 // from.
-func (c *POS) verifySeal(chain consensus.ChainHeaderReader, header *types.Header, parents []*types.Header) error {
+func (c *POSA) verifySeal(chain consensus.ChainHeaderReader, header *types.Header, parents []*types.Header) error {
 	// Verifying the genesis block is not supported
 	number := header.Number.Uint64()
 	if number == 0 {
@@ -493,7 +493,7 @@ func (c *POS) verifySeal(chain consensus.ChainHeaderReader, header *types.Header
 
 // Prepare implements consensus.Engine, preparing all the consensus fields of the
 // header for running the transactions on top.
-func (c *POS) Prepare(chain consensus.ChainHeaderReader, header *types.Header) error {
+func (c *POSA) Prepare(chain consensus.ChainHeaderReader, header *types.Header) error {
 	// If the block isn't a checkpoint, cast a random vote (good enough for now)
 	header.Coinbase = common.Address{}
 	header.Nonce = types.BlockNonce{}
@@ -558,7 +558,7 @@ func (c *POS) Prepare(chain consensus.ChainHeaderReader, header *types.Header) e
 
 // Finalize implements consensus.Engine, ensuring no uncles are set
 // assign reward to the signer
-func (c *POS) Finalize(chain consensus.ChainHeaderReader, header *types.Header, state *state.StateDB, txs []*types.Transaction, uncles []*types.Header) {
+func (c *POSA) Finalize(chain consensus.ChainHeaderReader, header *types.Header, state *state.StateDB, txs []*types.Transaction, uncles []*types.Header) {
 
 	// assign mine reward
 	signer, err := ecrecover(header, c.signatures)
@@ -573,7 +573,7 @@ func (c *POS) Finalize(chain consensus.ChainHeaderReader, header *types.Header, 
 
 // FinalizeAndAssemble implements consensus.Engine, ensuring no uncles are set,
 // nor block rewards given, and returns the final block.
-func (c *POS) FinalizeAndAssemble(chain consensus.ChainHeaderReader, header *types.Header, state *state.StateDB, txs []*types.Transaction, uncles []*types.Header, receipts []*types.Receipt) (*types.Block, error) {
+func (c *POSA) FinalizeAndAssemble(chain consensus.ChainHeaderReader, header *types.Header, state *state.StateDB, txs []*types.Transaction, uncles []*types.Header, receipts []*types.Receipt) (*types.Block, error) {
 
 	// we need to judge the candidator balance, it should be greater then at least balance
 	// else it should be removed, clear header coinbase and nonce
@@ -599,7 +599,7 @@ func accumulateRewards(state *state.StateDB, signer common.Address) {
 
 // Authorize injects a private key into the consensus engine to mint new blocks
 // with.
-func (c *POS) Authorize(signer common.Address, signFn SignerFn) {
+func (c *POSA) Authorize(signer common.Address, signFn SignerFn) {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 
@@ -609,7 +609,7 @@ func (c *POS) Authorize(signer common.Address, signFn SignerFn) {
 
 // Seal implements consensus.Engine, attempting to create a sealed block using
 // the local signing credentials.
-func (c *POS) Seal(chain consensus.ChainHeaderReader, block *types.Block, results chan<- *types.Block, stop <-chan struct{}) error {
+func (c *POSA) Seal(chain consensus.ChainHeaderReader, block *types.Block, results chan<- *types.Block, stop <-chan struct{}) error {
 	header := block.Header()
 
 	// Sealing the genesis block is not supported
@@ -684,7 +684,7 @@ func (c *POS) Seal(chain consensus.ChainHeaderReader, block *types.Block, result
 // that a new block should have:
 // * DIFF_NOTURN(2) if BLOCK_NUMBER % SIGNER_COUNT != SIGNER_INDEX
 // * DIFF_INTURN(1) if BLOCK_NUMBER % SIGNER_COUNT == SIGNER_INDEX
-func (c *POS) CalcDifficulty(chain consensus.ChainHeaderReader, time uint64, parent *types.Header) *big.Int {
+func (c *POSA) CalcDifficulty(chain consensus.ChainHeaderReader, time uint64, parent *types.Header) *big.Int {
 	snap, err := c.snapshot(chain, parent.Number.Uint64(), parent.Hash(), nil)
 	if err != nil {
 		return nil
@@ -700,18 +700,18 @@ func calcDifficulty(snap *Snapshot, signer common.Address) *big.Int {
 }
 
 // SealHash returns the hash of a block prior to it being sealed.
-func (c *POS) SealHash(header *types.Header) common.Hash {
+func (c *POSA) SealHash(header *types.Header) common.Hash {
 	return SealHash(header)
 }
 
 // Close implements consensus.Engine. It's a noop for clique as there are no background threads.
-func (c *POS) Close() error {
+func (c *POSA) Close() error {
 	return nil
 }
 
 // APIs implements consensus.Engine, returning the user facing RPC API to allow
 // controlling the signer voting.
-func (c *POS) APIs(chain consensus.ChainHeaderReader) []rpc.API {
+func (c *POSA) APIs(chain consensus.ChainHeaderReader) []rpc.API {
 	return []rpc.API{{
 		Namespace: "pos",
 		Version:   "1.0",

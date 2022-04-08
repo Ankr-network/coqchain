@@ -17,8 +17,6 @@
 package external
 
 import (
-	"math/big"
-	"sync"
 	"fmt"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts"
@@ -29,6 +27,8 @@ import (
 	"github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/ethereum/go-ethereum/signer/core"
+	"math/big"
+	"sync"
 )
 
 type ExternalBackend struct {
@@ -159,7 +159,7 @@ func (api *ExternalSigner) signHash(account accounts.Account, hash []byte) ([]by
 func (api *ExternalSigner) SignData(account accounts.Account, mimeType string, data []byte) ([]byte, error) {
 	var res hexutil.Bytes
 	var signAddress = common.NewMixedcaseAddress(account.Address)
-	
+
 	if err := api.client.Call(&res, "account_signData",
 		mimeType,
 		&signAddress, // Need to use the pointer here, because of how MarshalJSON is defined
@@ -170,9 +170,9 @@ func (api *ExternalSigner) SignData(account accounts.Account, mimeType string, d
 	if mimeType == accounts.MimetypeClique && (res[64] == 27 || res[64] == 28) {
 		res[64] -= 27 // Transform V from 27/28 to 0/1 for Clique use
 	}
-	
+
 	// If V is on 27/28-form, convert to 0/1 for dpos
-	if mimeType == accounts.MimetypeDpos && (res[64] == 27 || res[64] == 28) {
+	if mimeType == accounts.MimetypePosa && (res[64] == 27 || res[64] == 28) {
 		res[64] -= 27 // Transform V from 27/28 to 0/1 for dpos use
 	}
 	return res, nil

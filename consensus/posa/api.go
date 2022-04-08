@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the go-ethereum library. If not, see <http://www.gnu.org/licenses/>.
 
-package pos
+package posa
 
 import (
 	"fmt"
@@ -29,7 +29,7 @@ import (
 // mechanisms of the proof-of-authority scheme.
 type API struct {
 	chain consensus.ChainHeaderReader
-	pos   *POS
+	pos   *POSA
 }
 
 // GetSnapshot retrieves the state snapshot at a given block.

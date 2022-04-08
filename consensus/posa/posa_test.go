@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the go-ethereum library. If not, see <http://www.gnu.org/licenses/>.
 
-package pos
+package posa
 
 import (
 	"math/big"
@@ -41,7 +41,7 @@ func TestReimportMirroredState(t *testing.T) {
 		db     = rawdb.NewMemoryDatabase()
 		key, _ = crypto.HexToECDSA("b71c71a67e1177ad4e901695e1b4b9ee17ae16c6668d313eac2f96dbcda3f291")
 		addr   = crypto.PubkeyToAddress(key.PublicKey)
-		engine = New(params.AllPosProtocolChanges.Pos, db)
+		engine = New(params.AllPosProtocolChanges.Posa, db)
 		signer = new(types.HomesteadSigner)
 	)
 	genspec := &core.Genesis{
