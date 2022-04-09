@@ -184,7 +184,7 @@ type Posa struct {
 	signatures *lru.ARCCache // Signatures of recent blocks to speed up mining
 
 	proposals     map[common.Address]bool // Current list of proposals we are pushing
-	recentSigners map[common.Address]struct{}
+	recentSigners *lru.ARCCache
 
 	signer   common.Address // Ethereum address of the signing key
 	signFn   SignerFn       // Signer function to authorize hashes with
@@ -193,12 +193,6 @@ type Posa struct {
 
 	// The fields below are for testing only
 	fakeDiff bool // Skip difficulty verifications
-}
-
-func (c *Posa) clearRecentSigners() {
-	for signer := range c.recentSigners {
-		delete(c.recentSigners, signer)
-	}
 }
 
 // New creates a POS proof-of-stake consensus engine with the initial
@@ -212,6 +206,7 @@ func New(config *params.PosaConfig, db ethdb.Database) *Posa {
 	// Allocate the snapshot caches and create the engine
 	recents, _ := lru.NewARC(inmemorySnapshots)
 	signatures, _ := lru.NewARC(inmemorySignatures)
+	recentSigners, _ := lru.NewARC(int(config.Epoch))
 
 	return &Posa{
 		config:        &conf,
@@ -220,7 +215,7 @@ func New(config *params.PosaConfig, db ethdb.Database) *Posa {
 		signatures:    signatures,
 		proposals:     make(map[common.Address]bool),
 		taskPool:      workpool.New(max_worker_size),
-		recentSigners: make(map[common.Address]struct{}),
+		recentSigners: recentSigners,
 	}
 }
 
@@ -397,12 +392,6 @@ func (c *Posa) snapshot(chain consensus.ChainHeaderReader, number uint64, hash c
 				signers := make([]common.Address, (len(checkpoint.Extra)-extraVanity-extraSeal)/common.AddressLength)
 				for i := 0; i < len(signers); i++ {
 					copy(signers[i][:], checkpoint.Extra[extraVanity+i*common.AddressLength:])
-				}
-
-				if number == 0 {
-					for _, signer := range signers {
-						c.recentSigners[signer] = struct{}{}
-					}
 				}
 
 				snap = newSnapshot(c.config, c.signatures, number, hash, signers)
@@ -589,16 +578,17 @@ func (c *Posa) Finalize(chain consensus.ChainHeaderReader, header *types.Header,
 
 	header.Root = state.IntermediateRoot(chain.Config().IsEIP158(header.Number))
 	header.UncleHash = types.CalcUncleHash(nil)
+	c.recentSigners.Add(signer, struct{}{})
 
 	number := header.Number.Uint64()
-	if (number-1)%c.config.Epoch == 0 {
+	if number%c.config.Epoch == 0 {
 		snap, err := c.snapshot(chain, number-1, header.ParentHash, nil)
 		if err != nil {
 			return
 		}
 		// remove the signer which didn't mine block in one epoch
 		for signer = range snap.Signers {
-			if _, ok := c.recentSigners[signer]; !ok {
+			if ok := c.recentSigners.Contains(signer); !ok {
 				delete(snap.Signers, signer)
 			}
 		}
@@ -608,10 +598,7 @@ func (c *Posa) Finalize(chain consensus.ChainHeaderReader, header *types.Header,
 				delete(snap.Signers, signer)
 			}
 		}
-		c.clearRecentSigners()
 	}
-
-	c.recentSigners[signer] = struct{}{}
 
 }
 
