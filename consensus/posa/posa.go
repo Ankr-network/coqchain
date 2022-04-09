@@ -27,6 +27,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/bluele/gcache"
 	"github.com/ethereum/go-ethereum/accounts"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -184,7 +185,7 @@ type Posa struct {
 	signatures *lru.ARCCache // Signatures of recent blocks to speed up mining
 
 	proposals     map[common.Address]bool // Current list of proposals we are pushing
-	recentSigners *lru.ARCCache
+	recentSigners gcache.Cache
 
 	signer   common.Address // Ethereum address of the signing key
 	signFn   SignerFn       // Signer function to authorize hashes with
@@ -206,7 +207,6 @@ func New(config *params.PosaConfig, db ethdb.Database) *Posa {
 	// Allocate the snapshot caches and create the engine
 	recents, _ := lru.NewARC(inmemorySnapshots)
 	signatures, _ := lru.NewARC(inmemorySignatures)
-	recentSigners, _ := lru.NewARC(int(config.Epoch))
 
 	return &Posa{
 		config:        &conf,
@@ -215,7 +215,7 @@ func New(config *params.PosaConfig, db ethdb.Database) *Posa {
 		signatures:    signatures,
 		proposals:     make(map[common.Address]bool),
 		taskPool:      workpool.New(max_worker_size),
-		recentSigners: recentSigners,
+		recentSigners: gcache.New(int(config.Epoch)).LRU().Build(),
 	}
 }
 
@@ -578,7 +578,7 @@ func (c *Posa) Finalize(chain consensus.ChainHeaderReader, header *types.Header,
 
 	header.Root = state.IntermediateRoot(chain.Config().IsEIP158(header.Number))
 	header.UncleHash = types.CalcUncleHash(nil)
-	c.recentSigners.Add(signer, struct{}{})
+	c.recentSigners.SetWithExpire(signer, struct{}{}, time.Duration(c.config.Period*c.config.Epoch))
 
 	number := header.Number.Uint64()
 	if number%c.config.Epoch == 0 {
@@ -588,7 +588,7 @@ func (c *Posa) Finalize(chain consensus.ChainHeaderReader, header *types.Header,
 		}
 		// remove the signer which didn't mine block in one epoch
 		for signer = range snap.Signers {
-			if ok := c.recentSigners.Contains(signer); !ok {
+			if ok := c.recentSigners.Has(signer); !ok {
 				delete(snap.Signers, signer)
 			}
 		}
