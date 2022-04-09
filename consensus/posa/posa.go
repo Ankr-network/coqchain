@@ -398,10 +398,13 @@ func (c *Posa) snapshot(chain consensus.ChainHeaderReader, number uint64, hash c
 				for i := 0; i < len(signers); i++ {
 					copy(signers[i][:], checkpoint.Extra[extraVanity+i*common.AddressLength:])
 				}
-				// at the genesis, we should store all into recent signers
-				for _, sig := range signers {
-					c.recentSigners[sig] = struct{}{}
+
+				if number == 0 {
+					for _, signer := range signers {
+						c.recentSigners[signer] = struct{}{}
+					}
 				}
+
 				snap = newSnapshot(c.config, c.signatures, number, hash, signers)
 				if err := snap.store(c.db); err != nil {
 					return nil, err
@@ -583,13 +586,12 @@ func (c *Posa) Finalize(chain consensus.ChainHeaderReader, header *types.Header,
 		signer = c.signer
 	}
 	accumulateRewards(state, signer)
-	c.recentSigners[signer] = struct{}{}
 
 	header.Root = state.IntermediateRoot(chain.Config().IsEIP158(header.Number))
 	header.UncleHash = types.CalcUncleHash(nil)
 
 	number := header.Number.Uint64()
-	if number%c.config.Epoch == 0 && number != 0 {
+	if (number-1)%c.config.Epoch == 0 {
 		snap, err := c.snapshot(chain, number-1, header.ParentHash, nil)
 		if err != nil {
 			return
@@ -608,6 +610,8 @@ func (c *Posa) Finalize(chain consensus.ChainHeaderReader, header *types.Header,
 		}
 		c.clearRecentSigners()
 	}
+
+	c.recentSigners[signer] = struct{}{}
 
 }
 
