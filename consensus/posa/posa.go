@@ -585,7 +585,7 @@ func (c *Posa) Finalize(chain consensus.ChainHeaderReader, header *types.Header,
 	header.UncleHash = types.CalcUncleHash(nil)
 
 	number := header.Number.Uint64()
-	if number%c.config.Epoch == 0 {
+	if number%c.config.Epoch == 0 && number != 0 {
 		snap, err := c.snapshot(chain, number-1, header.ParentHash, nil)
 		if err != nil {
 			return
