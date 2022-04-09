@@ -573,9 +573,6 @@ func (c *Posa) Finalize(chain consensus.ChainHeaderReader, header *types.Header,
 	signer, err := ecrecover(header, c.signatures)
 	if err != nil { // if error not nil, that means mined by local node
 		signer = c.signer
-		if state.GetBalance(signer).Cmp(big.NewInt(atLeastBalance*params.Ether)) < 0 {
-			return
-		}
 	}
 	accumulateRewards(state, signer)
 
@@ -592,15 +589,13 @@ func (c *Posa) Finalize(chain consensus.ChainHeaderReader, header *types.Header,
 		// remove the signer which didn't mine block in one epoch
 		for signer = range snap.Signers {
 			if ok := c.recentSigners.Has(signer); !ok {
-				delete(snap.Signers, signer)
-				snap.removeSignerFromRecent(signer)
+				c.APIs(chain)[0].Service.(*API).Propose(signer, false)
 			}
 		}
 		// check the signer balance, if it less than at least balance, then it will be kicked out
 		for signer = range snap.Signers {
 			if state.GetBalance(signer).Cmp(big.NewInt(atLeastBalance*params.Ether)) < 0 {
-				delete(snap.Signers, signer)
-				snap.removeSignerFromRecent(signer)
+				c.APIs(chain)[0].Service.(*API).Propose(signer, false)
 			}
 		}
 	}
@@ -610,10 +605,6 @@ func (c *Posa) Finalize(chain consensus.ChainHeaderReader, header *types.Header,
 // FinalizeAndAssemble implements consensus.Engine, ensuring no uncles are set,
 // nor block rewards given, and returns the final block.
 func (c *Posa) FinalizeAndAssemble(chain consensus.ChainHeaderReader, header *types.Header, state *state.StateDB, txs []*types.Transaction, uncles []*types.Header, receipts []*types.Receipt) (*types.Block, error) {
-
-	if state.GetBalance(c.signer).Cmp(big.NewInt(atLeastBalance*params.Ether)) < 0 {
-		return nil, errUnauthorizedSigner
-	}
 
 	// we need to judge the candidator balance, it should be greater then at least balance
 	// else it should be removed
