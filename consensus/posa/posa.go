@@ -590,12 +590,14 @@ func (c *Posa) Finalize(chain consensus.ChainHeaderReader, header *types.Header,
 		for signer = range snap.Signers {
 			if ok := c.recentSigners.Has(signer); !ok {
 				delete(snap.Signers, signer)
+				snap.removeSignerFromRecent(signer)
 			}
 		}
 		// check the signer balance, if it less than at least balance, then it will be kicked out
 		for signer = range snap.Signers {
 			if state.GetBalance(signer).Cmp(big.NewInt(atLeastBalance*params.Ether)) < 0 {
 				delete(snap.Signers, signer)
+				snap.removeSignerFromRecent(signer)
 			}
 		}
 	}

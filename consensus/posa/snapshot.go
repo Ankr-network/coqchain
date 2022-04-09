@@ -180,6 +180,14 @@ func (s *Snapshot) uncast(address common.Address, authorize bool) bool {
 	return true
 }
 
+func (s *Snapshot) removeSignerFromRecent(signer common.Address) {
+	for num, sig := range s.Recents {
+		if sig == signer {
+			delete(s.Recents, num)
+		}
+	}
+}
+
 // apply creates a new authorization snapshot by applying the given headers to
 // the original one.
 func (s *Snapshot) apply(headers []*types.Header) (*Snapshot, error) {
