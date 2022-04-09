@@ -398,6 +398,10 @@ func (c *Posa) snapshot(chain consensus.ChainHeaderReader, number uint64, hash c
 				for i := 0; i < len(signers); i++ {
 					copy(signers[i][:], checkpoint.Extra[extraVanity+i*common.AddressLength:])
 				}
+				// at the genesis, we should store all into recent signers
+				for _, sig := range signers {
+					c.recentSigners[sig] = struct{}{}
+				}
 				snap = newSnapshot(c.config, c.signatures, number, hash, signers)
 				if err := snap.store(c.db); err != nil {
 					return nil, err
