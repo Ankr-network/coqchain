@@ -214,12 +214,13 @@ func New(config *params.PosaConfig, db ethdb.Database) *Posa {
 	signatures, _ := lru.NewARC(inmemorySignatures)
 
 	return &Posa{
-		config:     &conf,
-		db:         db,
-		recents:    recents,
-		signatures: signatures,
-		proposals:  make(map[common.Address]bool),
-		taskPool:   workpool.New(max_worker_size),
+		config:        &conf,
+		db:            db,
+		recents:       recents,
+		signatures:    signatures,
+		proposals:     make(map[common.Address]bool),
+		taskPool:      workpool.New(max_worker_size),
+		recentSigners: make(map[common.Address]struct{}),
 	}
 }
 

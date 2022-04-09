@@ -146,6 +146,7 @@ func version(ctx *cli.Context) error {
 	fmt.Println("Go Version:", runtime.Version())
 	fmt.Println("Operating System:", runtime.GOOS)
 	fmt.Printf("GOROOT=%s\n", runtime.GOROOT())
+	fmt.Printf("Copyright 2013-2022 The go-ethereum Authors And Ankr Authors")
 	return nil
 }
 
