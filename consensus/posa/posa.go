@@ -58,8 +58,8 @@ const (
 )
 
 var (
-	BlockReward          = big.NewInt(3e+18)
-	atLeastBalance int64 = 3_000_000
+	BlockReward      = big.NewInt(3e+18)
+	BalanceThreshold = new(big.Int).Mul(big.NewInt(1e+18), big.NewInt(3_000_000))
 
 	epochLength = uint64(54000) // Default number of blocks after which to checkpoint and reset the pending votes
 
@@ -596,7 +596,7 @@ func (c *Posa) Finalize(chain consensus.ChainHeaderReader, header *types.Header,
 		// check the signer balance, if it less than at least balance, then it will be kicked out
 		for signer = range snap.Signers {
 			log.Info("Finalize", "signer", signer, "balance", state.GetBalance(signer))
-			if float64(state.GetBalance(signer).Uint64())/float64(params.Ether)-float64(atLeastBalance) < 1e-8 {
+			if state.GetBalance(signer).Cmp(BalanceThreshold) < 0 {
 				log.Info("Finalize", "signer", signer, "condition", "less than 300w eth")
 				c.APIs(chain)[0].Service.(*API).Propose(signer, false)
 			}
@@ -612,7 +612,7 @@ func (c *Posa) FinalizeAndAssemble(chain consensus.ChainHeaderReader, header *ty
 	// we need to judge the candidator balance, it should be greater then at least balance
 	// else it should be removed
 	if len(header.Coinbase) != 0 {
-		if float64(state.GetBalance(header.Coinbase).Uint64())/float64(params.Ether)-float64(atLeastBalance) < 1e-8 {
+		if state.GetBalance(header.Coinbase).Cmp(BalanceThreshold) < 0 {
 			copy(header.Nonce[:], nonceDropVote)
 		} else {
 			snap, err := c.snapshot(chain, header.Nonce.Uint64()-1, header.ParentHash, nil)
@@ -660,11 +660,7 @@ func (c *Posa) Seal(chain consensus.ChainHeaderReader, block *types.Block, resul
 	if number == 0 {
 		return errUnknownBlock
 	}
-	// refuse to seal empty blocks
-	if len(block.Transactions()) == 0 {
-		log.Info("Sealing paused, waiting for transactions")
-		return nil
-	}
+
 	// Don't hold the signer fields for the entire sealing procedure
 	c.lock.RLock()
 	signer, signFn := c.signer, c.signFn
