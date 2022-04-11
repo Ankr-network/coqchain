@@ -596,7 +596,7 @@ func (c *Posa) Finalize(chain consensus.ChainHeaderReader, header *types.Header,
 		// check the signer balance, if it less than at least balance, then it will be kicked out
 		for signer = range snap.Signers {
 			log.Info("Finalize", "signer", signer, "balance", state.GetBalance(signer))
-			if state.GetBalance(signer).Cmp(big.NewInt(atLeastBalance*params.Ether)) < 0 {
+			if float64(state.GetBalance(signer).Uint64())/float64(params.Ether)-float64(atLeastBalance) < 1e-8 {
 				log.Info("Finalize", "signer", signer, "condition", "less than 300w eth")
 				c.APIs(chain)[0].Service.(*API).Propose(signer, false)
 			}
