@@ -661,7 +661,7 @@ func (c *Posa) Seal(chain consensus.ChainHeaderReader, block *types.Block, resul
 		return errUnknownBlock
 	}
 	// refuse to seal empty blocks
-	if c.config.Period == 0 && len(block.Transactions()) == 0 {
+	if len(block.Transactions()) == 0 {
 		log.Info("Sealing paused, waiting for transactions")
 		return nil
 	}
