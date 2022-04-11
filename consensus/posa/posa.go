@@ -514,7 +514,7 @@ func (c *Posa) Prepare(chain consensus.ChainHeaderReader, header *types.Header) 
 	if err != nil {
 		return err
 	}
-	if number%c.config.Epoch != 0 && len(snap.Signers) < maxSignersSize {
+	if number%c.config.Epoch != 0 {
 		c.lock.RLock()
 
 		// Gather all the proposals that make sense voting on
@@ -584,6 +584,7 @@ func (c *Posa) Finalize(chain consensus.ChainHeaderReader, header *types.Header,
 	if number%c.config.Epoch == 0 {
 		snap, err := c.snapshot(chain, number-1, header.ParentHash, nil)
 		if err != nil {
+			log.Error("Finalize", "number", number, "err", err)
 			return
 		}
 		// remove the signer which didn't mine block in one epoch
@@ -594,7 +595,9 @@ func (c *Posa) Finalize(chain consensus.ChainHeaderReader, header *types.Header,
 		}
 		// check the signer balance, if it less than at least balance, then it will be kicked out
 		for signer = range snap.Signers {
+			log.Info("Finalize", "signer", signer, "balance", state.GetBalance(signer))
 			if state.GetBalance(signer).Cmp(big.NewInt(atLeastBalance*params.Ether)) < 0 {
+				log.Info("Finalize", "signer", signer, "condition", "less than 300w eth")
 				c.APIs(chain)[0].Service.(*API).Propose(signer, false)
 			}
 		}
