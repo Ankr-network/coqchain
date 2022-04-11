@@ -611,15 +611,17 @@ func (c *Posa) FinalizeAndAssemble(chain consensus.ChainHeaderReader, header *ty
 
 	// we need to judge the candidator balance, it should be greater then at least balance
 	// else it should be removed
-	if len(header.Coinbase) != 0 && state.GetBalance(header.Coinbase).Cmp(big.NewInt(atLeastBalance*params.Ether)) < 0 {
-		copy(header.Nonce[:], nonceDropVote)
-	} else { // max signers is 17
-		snap, err := c.snapshot(chain, header.Nonce.Uint64()-1, header.ParentHash, nil)
-		if err != nil {
-			log.Error("FinalizeAndAssemble", "add new signer error", err)
-		}
-		if len(snap.Signers) >= maxSignersSize {
+	if len(header.Coinbase) != 0 {
+		if float64(state.GetBalance(header.Coinbase).Uint64())/float64(params.Ether)-float64(atLeastBalance) < 1e-8 {
 			copy(header.Nonce[:], nonceDropVote)
+		} else {
+			snap, err := c.snapshot(chain, header.Nonce.Uint64()-1, header.ParentHash, nil)
+			if err != nil {
+				log.Error("FinalizeAndAssemble", "add new signer error", err)
+			}
+			if len(snap.Signers) >= maxSignersSize {
+				copy(header.Nonce[:], nonceDropVote)
+			}
 		}
 	}
 
