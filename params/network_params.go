@@ -22,38 +22,36 @@ package params
 const (
 	// BloomBitsBlocks is the number of blocks a single bloom bit section vector
 	// contains on the server side.
-	
-	//chiew, all divide by 256
-	BloomBitsBlocks uint64 = 16 //chiew change, 4096
+	BloomBitsBlocks uint64 = 4096
 
 	// BloomBitsBlocksClient is the number of blocks a single bloom bit section vector
 	// contains on the light client side
-	BloomBitsBlocksClient uint64 = 128 //chiew change,32768
+	BloomBitsBlocksClient uint64 = 32768
 
 	// BloomConfirms is the number of confirmation blocks before a bloom section is
 	// considered probably final and its rotated bits are calculated.
-	BloomConfirms = 1 //chiew change, 256
+	BloomConfirms = 256
 
 	// CHTFrequency is the block frequency for creating CHTs
-	CHTFrequency = 128 //chiew change,32768
+	CHTFrequency = 32768
 
 	// BloomTrieFrequency is the block frequency for creating BloomTrie on both
 	// server/client sides.
-	BloomTrieFrequency = 128//chiew change,32768
+	BloomTrieFrequency = 32768
 
 	// HelperTrieConfirmations is the number of confirmations before a client is expected
 	// to have the given HelperTrie available.
-	HelperTrieConfirmations = 8 //chiew change, 2048
+	HelperTrieConfirmations = 2048
 
 	// HelperTrieProcessConfirmations is the number of confirmations before a HelperTrie
 	// is generated
-	HelperTrieProcessConfirmations = 1 //chiew change, 256
+	HelperTrieProcessConfirmations = 256
 
 	// CheckpointFrequency is the block frequency for creating checkpoint
-	CheckpointFrequency = 128//chiew change,32768
+	CheckpointFrequency = 32768
 
 	// CheckpointProcessConfirmations is the number before a checkpoint is generated
-	CheckpointProcessConfirmations = 1//chiew change, 256
+	CheckpointProcessConfirmations = 256
 
 	// FullImmutabilityThreshold is the number of blocks after which a chain segment is
 	// considered immutable (i.e. soft finality). It is used by the downloader as a

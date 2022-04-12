@@ -18,6 +18,9 @@ package external
 
 import (
 	"fmt"
+	"math/big"
+	"sync"
+
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts"
 	"github.com/ethereum/go-ethereum/common"
@@ -26,9 +29,7 @@ import (
 	"github.com/ethereum/go-ethereum/event"
 	"github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/rpc"
-	"github.com/ethereum/go-ethereum/signer/core"
-	"math/big"
-	"sync"
+	"github.com/ethereum/go-ethereum/signer/core/apitypes"
 )
 
 type ExternalBackend struct {
@@ -159,7 +160,6 @@ func (api *ExternalSigner) signHash(account accounts.Account, hash []byte) ([]by
 func (api *ExternalSigner) SignData(account accounts.Account, mimeType string, data []byte) ([]byte, error) {
 	var res hexutil.Bytes
 	var signAddress = common.NewMixedcaseAddress(account.Address)
-
 	if err := api.client.Call(&res, "account_signData",
 		mimeType,
 		&signAddress, // Need to use the pointer here, because of how MarshalJSON is defined
@@ -171,10 +171,11 @@ func (api *ExternalSigner) SignData(account accounts.Account, mimeType string, d
 		res[64] -= 27 // Transform V from 27/28 to 0/1 for Clique use
 	}
 
-	// If V is on 27/28-form, convert to 0/1 for dpos
+	// If V is on 27/28-form, convert to 0/1 for posa
 	if mimeType == accounts.MimetypePosa && (res[64] == 27 || res[64] == 28) {
 		res[64] -= 27 // Transform V from 27/28 to 0/1 for dpos use
 	}
+
 	return res, nil
 }
 
@@ -201,6 +202,10 @@ type signTransactionResult struct {
 	Tx  *types.Transaction `json:"tx"`
 }
 
+// SignTx sends the transaction to the external signer.
+// If chainID is nil, or tx.ChainID is zero, the chain ID will be assigned
+// by the external signer. For non-legacy transactions, the chain ID of the
+// transaction overrides the chainID parameter.
 func (api *ExternalSigner) SignTx(account accounts.Account, tx *types.Transaction, chainID *big.Int) (*types.Transaction, error) {
 	data := hexutil.Bytes(tx.Data())
 	var to *common.MixedcaseAddress
@@ -208,14 +213,36 @@ func (api *ExternalSigner) SignTx(account accounts.Account, tx *types.Transactio
 		t := common.NewMixedcaseAddress(*tx.To())
 		to = &t
 	}
-	args := &core.SendTxArgs{
-		Data:     &data,
-		Nonce:    hexutil.Uint64(tx.Nonce()),
-		Value:    hexutil.Big(*tx.Value()),
-		Gas:      hexutil.Uint64(tx.Gas()),
-		GasPrice: hexutil.Big(*tx.GasPrice()),
-		To:       to,
-		From:     common.NewMixedcaseAddress(account.Address),
+	args := &apitypes.SendTxArgs{
+		Data:  &data,
+		Nonce: hexutil.Uint64(tx.Nonce()),
+		Value: hexutil.Big(*tx.Value()),
+		Gas:   hexutil.Uint64(tx.Gas()),
+		To:    to,
+		From:  common.NewMixedcaseAddress(account.Address),
+	}
+	switch tx.Type() {
+	case types.LegacyTxType, types.AccessListTxType:
+		args.GasPrice = (*hexutil.Big)(tx.GasPrice())
+	case types.DynamicFeeTxType:
+		args.MaxFeePerGas = (*hexutil.Big)(tx.GasFeeCap())
+		args.MaxPriorityFeePerGas = (*hexutil.Big)(tx.GasTipCap())
+	default:
+		return nil, fmt.Errorf("unsupported tx type %d", tx.Type())
+	}
+	// We should request the default chain id that we're operating with
+	// (the chain we're executing on)
+	if chainID != nil && chainID.Sign() != 0 {
+		args.ChainID = (*hexutil.Big)(chainID)
+	}
+	if tx.Type() != types.LegacyTxType {
+		// However, if the user asked for a particular chain id, then we should
+		// use that instead.
+		if tx.ChainId().Sign() != 0 {
+			args.ChainID = (*hexutil.Big)(tx.ChainId())
+		}
+		accessList := tx.AccessList()
+		args.AccessList = &accessList
 	}
 	var res signTransactionResult
 	if err := api.client.Call(&res, "account_signTransaction", args); err != nil {

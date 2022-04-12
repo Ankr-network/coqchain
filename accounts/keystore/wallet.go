@@ -18,7 +18,7 @@ package keystore
 
 import (
 	"math/big"
-	
+
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -95,9 +95,7 @@ func (w *keystoreWallet) signHash(account accounts.Account, hash []byte) ([]byte
 
 // SignData signs keccak256(data). The mimetype parameter describes the type of data being signed.
 func (w *keystoreWallet) SignData(account accounts.Account, mimeType string, data []byte) ([]byte, error) {
-	
-	bytes, err := w.signHash(account, crypto.Keccak256(data))
-	return bytes, err
+	return w.signHash(account, crypto.Keccak256(data))
 }
 
 // SignDataWithPassphrase signs keccak256(data). The mimetype parameter describes the type of data being signed.
