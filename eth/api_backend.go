@@ -19,7 +19,6 @@ package eth
 import (
 	"context"
 	"errors"
-	"fmt"
 	"math/big"
 	"time"
 
@@ -186,11 +185,11 @@ func (b *EthAPIBackend) GetLogs(ctx context.Context, hash common.Hash) ([][]*typ
 	db := b.eth.ChainDb()
 	number := rawdb.ReadHeaderNumber(db, hash)
 	if number == nil {
-		return nil, fmt.Errorf("failed to get block number for hash %#x", hash)
+		return nil, errors.New("failed to get block number from hash")
 	}
 	logs := rawdb.ReadLogs(db, hash, *number, b.eth.blockchain.Config())
 	if logs == nil {
-		return nil, fmt.Errorf("failed to get logs for block #%d (0x%s)", *number, hash.TerminalString())
+		return nil, errors.New("failed to get logs for block")
 	}
 	return logs, nil
 }
@@ -354,7 +353,7 @@ func (b *EthAPIBackend) StartMining(threads int) error {
 }
 
 func (b *EthAPIBackend) StateAtBlock(ctx context.Context, block *types.Block, reexec uint64, base *state.StateDB, checkLive, preferDisk bool) (*state.StateDB, error) {
-	return b.eth.StateAtBlock(block, reexec, base, checkLive, preferDisk)
+	return b.eth.stateAtBlock(block, reexec, base, checkLive, preferDisk)
 }
 
 func (b *EthAPIBackend) StateAtTransaction(ctx context.Context, block *types.Block, txIndex int, reexec uint64) (core.Message, vm.BlockContext, *state.StateDB, error) {

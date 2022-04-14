@@ -19,6 +19,7 @@ package main
 import (
 	"crypto/rand"
 	"math/big"
+	"os"
 	"path/filepath"
 	"runtime"
 	"strconv"
@@ -91,7 +92,9 @@ func TestAttachWelcome(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		ipc = `\\.\pipe\geth` + strconv.Itoa(trulyRandInt(100000, 999999))
 	} else {
-		ipc = filepath.Join(t.TempDir(), "geth.ipc")
+		ws := tmpdir(t)
+		defer os.RemoveAll(ws)
+		ipc = filepath.Join(ws, "geth.ipc")
 	}
 	// And HTTP + WS attachment
 	p := trulyRandInt(1024, 65533) // Yeah, sometimes this will fail, sorry :P
@@ -115,7 +118,6 @@ func TestAttachWelcome(t *testing.T) {
 		waitForEndpoint(t, endpoint, 3*time.Second)
 		testAttachWelcome(t, geth, endpoint, httpAPIs)
 	})
-	geth.ExpectExit()
 }
 
 func testAttachWelcome(t *testing.T, geth *testgeth, endpoint, apis string) {

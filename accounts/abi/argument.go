@@ -81,7 +81,13 @@ func (arguments Arguments) Unpack(data []byte) ([]interface{}, error) {
 		if len(arguments) != 0 {
 			return nil, fmt.Errorf("abi: attempting to unmarshall an empty string while arguments are expected")
 		}
-		return make([]interface{}, 0), nil
+		// Nothing to unmarshal, return default variables
+		nonIndexedArgs := arguments.NonIndexed()
+		defaultVars := make([]interface{}, len(nonIndexedArgs))
+		for index, arg := range nonIndexedArgs {
+			defaultVars[index] = reflect.New(arg.Type.GetType())
+		}
+		return defaultVars, nil
 	}
 	return arguments.UnpackValues(data)
 }

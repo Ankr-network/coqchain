@@ -99,11 +99,6 @@ func (db *nofreezedb) Ancients() (uint64, error) {
 	return 0, errNotSupported
 }
 
-// Tail returns an error as we don't have a backing chain freezer.
-func (db *nofreezedb) Tail() (uint64, error) {
-	return 0, errNotSupported
-}
-
 // AncientSize returns an error as we don't have a backing chain freezer.
 func (db *nofreezedb) AncientSize(kind string) (uint64, error) {
 	return 0, errNotSupported
@@ -114,13 +109,8 @@ func (db *nofreezedb) ModifyAncients(func(ethdb.AncientWriteOp) error) (int64, e
 	return 0, errNotSupported
 }
 
-// TruncateHead returns an error as we don't have a backing chain freezer.
-func (db *nofreezedb) TruncateHead(items uint64) error {
-	return errNotSupported
-}
-
-// TruncateTail returns an error as we don't have a backing chain freezer.
-func (db *nofreezedb) TruncateTail(items uint64) error {
+// TruncateAncients returns an error as we don't have a backing chain freezer.
+func (db *nofreezedb) TruncateAncients(items uint64) error {
 	return errNotSupported
 }
 
@@ -143,12 +133,6 @@ func (db *nofreezedb) ReadAncients(fn func(reader ethdb.AncientReader) error) (e
 	// have to explicitly check for that, having an extra clause to do the
 	// non-ancient operations.
 	return fn(db)
-}
-
-// MigrateTable processes the entries in a given table in sequence
-// converting them to a new format if they're of an old format.
-func (db *nofreezedb) MigrateTable(kind string, convert convertLegacyFn) error {
-	return errNotSupported
 }
 
 // NewDatabase creates a high level database on top of a given key-value data
@@ -227,7 +211,7 @@ func NewDatabaseWithFreezer(db ethdb.KeyValueStore, freezer string, namespace st
 				// Block #1 is still in the database, we're allowed to init a new feezer
 			}
 			// Otherwise, the head header is still the genesis, we're allowed to init a new
-			// freezer.
+			// feezer.
 		}
 	}
 	// Freezer is consistent with the key-value database, permit combining the two
@@ -337,7 +321,6 @@ func InspectDatabase(db ethdb.Database, keyPrefix, keyStart []byte) error {
 		storageSnaps    stat
 		preimages       stat
 		bloomBits       stat
-		beaconHeaders   stat
 		cliqueSnaps     stat
 
 		// Ancient store statistics
@@ -392,14 +375,10 @@ func InspectDatabase(db ethdb.Database, keyPrefix, keyStart []byte) error {
 			preimages.Add(size)
 		case bytes.HasPrefix(key, configPrefix) && len(key) == (len(configPrefix)+common.HashLength):
 			metadata.Add(size)
-		case bytes.HasPrefix(key, genesisPrefix) && len(key) == (len(genesisPrefix)+common.HashLength):
-			metadata.Add(size)
 		case bytes.HasPrefix(key, bloomBitsPrefix) && len(key) == (len(bloomBitsPrefix)+10+common.HashLength):
 			bloomBits.Add(size)
 		case bytes.HasPrefix(key, BloomBitsIndexPrefix):
 			bloomBits.Add(size)
-		case bytes.HasPrefix(key, skeletonHeaderPrefix) && len(key) == (len(skeletonHeaderPrefix)+8):
-			beaconHeaders.Add(size)
 		case bytes.HasPrefix(key, []byte("clique-")) && len(key) == 7+common.HashLength:
 			cliqueSnaps.Add(size)
 		case bytes.HasPrefix(key, []byte("cht-")) ||
@@ -416,7 +395,7 @@ func InspectDatabase(db ethdb.Database, keyPrefix, keyStart []byte) error {
 				databaseVersionKey, headHeaderKey, headBlockKey, headFastBlockKey, lastPivotKey,
 				fastTrieProgressKey, snapshotDisabledKey, SnapshotRootKey, snapshotJournalKey,
 				snapshotGeneratorKey, snapshotRecoveryKey, txIndexTailKey, fastTxLookupLimitKey,
-				uncleanShutdownKey, badBlockKey, transitionStatusKey, skeletonSyncStatusKey,
+				uncleanShutdownKey, badBlockKey,
 			} {
 				if bytes.Equal(key, meta) {
 					metadata.Add(size)
@@ -462,7 +441,6 @@ func InspectDatabase(db ethdb.Database, keyPrefix, keyStart []byte) error {
 		{"Key-Value store", "Trie preimages", preimages.Size(), preimages.Count()},
 		{"Key-Value store", "Account snapshot", accountSnaps.Size(), accountSnaps.Count()},
 		{"Key-Value store", "Storage snapshot", storageSnaps.Size(), storageSnaps.Count()},
-		{"Key-Value store", "Beacon sync headers", beaconHeaders.Size(), beaconHeaders.Count()},
 		{"Key-Value store", "Clique snapshots", cliqueSnaps.Size(), cliqueSnaps.Count()},
 		{"Key-Value store", "Singleton metadata", metadata.Size(), metadata.Count()},
 		{"Ancient store", "Headers", ancientHeadersSize.String(), ancients.String()},

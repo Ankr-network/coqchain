@@ -96,19 +96,6 @@ func (s *Suite) dial66() (*Conn, error) {
 	return conn, nil
 }
 
-// dial66 attempts to dial the given node and perform a handshake,
-// returning the created Conn with additional snap/1 capabilities if
-// successful.
-func (s *Suite) dialSnap() (*Conn, error) {
-	conn, err := s.dial66()
-	if err != nil {
-		return nil, fmt.Errorf("dial failed: %v", err)
-	}
-	conn.caps = append(conn.caps, p2p.Cap{Name: "snap", Version: 1})
-	conn.ourHighestSnapProtoVersion = 1
-	return conn, nil
-}
-
 // peer performs both the protocol handshake and the status message
 // exchange with the node in order to peer with it.
 func (c *Conn) peer(chain *Chain, status *Status) error {
@@ -144,11 +131,7 @@ func (c *Conn) handshake() error {
 		}
 		c.negotiateEthProtocol(msg.Caps)
 		if c.negotiatedProtoVersion == 0 {
-			return fmt.Errorf("could not negotiate eth protocol (remote caps: %v, local eth version: %v)", msg.Caps, c.ourHighestProtoVersion)
-		}
-		// If we require snap, verify that it was negotiated
-		if c.ourHighestSnapProtoVersion != c.negotiatedSnapProtoVersion {
-			return fmt.Errorf("could not negotiate snap protocol (remote caps: %v, local snap version: %v)", msg.Caps, c.ourHighestSnapProtoVersion)
+			return fmt.Errorf("could not negotiate protocol (remote caps: %v, local eth version: %v)", msg.Caps, c.ourHighestProtoVersion)
 		}
 		return nil
 	default:
@@ -160,21 +143,15 @@ func (c *Conn) handshake() error {
 // advertised capability from peer.
 func (c *Conn) negotiateEthProtocol(caps []p2p.Cap) {
 	var highestEthVersion uint
-	var highestSnapVersion uint
 	for _, capability := range caps {
-		switch capability.Name {
-		case "eth":
-			if capability.Version > highestEthVersion && capability.Version <= c.ourHighestProtoVersion {
-				highestEthVersion = capability.Version
-			}
-		case "snap":
-			if capability.Version > highestSnapVersion && capability.Version <= c.ourHighestSnapProtoVersion {
-				highestSnapVersion = capability.Version
-			}
+		if capability.Name != "eth" {
+			continue
+		}
+		if capability.Version > highestEthVersion && capability.Version <= c.ourHighestProtoVersion {
+			highestEthVersion = capability.Version
 		}
 	}
 	c.negotiatedProtoVersion = highestEthVersion
-	c.negotiatedSnapProtoVersion = highestSnapVersion
 }
 
 // statusExchange performs a `Status` message exchange with the given node.
@@ -346,15 +323,6 @@ func (c *Conn) headersRequest(request *GetBlockHeaders, chain *Chain, isEth66 bo
 	default:
 		return nil, fmt.Errorf("invalid message: %s", pretty.Sdump(msg))
 	}
-}
-
-func (c *Conn) snapRequest(msg Message, id uint64, chain *Chain) (Message, error) {
-	defer c.SetReadDeadline(time.Time{})
-	c.SetReadDeadline(time.Now().Add(5 * time.Second))
-	if err := c.Write(msg); err != nil {
-		return nil, fmt.Errorf("could not write to connection: %v", err)
-	}
-	return c.ReadSnap(id)
 }
 
 // getBlockHeaders66 executes the given `GetBlockHeaders` request over the eth66 protocol.

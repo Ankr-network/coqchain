@@ -22,6 +22,7 @@ import (
 	"errors"
 	"fmt"
 	"hash"
+	"io/ioutil"
 	"math/big"
 	"math/rand"
 	"os"
@@ -31,7 +32,6 @@ import (
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/rawdb"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethdb"
@@ -53,7 +53,7 @@ func newEmpty() *Trie {
 }
 
 func TestEmptyTrie(t *testing.T) {
-	trie, _ := New(common.Hash{}, NewDatabase(rawdb.NewMemoryDatabase()))
+	var trie Trie
 	res := trie.Hash()
 	exp := emptyRoot
 	if res != exp {
@@ -62,7 +62,7 @@ func TestEmptyTrie(t *testing.T) {
 }
 
 func TestNull(t *testing.T) {
-	trie, _ := New(common.Hash{}, NewDatabase(rawdb.NewMemoryDatabase()))
+	var trie Trie
 	key := make([]byte, 32)
 	value := []byte("test")
 	trie.Update(key, value)
@@ -374,7 +374,6 @@ const (
 	opHash
 	opReset
 	opItercheckhash
-	opNodeDiff
 	opMax // boundary value, not an actual op
 )
 
@@ -409,18 +408,14 @@ func (randTest) Generate(r *rand.Rand, size int) reflect.Value {
 }
 
 func runRandTest(rt randTest) bool {
-	var (
-		triedb      = NewDatabase(memorydb.New())
-		tr, _       = New(common.Hash{}, triedb)
-		values      = make(map[string]string) // tracks content of the trie
-		origTrie, _ = New(common.Hash{}, triedb)
-	)
-	tr.tracer = newTracer()
+	triedb := NewDatabase(memorydb.New())
+
+	tr, _ := New(common.Hash{}, triedb)
+	values := make(map[string]string) // tracks content of the trie
 
 	for i, step := range rt {
-		// fmt.Printf("{op: %d, key: common.Hex2Bytes(\"%x\"), value: common.Hex2Bytes(\"%x\")}, // step %d\n",
-		// 	step.op, step.key, step.value, i)
-
+		fmt.Printf("{op: %d, key: common.Hex2Bytes(\"%x\"), value: common.Hex2Bytes(\"%x\")}, // step %d\n",
+			step.op, step.key, step.value, i)
 		switch step.op {
 		case opUpdate:
 			tr.Update(step.key, step.value)
@@ -436,7 +431,6 @@ func runRandTest(rt randTest) bool {
 			}
 		case opCommit:
 			_, _, rt[i].err = tr.Commit(nil)
-			origTrie = tr.Copy()
 		case opHash:
 			tr.Hash()
 		case opReset:
@@ -451,9 +445,6 @@ func runRandTest(rt randTest) bool {
 				return false
 			}
 			tr = newtr
-			tr.tracer = newTracer()
-
-			origTrie = tr.Copy()
 		case opItercheckhash:
 			checktr, _ := New(common.Hash{}, triedb)
 			it := NewIterator(tr.NodeIterator(nil))
@@ -462,59 +453,6 @@ func runRandTest(rt randTest) bool {
 			}
 			if tr.Hash() != checktr.Hash() {
 				rt[i].err = fmt.Errorf("hash mismatch in opItercheckhash")
-			}
-		case opNodeDiff:
-			var (
-				inserted = tr.tracer.insertList()
-				deleted  = tr.tracer.deleteList()
-				origIter = origTrie.NodeIterator(nil)
-				curIter  = tr.NodeIterator(nil)
-				origSeen = make(map[string]struct{})
-				curSeen  = make(map[string]struct{})
-			)
-			for origIter.Next(true) {
-				if origIter.Leaf() {
-					continue
-				}
-				origSeen[string(origIter.Path())] = struct{}{}
-			}
-			for curIter.Next(true) {
-				if curIter.Leaf() {
-					continue
-				}
-				curSeen[string(curIter.Path())] = struct{}{}
-			}
-			var (
-				insertExp = make(map[string]struct{})
-				deleteExp = make(map[string]struct{})
-			)
-			for path := range curSeen {
-				_, present := origSeen[path]
-				if !present {
-					insertExp[path] = struct{}{}
-				}
-			}
-			for path := range origSeen {
-				_, present := curSeen[path]
-				if !present {
-					deleteExp[path] = struct{}{}
-				}
-			}
-			if len(insertExp) != len(inserted) {
-				rt[i].err = fmt.Errorf("insert set mismatch")
-			}
-			if len(deleteExp) != len(deleted) {
-				rt[i].err = fmt.Errorf("delete set mismatch")
-			}
-			for _, insert := range inserted {
-				if _, present := insertExp[string(insert)]; !present {
-					rt[i].err = fmt.Errorf("missing inserted node")
-				}
-			}
-			for _, del := range deleted {
-				if _, present := deleteExp[string(del)]; !present {
-					rt[i].err = fmt.Errorf("missing deleted node")
-				}
 			}
 		}
 		// Abort the test on error.
@@ -542,9 +480,9 @@ func BenchmarkUpdateLE(b *testing.B) { benchUpdate(b, binary.LittleEndian) }
 const benchElemCount = 20000
 
 func benchGet(b *testing.B, commit bool) {
-	trie, _ := New(common.Hash{}, NewDatabase(rawdb.NewMemoryDatabase()))
+	trie := new(Trie)
 	if commit {
-		tmpdb := tempDB(b)
+		_, tmpdb := tempDB()
 		trie, _ = New(common.Hash{}, tmpdb)
 	}
 	k := make([]byte, 32)
@@ -737,8 +675,6 @@ func (s *spongeDb) Has(key []byte) (bool, error)             { panic("implement 
 func (s *spongeDb) Get(key []byte) ([]byte, error)           { return nil, errors.New("no such elem") }
 func (s *spongeDb) Delete(key []byte) error                  { panic("implement me") }
 func (s *spongeDb) NewBatch() ethdb.Batch                    { return &spongeBatch{s} }
-func (s *spongeDb) NewBatchWithSize(size int) ethdb.Batch    { return &spongeBatch{s} }
-func (s *spongeDb) NewSnapshot() (ethdb.Snapshot, error)     { panic("implement me") }
 func (s *spongeDb) Stat(property string) (string, error)     { panic("implement me") }
 func (s *spongeDb) Compact(start []byte, limit []byte) error { panic("implement me") }
 func (s *spongeDb) Close() error                             { return nil }
@@ -948,8 +884,7 @@ func TestCommitSequenceSmallRoot(t *testing.T) {
 	if stRoot != root {
 		t.Fatalf("root wrong, got %x exp %x", stRoot, root)
 	}
-
-	t.Logf("root: %x\n", stRoot)
+	fmt.Printf("root: %x\n", stRoot)
 	if got, exp := stackTrieSponge.sponge.Sum(nil), s.sponge.Sum(nil); !bytes.Equal(got, exp) {
 		t.Fatalf("test, disk write sequence wrong:\ngot %x exp %x\n", got, exp)
 	}
@@ -1114,13 +1049,16 @@ func benchmarkDerefRootFixedSize(b *testing.B, addresses [][20]byte, accounts []
 	b.StopTimer()
 }
 
-func tempDB(tb testing.TB) *Database {
-	dir := tb.TempDir()
+func tempDB() (string, *Database) {
+	dir, err := ioutil.TempDir("", "trie-bench")
+	if err != nil {
+		panic(fmt.Sprintf("can't create temporary directory: %v", err))
+	}
 	diskdb, err := leveldb.New(dir, 256, 0, "", false)
 	if err != nil {
 		panic(fmt.Sprintf("can't create temporary database: %v", err))
 	}
-	return NewDatabase(diskdb)
+	return dir, NewDatabase(diskdb)
 }
 
 func getString(trie *Trie, k string) []byte {

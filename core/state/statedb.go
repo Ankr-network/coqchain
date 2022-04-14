@@ -506,14 +506,16 @@ func (s *StateDB) getDeletedStateObject(addr common.Address) *stateObject {
 		return obj
 	}
 	// If no live objects are available, attempt to use snapshots
-	var data *types.StateAccount
+	var (
+		data *types.StateAccount
+		err  error
+	)
 	if s.snap != nil {
-		start := time.Now()
-		acc, err := s.snap.Account(crypto.HashData(s.hasher, addr.Bytes()))
 		if metrics.EnabledExpensive {
-			s.SnapshotAccountReads += time.Since(start)
+			defer func(start time.Time) { s.SnapshotAccountReads += time.Since(start) }(time.Now())
 		}
-		if err == nil {
+		var acc *snapshot.Account
+		if acc, err = s.snap.Account(crypto.HashData(s.hasher, addr.Bytes())); err == nil {
 			if acc == nil {
 				return nil
 			}
@@ -532,12 +534,11 @@ func (s *StateDB) getDeletedStateObject(addr common.Address) *stateObject {
 		}
 	}
 	// If snapshot unavailable or reading from it failed, load from the database
-	if data == nil {
-		start := time.Now()
-		enc, err := s.trie.TryGet(addr.Bytes())
+	if s.snap == nil || err != nil {
 		if metrics.EnabledExpensive {
-			s.AccountReads += time.Since(start)
+			defer func(start time.Time) { s.AccountReads += time.Since(start) }(time.Now())
 		}
+		enc, err := s.trie.TryGet(addr.Bytes())
 		if err != nil {
 			s.setError(fmt.Errorf("getDeleteStateObject (%x) error: %v", addr.Bytes(), err))
 			return nil
@@ -884,6 +885,7 @@ func (s *StateDB) IntermediateRoot(deleteEmptyObjects bool) common.Hash {
 func (s *StateDB) Prepare(thash common.Hash, ti int) {
 	s.thash = thash
 	s.txIndex = ti
+	s.accessList = newAccessList()
 }
 
 func (s *StateDB) clearJournalAndRefund() {
@@ -993,9 +995,6 @@ func (s *StateDB) Commit(deleteEmptyObjects bool) (common.Hash, error) {
 //
 // This method should only be called if Berlin/2929+2930 is applicable at the current number.
 func (s *StateDB) PrepareAccessList(sender common.Address, dst *common.Address, precompiles []common.Address, list types.AccessList) {
-	// Clear out any leftover from previous executions
-	s.accessList = newAccessList()
-
 	s.AddAddressToAccessList(sender)
 	if dst != nil {
 		s.AddAddressToAccessList(*dst)

@@ -60,7 +60,7 @@ func (s *Server) WebsocketHandler(allowedOrigins []string) http.Handler {
 			log.Debug("WebSocket upgrade failed", "err", err)
 			return
 		}
-		codec := newWebsocketCodec(conn, r.Host, r.Header)
+		codec := newWebsocketCodec(conn)
 		s.ServeCodec(codec, 0)
 	})
 }
@@ -197,7 +197,7 @@ func DialWebsocketWithDialer(ctx context.Context, endpoint, origin string, diale
 			}
 			return nil, hErr
 		}
-		return newWebsocketCodec(conn, endpoint, header), nil
+		return newWebsocketCodec(conn), nil
 	})
 }
 
@@ -235,13 +235,12 @@ func wsClientHeaders(endpoint, origin string) (string, http.Header, error) {
 type websocketCodec struct {
 	*jsonCodec
 	conn *websocket.Conn
-	info PeerInfo
 
 	wg        sync.WaitGroup
 	pingReset chan struct{}
 }
 
-func newWebsocketCodec(conn *websocket.Conn, host string, req http.Header) ServerCodec {
+func newWebsocketCodec(conn *websocket.Conn) ServerCodec {
 	conn.SetReadLimit(wsMessageSizeLimit)
 	conn.SetPongHandler(func(appData string) error {
 		conn.SetReadDeadline(time.Time{})
@@ -251,16 +250,7 @@ func newWebsocketCodec(conn *websocket.Conn, host string, req http.Header) Serve
 		jsonCodec: NewFuncCodec(conn, conn.WriteJSON, conn.ReadJSON).(*jsonCodec),
 		conn:      conn,
 		pingReset: make(chan struct{}, 1),
-		info: PeerInfo{
-			Transport:  "ws",
-			RemoteAddr: conn.RemoteAddr().String(),
-		},
 	}
-	// Fill in connection details.
-	wc.info.HTTP.Host = host
-	wc.info.HTTP.Origin = req.Get("Origin")
-	wc.info.HTTP.UserAgent = req.Get("User-Agent")
-	// Start pinger.
 	wc.wg.Add(1)
 	go wc.pingLoop()
 	return wc
@@ -269,10 +259,6 @@ func newWebsocketCodec(conn *websocket.Conn, host string, req http.Header) Serve
 func (wc *websocketCodec) close() {
 	wc.jsonCodec.close()
 	wc.wg.Wait()
-}
-
-func (wc *websocketCodec) peerInfo() PeerInfo {
-	return wc.info
 }
 
 func (wc *websocketCodec) writeJSON(ctx context.Context, v interface{}) error {

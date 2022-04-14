@@ -117,7 +117,7 @@ func (oracle *Oracle) processBlock(bf *blockFees, percentiles []float64) {
 		reward, _ := tx.EffectiveGasTip(bf.block.BaseFee())
 		sorter[i] = txGasAndReward{gasUsed: bf.receipts[i].GasUsed, reward: reward}
 	}
-	sort.Stable(sorter)
+	sort.Sort(sorter)
 
 	var txIndex int
 	sumGasUsed := sorter[0].gasUsed

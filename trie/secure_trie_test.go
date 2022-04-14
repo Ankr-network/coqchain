@@ -112,7 +112,8 @@ func TestSecureTrieConcurrency(t *testing.T) {
 	threads := runtime.NumCPU()
 	tries := make([]*SecureTrie, threads)
 	for i := 0; i < threads; i++ {
-		tries[i] = trie.Copy()
+		cpy := *trie
+		tries[i] = &cpy
 	}
 	// Start a batch of goroutines interactng with the trie
 	pend := new(sync.WaitGroup)

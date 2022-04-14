@@ -27,7 +27,7 @@ import (
 )
 
 func init() {
-	register("noopTracer", newNoopTracer)
+	register("noopTracerNative", newNoopTracer)
 }
 
 // noopTracer is a go implementation of the Tracer interface which
@@ -63,10 +63,6 @@ func (t *noopTracer) CaptureEnter(typ vm.OpCode, from common.Address, to common.
 // execute any code.
 func (t *noopTracer) CaptureExit(output []byte, gasUsed uint64, err error) {
 }
-
-func (*noopTracer) CaptureTxStart(gasLimit uint64) {}
-
-func (*noopTracer) CaptureTxEnd(restGas uint64) {}
 
 // GetResult returns an empty json object.
 func (t *noopTracer) GetResult() (json.RawMessage, error) {

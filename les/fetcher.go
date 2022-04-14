@@ -71,8 +71,8 @@ type fetcherPeer struct {
 	// These following two fields can track the latest announces
 	// from the peer with limited size for caching. We hold the
 	// assumption that all enqueued announces are td-monotonic.
-	announces map[common.Hash]*announce // Announcement map
-	fifo      []common.Hash             // FIFO announces list
+	announces     map[common.Hash]*announce // Announcement map
+	announcesList []common.Hash             // FIFO announces list
 }
 
 // addAnno enqueues an new trusted announcement. If the queued announces overflow,
@@ -87,15 +87,15 @@ func (fp *fetcherPeer) addAnno(anno *announce) {
 		return
 	}
 	fp.announces[hash] = anno
-	fp.fifo = append(fp.fifo, hash)
+	fp.announcesList = append(fp.announcesList, hash)
 
 	// Evict oldest if the announces are oversized.
-	if len(fp.fifo)-cachedAnnosThreshold > 0 {
-		for i := 0; i < len(fp.fifo)-cachedAnnosThreshold; i++ {
-			delete(fp.announces, fp.fifo[i])
+	if len(fp.announcesList)-cachedAnnosThreshold > 0 {
+		for i := 0; i < len(fp.announcesList)-cachedAnnosThreshold; i++ {
+			delete(fp.announces, fp.announcesList[i])
 		}
-		copy(fp.fifo, fp.fifo[len(fp.fifo)-cachedAnnosThreshold:])
-		fp.fifo = fp.fifo[:cachedAnnosThreshold]
+		copy(fp.announcesList, fp.announcesList[len(fp.announcesList)-cachedAnnosThreshold:])
+		fp.announcesList = fp.announcesList[:cachedAnnosThreshold]
 	}
 }
 
@@ -106,8 +106,8 @@ func (fp *fetcherPeer) forwardAnno(td *big.Int) []*announce {
 		cutset  int
 		evicted []*announce
 	)
-	for ; cutset < len(fp.fifo); cutset++ {
-		anno := fp.announces[fp.fifo[cutset]]
+	for ; cutset < len(fp.announcesList); cutset++ {
+		anno := fp.announces[fp.announcesList[cutset]]
 		if anno == nil {
 			continue // In theory it should never ever happen
 		}
@@ -118,8 +118,8 @@ func (fp *fetcherPeer) forwardAnno(td *big.Int) []*announce {
 		delete(fp.announces, anno.data.Hash)
 	}
 	if cutset > 0 {
-		copy(fp.fifo, fp.fifo[cutset:])
-		fp.fifo = fp.fifo[:len(fp.fifo)-cutset]
+		copy(fp.announcesList, fp.announcesList[cutset:])
+		fp.announcesList = fp.announcesList[:len(fp.announcesList)-cutset]
 	}
 	return evicted
 }
@@ -441,14 +441,6 @@ func (f *lightFetcher) mainloop() {
 			if ulc {
 				head := f.chain.CurrentHeader()
 				ancestor := rawdb.FindCommonAncestor(f.chaindb, origin, head)
-
-				// Recap the ancestor with genesis header in case the ancestor
-				// is not found. It can happen the original head is before the
-				// checkpoint while the synced headers are after it. In this
-				// case there is no ancestor between them.
-				if ancestor == nil {
-					ancestor = f.chain.Genesis().Header()
-				}
 				var untrusted []common.Hash
 				for head.Number.Cmp(ancestor.Number) > 0 {
 					hash, number := head.Hash(), head.Number.Uint64()
@@ -457,9 +449,6 @@ func (f *lightFetcher) mainloop() {
 					}
 					untrusted = append(untrusted, hash)
 					head = f.chain.GetHeader(head.ParentHash, number-1)
-					if head == nil {
-						break // all the synced headers will be dropped
-					}
 				}
 				if len(untrusted) > 0 {
 					for i, j := 0, len(untrusted)-1; i < j; i, j = i+1, j-1 {
@@ -525,7 +514,7 @@ func (f *lightFetcher) requestHeaderByHash(peerid enode.ID) func(common.Hash) er
 	}
 }
 
-// startSync invokes synchronisation callback to start syncing.
+// requestResync invokes synchronisation callback to start syncing.
 func (f *lightFetcher) startSync(id enode.ID) {
 	defer func(header *types.Header) {
 		f.syncDone <- header

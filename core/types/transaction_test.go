@@ -76,7 +76,7 @@ func TestDecodeEmptyTypedTx(t *testing.T) {
 	input := []byte{0x80}
 	var tx Transaction
 	err := rlp.DecodeBytes(input, &tx)
-	if err != errShortTypedTx {
+	if err != errEmptyTypedTx {
 		t.Fatal("wrong error:", err)
 	}
 }

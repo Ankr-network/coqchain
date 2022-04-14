@@ -87,7 +87,7 @@ func (t *SecureTrie) TryGetNode(path []byte) ([]byte, int, error) {
 	return t.trie.TryGetNode(path)
 }
 
-// TryUpdateAccount account will abstract the write of an account to the
+// TryUpdate account will abstract the write of an account to the
 // secure trie.
 func (t *SecureTrie) TryUpdateAccount(key []byte, acc *types.StateAccount) error {
 	hk := t.hashKey(key)
@@ -185,10 +185,8 @@ func (t *SecureTrie) Hash() common.Hash {
 
 // Copy returns a copy of SecureTrie.
 func (t *SecureTrie) Copy() *SecureTrie {
-	return &SecureTrie{
-		trie:        *t.trie.Copy(),
-		secKeyCache: t.secKeyCache,
-	}
+	cpy := *t
+	return &cpy
 }
 
 // NodeIterator returns an iterator that returns nodes of the underlying trie. Iteration

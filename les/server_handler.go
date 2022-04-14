@@ -374,7 +374,7 @@ func getAccount(triedb *trie.Database, root, hash common.Hash) (types.StateAccou
 	return acc, nil
 }
 
-// GetHelperTrie returns the post-processed trie root for the given trie ID and section index
+// getHelperTrie returns the post-processed trie root for the given trie ID and section index
 func (h *serverHandler) GetHelperTrie(typ uint, index uint64) *trie.Trie {
 	var (
 		root   common.Hash
@@ -421,10 +421,7 @@ func (h *serverHandler) broadcastLoop() {
 			}
 			var reorg uint64
 			if lastHead != nil {
-				// If a setHead has been performed, the common ancestor can be nil.
-				if ancestor := rawdb.FindCommonAncestor(h.chainDb, header, lastHead); ancestor != nil {
-					reorg = lastHead.Number.Uint64() - ancestor.Number.Uint64()
-				}
+				reorg = lastHead.Number.Uint64() - rawdb.FindCommonAncestor(h.chainDb, header, lastHead).Number.Uint64()
 			}
 			lastHead, lastTd = header, td
 			log.Debug("Announcing block to peers", "number", number, "hash", hash, "td", td, "reorg", reorg)

@@ -24,12 +24,22 @@ import (
 	"golang.org/x/crypto/sha3"
 )
 
+type sliceBuffer []byte
+
+func (b *sliceBuffer) Write(data []byte) (n int, err error) {
+	*b = append(*b, data...)
+	return len(data), nil
+}
+
+func (b *sliceBuffer) Reset() {
+	*b = (*b)[:0]
+}
+
 // hasher is a type used for the trie Hash operation. A hasher has some
 // internal preallocated temp space
 type hasher struct {
 	sha      crypto.KeccakState
-	tmp      []byte
-	encbuf   rlp.EncoderBuffer
+	tmp      sliceBuffer
 	parallel bool // Whether to use paralallel threads when hashing
 }
 
@@ -37,9 +47,8 @@ type hasher struct {
 var hasherPool = sync.Pool{
 	New: func() interface{} {
 		return &hasher{
-			tmp:    make([]byte, 0, 550), // cap is as large as a full fullNode.
-			sha:    sha3.NewLegacyKeccak256().(crypto.KeccakState),
-			encbuf: rlp.NewEncoderBuffer(nil),
+			tmp: make(sliceBuffer, 0, 550), // cap is as large as a full fullNode.
+			sha: sha3.NewLegacyKeccak256().(crypto.KeccakState),
 		}
 	},
 }
@@ -144,41 +153,30 @@ func (h *hasher) hashFullNodeChildren(n *fullNode) (collapsed *fullNode, cached 
 // into compact form for RLP encoding.
 // If the rlp data is smaller than 32 bytes, `nil` is returned.
 func (h *hasher) shortnodeToHash(n *shortNode, force bool) node {
-	n.encode(h.encbuf)
-	enc := h.encodedBytes()
+	h.tmp.Reset()
+	if err := rlp.Encode(&h.tmp, n); err != nil {
+		panic("encode error: " + err.Error())
+	}
 
-	if len(enc) < 32 && !force {
+	if len(h.tmp) < 32 && !force {
 		return n // Nodes smaller than 32 bytes are stored inside their parent
 	}
-	return h.hashData(enc)
+	return h.hashData(h.tmp)
 }
 
 // shortnodeToHash is used to creates a hashNode from a set of hashNodes, (which
 // may contain nil values)
 func (h *hasher) fullnodeToHash(n *fullNode, force bool) node {
-	n.encode(h.encbuf)
-	enc := h.encodedBytes()
+	h.tmp.Reset()
+	// Generate the RLP encoding of the node
+	if err := n.EncodeRLP(&h.tmp); err != nil {
+		panic("encode error: " + err.Error())
+	}
 
-	if len(enc) < 32 && !force {
+	if len(h.tmp) < 32 && !force {
 		return n // Nodes smaller than 32 bytes are stored inside their parent
 	}
-	return h.hashData(enc)
-}
-
-// encodedBytes returns the result of the last encoding operation on h.encbuf.
-// This also resets the encoder buffer.
-//
-// All node encoding must be done like this:
-//
-//     node.encode(h.encbuf)
-//     enc := h.encodedBytes()
-//
-// This convention exists because node.encode can only be inlined/escape-analyzed when
-// called on a concrete receiver type.
-func (h *hasher) encodedBytes() []byte {
-	h.tmp = h.encbuf.AppendToBytes(h.tmp[:0])
-	h.encbuf.Reset(nil)
-	return h.tmp
+	return h.hashData(h.tmp)
 }
 
 // hashData hashes the provided data

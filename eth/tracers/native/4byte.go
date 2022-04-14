@@ -83,7 +83,7 @@ func (t *fourByteTracer) CaptureStart(env *vm.EVM, from common.Address, to commo
 	t.env = env
 
 	// Update list of precompiles based on current block
-	rules := env.ChainConfig().Rules(env.Context.BlockNumber, env.Context.Random != nil)
+	rules := env.ChainConfig().Rules(env.Context.BlockNumber)
 	t.activePrecompiles = vm.ActivePrecompiles(rules)
 
 	// Save the outer calldata also
@@ -130,10 +130,6 @@ func (t *fourByteTracer) CaptureFault(pc uint64, op vm.OpCode, gas, cost uint64,
 // CaptureEnd is called after the call finishes to finalize the tracing.
 func (t *fourByteTracer) CaptureEnd(output []byte, gasUsed uint64, _ time.Duration, err error) {
 }
-
-func (*fourByteTracer) CaptureTxStart(gasLimit uint64) {}
-
-func (*fourByteTracer) CaptureTxEnd(restGas uint64) {}
 
 // GetResult returns the json-encoded nested list of call traces, and any
 // error arising from the encoding or forceful termination (via `Stop`).

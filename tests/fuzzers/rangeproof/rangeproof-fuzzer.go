@@ -24,7 +24,6 @@ import (
 	"sort"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/rawdb"
 	"github.com/ethereum/go-ethereum/ethdb/memorydb"
 	"github.com/ethereum/go-ethereum/trie"
 )
@@ -62,7 +61,8 @@ func (f *fuzzer) readInt() uint64 {
 }
 
 func (f *fuzzer) randomTrie(n int) (*trie.Trie, map[string]*kv) {
-	trie, _ := trie.New(common.Hash{}, trie.NewDatabase(rawdb.NewMemoryDatabase()))
+
+	trie := new(trie.Trie)
 	vals := make(map[string]*kv)
 	size := f.readInt()
 	// Fill it with some fluff

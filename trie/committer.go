@@ -44,6 +44,7 @@ type leaf struct {
 // By 'some level' of parallelism, it's still the case that all leaves will be
 // processed sequentially - onleaf will never be called in parallel or out of order.
 type committer struct {
+	tmp sliceBuffer
 	sha crypto.KeccakState
 
 	onleaf LeafCallback
@@ -54,6 +55,7 @@ type committer struct {
 var committerPool = sync.Pool{
 	New: func() interface{} {
 		return &committer{
+			tmp: make(sliceBuffer, 0, 550), // cap is as large as a full fullNode.
 			sha: sha3.NewLegacyKeccak256().(crypto.KeccakState),
 		}
 	},
@@ -89,7 +91,7 @@ func (c *committer) commit(n node, db *Database) (node, int, error) {
 	if hash != nil && !dirty {
 		return hash, 0, nil
 	}
-	// Commit children, then parent, and remove the dirty flag.
+	// Commit children, then parent, and remove remove the dirty flag.
 	switch cn := n.(type) {
 	case *shortNode:
 		// Commit child

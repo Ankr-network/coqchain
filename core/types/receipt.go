@@ -31,14 +31,15 @@ import (
 	"github.com/ethereum/go-ethereum/rlp"
 )
 
-//go:generate go run github.com/fjl/gencodec@latest -type Receipt -field-override receiptMarshaling -out gen_receipt_json.go
+//go:generate gencodec -type Receipt -field-override receiptMarshaling -out gen_receipt_json.go
 
 var (
 	receiptStatusFailedRLP     = []byte{}
 	receiptStatusSuccessfulRLP = []byte{0x01}
 )
 
-var errShortTypedReceipt = errors.New("typed receipt too short")
+// This error is returned when a typed receipt is decoded, but the string is empty.
+var errEmptyTypedReceipt = errors.New("empty typed receipt bytes")
 
 const (
 	// ReceiptStatusFailed is the status code of a transaction if execution failed.
@@ -181,13 +182,26 @@ func (r *Receipt) DecodeRLP(s *rlp.Stream) error {
 		}
 		r.Type = LegacyTxType
 		return r.setFromRLP(dec)
-	default:
+	case kind == rlp.String:
 		// It's an EIP-2718 typed tx receipt.
 		b, err := s.Bytes()
 		if err != nil {
 			return err
 		}
-		return r.decodeTyped(b)
+		if len(b) == 0 {
+			return errEmptyTypedReceipt
+		}
+		r.Type = b[0]
+		if r.Type == AccessListTxType || r.Type == DynamicFeeTxType {
+			var dec receiptRLP
+			if err := rlp.DecodeBytes(b[1:], &dec); err != nil {
+				return err
+			}
+			return r.setFromRLP(dec)
+		}
+		return ErrTxTypeNotSupported
+	default:
+		return rlp.ErrExpectedList
 	}
 }
 
@@ -210,8 +224,8 @@ func (r *Receipt) UnmarshalBinary(b []byte) error {
 
 // decodeTyped decodes a typed receipt from the canonical format.
 func (r *Receipt) decodeTyped(b []byte) error {
-	if len(b) <= 1 {
-		return errShortTypedReceipt
+	if len(b) == 0 {
+		return errEmptyTypedReceipt
 	}
 	switch b[0] {
 	case DynamicFeeTxType, AccessListTxType:
@@ -273,20 +287,16 @@ type ReceiptForStorage Receipt
 
 // EncodeRLP implements rlp.Encoder, and flattens all content fields of a receipt
 // into an RLP stream.
-func (r *ReceiptForStorage) EncodeRLP(_w io.Writer) error {
-	w := rlp.NewEncoderBuffer(_w)
-	outerList := w.List()
-	w.WriteBytes((*Receipt)(r).statusEncoding())
-	w.WriteUint64(r.CumulativeGasUsed)
-	logList := w.List()
-	for _, log := range r.Logs {
-		if err := rlp.Encode(w, log); err != nil {
-			return err
-		}
+func (r *ReceiptForStorage) EncodeRLP(w io.Writer) error {
+	enc := &storedReceiptRLP{
+		PostStateOrStatus: (*Receipt)(r).statusEncoding(),
+		CumulativeGasUsed: r.CumulativeGasUsed,
+		Logs:              make([]*LogForStorage, len(r.Logs)),
 	}
-	w.ListEnd(logList)
-	w.ListEnd(outerList)
-	return w.Flush()
+	for i, log := range r.Logs {
+		enc.Logs[i] = (*LogForStorage)(log)
+	}
+	return rlp.Encode(w, enc)
 }
 
 // DecodeRLP implements rlp.Decoder, and loads both consensus and implementation

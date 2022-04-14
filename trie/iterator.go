@@ -23,6 +23,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethdb"
+	"github.com/ethereum/go-ethereum/rlp"
 )
 
 // Iterator is a key-value trie iterator that traverses a Trie.
@@ -85,10 +86,6 @@ type NodeIterator interface {
 	// For leaf nodes, the last element of the path is the 'terminator symbol' 0x10.
 	Path() []byte
 
-	// NodeBlob returns the rlp-encoded value of the current iterated node.
-	// If the node is an embedded node in its parent, nil is returned then.
-	NodeBlob() []byte
-
 	// Leaf returns true iff the current node is a leaf node.
 	Leaf() bool
 
@@ -118,7 +115,7 @@ type NodeIterator interface {
 	// Before adding a similar mechanism to any other place in Geth, consider
 	// making trie.Database an interface and wrapping at that level. It's a huge
 	// refactor, but it could be worth it if another occurrence arises.
-	AddResolver(ethdb.KeyValueReader)
+	AddResolver(ethdb.KeyValueStore)
 }
 
 // nodeIteratorState represents the iteration state at one particular node of the
@@ -137,7 +134,7 @@ type nodeIterator struct {
 	path  []byte               // Path to the current node
 	err   error                // Failure set in case of an internal error in the iterator
 
-	resolver ethdb.KeyValueReader // Optional intermediate resolver above the disk layer
+	resolver ethdb.KeyValueStore // Optional intermediate resolver above the disk layer
 }
 
 // errIteratorEnd is stored in nodeIterator.err when iteration is done.
@@ -154,18 +151,15 @@ func (e seekError) Error() string {
 }
 
 func newNodeIterator(trie *Trie, start []byte) NodeIterator {
-	if trie.Hash() == emptyRoot {
-		return &nodeIterator{
-			trie: trie,
-			err:  errIteratorEnd,
-		}
+	if trie.Hash() == emptyState {
+		return new(nodeIterator)
 	}
 	it := &nodeIterator{trie: trie}
 	it.err = it.seek(start)
 	return it
 }
 
-func (it *nodeIterator) AddResolver(resolver ethdb.KeyValueReader) {
+func (it *nodeIterator) AddResolver(resolver ethdb.KeyValueStore) {
 	it.resolver = resolver
 }
 
@@ -216,7 +210,8 @@ func (it *nodeIterator) LeafProof() [][]byte {
 				// Gather nodes that end up as hash nodes (or the root)
 				node, hashed := hasher.proofHash(item.node)
 				if _, ok := hashed.(hashNode); ok || i == 0 {
-					proofs = append(proofs, nodeToBytes(node))
+					enc, _ := rlp.EncodeToBytes(node)
+					proofs = append(proofs, enc)
 				}
 			}
 			return proofs
@@ -227,18 +222,6 @@ func (it *nodeIterator) LeafProof() [][]byte {
 
 func (it *nodeIterator) Path() []byte {
 	return it.path
-}
-
-func (it *nodeIterator) NodeBlob() []byte {
-	if it.Hash() == (common.Hash{}) {
-		return nil // skip the non-standalone node
-	}
-	blob, err := it.resolveBlob(it.Hash().Bytes(), it.Path())
-	if err != nil {
-		it.err = err
-		return nil
-	}
-	return blob
 }
 
 func (it *nodeIterator) Error() error {
@@ -292,7 +275,7 @@ func (it *nodeIterator) seek(prefix []byte) error {
 	}
 }
 
-// init initializes the iterator.
+// init initializes the the iterator.
 func (it *nodeIterator) init() (*nodeIteratorState, error) {
 	root := it.trie.Hash()
 	state := &nodeIteratorState{node: it.trie.root, index: -1}
@@ -379,15 +362,6 @@ func (it *nodeIterator) resolveHash(hash hashNode, path []byte) (node, error) {
 	return resolved, err
 }
 
-func (it *nodeIterator) resolveBlob(hash hashNode, path []byte) ([]byte, error) {
-	if it.resolver != nil {
-		if blob, err := it.resolver.Get(hash); err == nil && len(blob) > 0 {
-			return blob, nil
-		}
-	}
-	return it.trie.resolveBlob(hash, path)
-}
-
 func (st *nodeIteratorState) resolve(it *nodeIterator, path []byte) error {
 	if hash, ok := st.node.(hashNode); ok {
 		resolved, err := it.resolveHash(hash, path)
@@ -428,7 +402,7 @@ func findChild(n *fullNode, index int, path []byte, ancestor common.Hash) (node,
 func (it *nodeIterator) nextChild(parent *nodeIteratorState, ancestor common.Hash) (*nodeIteratorState, []byte, bool) {
 	switch node := parent.node.(type) {
 	case *fullNode:
-		// Full node, move to the first non-nil child.
+		//Full node, move to the first non-nil child.
 		if child, state, path, index := findChild(node, parent.index+1, it.path, ancestor); child != nil {
 			parent.index = index - 1
 			return state, path, true
@@ -506,9 +480,8 @@ func (it *nodeIterator) push(state *nodeIteratorState, parentIndex *int, path []
 }
 
 func (it *nodeIterator) pop() {
-	last := it.stack[len(it.stack)-1]
-	it.path = it.path[:last.pathlen]
-	it.stack[len(it.stack)-1] = nil
+	parent := it.stack[len(it.stack)-1]
+	it.path = it.path[:parent.pathlen]
 	it.stack = it.stack[:len(it.stack)-1]
 }
 
@@ -576,11 +549,7 @@ func (it *differenceIterator) Path() []byte {
 	return it.b.Path()
 }
 
-func (it *differenceIterator) NodeBlob() []byte {
-	return it.b.NodeBlob()
-}
-
-func (it *differenceIterator) AddResolver(resolver ethdb.KeyValueReader) {
+func (it *differenceIterator) AddResolver(resolver ethdb.KeyValueStore) {
 	panic("not implemented")
 }
 
@@ -691,11 +660,7 @@ func (it *unionIterator) Path() []byte {
 	return (*it.items)[0].Path()
 }
 
-func (it *unionIterator) NodeBlob() []byte {
-	return (*it.items)[0].NodeBlob()
-}
-
-func (it *unionIterator) AddResolver(resolver ethdb.KeyValueReader) {
+func (it *unionIterator) AddResolver(resolver ethdb.KeyValueStore) {
 	panic("not implemented")
 }
 

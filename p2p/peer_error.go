@@ -54,7 +54,7 @@ func (pe *peerError) Error() string {
 
 var errProtocolReturned = errors.New("protocol returned")
 
-type DiscReason uint8
+type DiscReason uint
 
 const (
 	DiscRequested DiscReason = iota

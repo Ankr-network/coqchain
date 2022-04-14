@@ -267,7 +267,9 @@ func FuzzClientPool(input []byte) int {
 				bias      = f.randomDelay()
 				requested = f.randomBool()
 			)
-			pool.SetCapacity(f.peers[index].node, reqCap, bias, requested)
+			if _, err := pool.SetCapacity(f.peers[index].node, reqCap, bias, requested); err == vfs.ErrCantFindMaximum {
+				panic(nil)
+			}
 			doLog("Set capacity", "id", f.peers[index].node.ID(), "reqcap", reqCap, "bias", bias, "requested", requested)
 		case 7:
 			index := f.randomByte()

@@ -40,19 +40,23 @@ func (no *testNativeObjectBinding) TestMethod(call goja.FunctionCall) goja.Value
 	return no.vm.ToValue(&msg{m})
 }
 
-func newWithTestJS(t *testing.T, testjs string) *JSRE {
-	dir := t.TempDir()
+func newWithTestJS(t *testing.T, testjs string) (*JSRE, string) {
+	dir, err := ioutil.TempDir("", "jsre-test")
+	if err != nil {
+		t.Fatal("cannot create temporary directory:", err)
+	}
 	if testjs != "" {
 		if err := ioutil.WriteFile(path.Join(dir, "test.js"), []byte(testjs), os.ModePerm); err != nil {
 			t.Fatal("cannot create test.js:", err)
 		}
 	}
 	jsre := New(dir, os.Stdout)
-	return jsre
+	return jsre, dir
 }
 
 func TestExec(t *testing.T) {
-	jsre := newWithTestJS(t, `msg = "testMsg"`)
+	jsre, dir := newWithTestJS(t, `msg = "testMsg"`)
+	defer os.RemoveAll(dir)
 
 	err := jsre.Exec("test.js")
 	if err != nil {
@@ -74,24 +78,25 @@ func TestExec(t *testing.T) {
 }
 
 func TestNatto(t *testing.T) {
-	jsre := newWithTestJS(t, `setTimeout(function(){msg = "testMsg"}, 1);`)
+	jsre, dir := newWithTestJS(t, `setTimeout(function(){msg = "testMsg"}, 1);`)
+	defer os.RemoveAll(dir)
 
 	err := jsre.Exec("test.js")
 	if err != nil {
-		t.Fatalf("expected no error, got %v", err)
+		t.Errorf("expected no error, got %v", err)
 	}
 	time.Sleep(100 * time.Millisecond)
 	val, err := jsre.Run("msg")
 	if err != nil {
-		t.Fatalf("expected no error, got %v", err)
+		t.Errorf("expected no error, got %v", err)
 	}
 	if val.ExportType().Kind() != reflect.String {
-		t.Fatalf("expected string value, got %v", val)
+		t.Errorf("expected string value, got %v", val)
 	}
 	exp := "testMsg"
 	got := val.ToString().String()
 	if exp != got {
-		t.Fatalf("expected '%v', got '%v'", exp, got)
+		t.Errorf("expected '%v', got '%v'", exp, got)
 	}
 	jsre.Stop(false)
 }
@@ -109,7 +114,8 @@ func TestBind(t *testing.T) {
 }
 
 func TestLoadScript(t *testing.T) {
-	jsre := newWithTestJS(t, `msg = "testMsg"`)
+	jsre, dir := newWithTestJS(t, `msg = "testMsg"`)
+	defer os.RemoveAll(dir)
 
 	_, err := jsre.Run(`loadScript("test.js")`)
 	if err != nil {

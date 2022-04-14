@@ -27,7 +27,6 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/consensus"
-	"github.com/ethereum/go-ethereum/consensus/beacon"
 	"github.com/ethereum/go-ethereum/consensus/clique"
 	"github.com/ethereum/go-ethereum/consensus/ethash"
 	"github.com/ethereum/go-ethereum/consensus/posa"
@@ -85,7 +84,7 @@ var Defaults = Config{
 	TrieTimeout:             60 * time.Minute,
 	SnapshotCache:           102,
 	Miner: miner.Config{
-		GasCeil:  30000000,
+		GasCeil:  8000000,
 		GasPrice: big.NewInt(params.GWei),
 		Recommit: 3 * time.Second,
 	},
@@ -139,10 +138,8 @@ type Config struct {
 
 	TxLookupLimit uint64 `toml:",omitempty"` // The maximum number of blocks from head whose tx indices are reserved.
 
-	// PeerRequiredBlocks is a set of block number -> hash mappings which must be in the
-	// canonical chain of all remote peers. Setting the option makes geth verify the
-	// presence of these blocks for every new peer connection.
-	PeerRequiredBlocks map[uint64]common.Hash `toml:"-"`
+	// Whitelist of required block number -> hash values to accept
+	Whitelist map[uint64]common.Hash `toml:"-"`
 
 	// Light client options
 	LightServ          int  `toml:",omitempty"` // Maximum percentage of time allowed for serving LES requests
@@ -208,15 +205,10 @@ type Config struct {
 
 	// Arrow Glacier block override (TODO: remove after the fork)
 	OverrideArrowGlacier *big.Int `toml:",omitempty"`
-
-	// OverrideTerminalTotalDifficulty (TODO: remove after the fork)
-	OverrideTerminalTotalDifficulty *big.Int `toml:",omitempty"`
 }
 
 // CreateConsensusEngine creates a consensus engine for the given chain configuration.
 func CreateConsensusEngine(stack *node.Node, chainConfig *params.ChainConfig, config *ethash.Config, notify []string, noverify bool, db ethdb.Database) consensus.Engine {
-
-	var engine consensus.Engine
 
 	if chainConfig.Posa != nil {
 		return posa.New(chainConfig.Posa, db)
@@ -224,29 +216,29 @@ func CreateConsensusEngine(stack *node.Node, chainConfig *params.ChainConfig, co
 
 	// If proof-of-authority is requested, set it up
 	if chainConfig.Clique != nil {
-		engine = clique.New(chainConfig.Clique, db)
-	} else {
-		switch config.PowMode {
-		case ethash.ModeFake:
-			log.Warn("Ethash used in fake mode")
-		case ethash.ModeTest:
-			log.Warn("Ethash used in test mode")
-		case ethash.ModeShared:
-			log.Warn("Ethash used in shared mode")
-		}
-		engine = ethash.New(ethash.Config{
-			PowMode:          config.PowMode,
-			CacheDir:         stack.ResolvePath(config.CacheDir),
-			CachesInMem:      config.CachesInMem,
-			CachesOnDisk:     config.CachesOnDisk,
-			CachesLockMmap:   config.CachesLockMmap,
-			DatasetDir:       config.DatasetDir,
-			DatasetsInMem:    config.DatasetsInMem,
-			DatasetsOnDisk:   config.DatasetsOnDisk,
-			DatasetsLockMmap: config.DatasetsLockMmap,
-			NotifyFull:       config.NotifyFull,
-		}, notify, noverify)
-		engine.(*ethash.Ethash).SetThreads(-1) // Disable CPU mining
+		return clique.New(chainConfig.Clique, db)
 	}
-	return beacon.New(engine)
+	// Otherwise assume proof-of-work
+	switch config.PowMode {
+	case ethash.ModeFake:
+		log.Warn("Ethash used in fake mode")
+	case ethash.ModeTest:
+		log.Warn("Ethash used in test mode")
+	case ethash.ModeShared:
+		log.Warn("Ethash used in shared mode")
+	}
+	engine := ethash.New(ethash.Config{
+		PowMode:          config.PowMode,
+		CacheDir:         stack.ResolvePath(config.CacheDir),
+		CachesInMem:      config.CachesInMem,
+		CachesOnDisk:     config.CachesOnDisk,
+		CachesLockMmap:   config.CachesLockMmap,
+		DatasetDir:       config.DatasetDir,
+		DatasetsInMem:    config.DatasetsInMem,
+		DatasetsOnDisk:   config.DatasetsOnDisk,
+		DatasetsLockMmap: config.DatasetsLockMmap,
+		NotifyFull:       config.NotifyFull,
+	}, notify, noverify)
+	engine.SetThreads(-1) // Disable CPU mining
+	return engine
 }

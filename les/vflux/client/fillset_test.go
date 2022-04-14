@@ -34,20 +34,16 @@ type testIter struct {
 }
 
 func (i *testIter) Next() bool {
-	if _, ok := <-i.waitCh; !ok {
-		return false
-	}
+	i.waitCh <- struct{}{}
 	i.node = <-i.nodeCh
-	return true
+	return i.node != nil
 }
 
 func (i *testIter) Node() *enode.Node {
 	return i.node
 }
 
-func (i *testIter) Close() {
-	close(i.waitCh)
-}
+func (i *testIter) Close() {}
 
 func (i *testIter) push() {
 	var id enode.ID
@@ -57,7 +53,7 @@ func (i *testIter) push() {
 
 func (i *testIter) waiting(timeout time.Duration) bool {
 	select {
-	case i.waitCh <- struct{}{}:
+	case <-i.waitCh:
 		return true
 	case <-time.After(timeout):
 		return false

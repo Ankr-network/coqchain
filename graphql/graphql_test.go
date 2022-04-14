@@ -40,12 +40,14 @@ import (
 )
 
 func TestBuildSchema(t *testing.T) {
-	ddir := t.TempDir()
+	ddir, err := ioutil.TempDir("", "graphql-buildschema")
+	if err != nil {
+		t.Fatalf("failed to create temporary datadir: %v", err)
+	}
 	// Copy config
 	conf := node.DefaultConfig
 	conf.DataDir = ddir
 	stack, err := node.New(&conf)
-	defer stack.Close()
 	if err != nil {
 		t.Fatalf("could not create new node: %v", err)
 	}

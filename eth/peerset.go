@@ -230,7 +230,7 @@ func (ps *peerSet) snapLen() int {
 }
 
 // peerWithHighestTD retrieves the known peer with the currently highest total
-// difficulty, but below the given PoS switchover threshold.
+// difficulty.
 func (ps *peerSet) peerWithHighestTD() *eth.Peer {
 	ps.lock.RLock()
 	defer ps.lock.RUnlock()
