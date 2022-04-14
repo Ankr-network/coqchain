@@ -87,7 +87,7 @@ func newSnapshot(config *params.PosaConfig, sigcache *lru.ARCCache, number uint6
 
 // loadSnapshot loads an existing snapshot from the database.
 func loadSnapshot(config *params.PosaConfig, sigcache *lru.ARCCache, db ethdb.Database, hash common.Hash) (*Snapshot, error) {
-	blob, err := db.Get(append([]byte("clique-"), hash[:]...))
+	blob, err := db.Get(append([]byte("posa-"), hash[:]...))
 	if err != nil {
 		return nil, err
 	}
@@ -107,7 +107,7 @@ func (s *Snapshot) store(db ethdb.Database) error {
 	if err != nil {
 		return err
 	}
-	return db.Put(append([]byte("clique-"), s.Hash[:]...), blob)
+	return db.Put(append([]byte("posa-"), s.Hash[:]...), blob)
 }
 
 // copy creates a deep copy of the snapshot, though not the individual votes.
