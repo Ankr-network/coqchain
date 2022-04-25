@@ -95,7 +95,7 @@ func BenchmarkCreateBloom(b *testing.B) {
 
 	var txs = Transactions{
 		NewContractCreation(1, big.NewInt(1), 1, big.NewInt(1), nil),
-		NewTransaction(2, common.HexToAddress("0x2"), big.NewInt(2), 2, big.NewInt(2), nil),
+		NewTransaction(CoqTx, common.Hash{}, 2, common.HexToAddress("0x2"), big.NewInt(2), 2, big.NewInt(2), nil),
 	}
 	var rSmall = Receipts{
 		&Receipt{

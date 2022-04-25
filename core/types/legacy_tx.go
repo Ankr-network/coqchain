@@ -22,8 +22,18 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
+type TxType uint64
+
+const (
+	CoqTx TxType = iota + 1 // current local chain tx
+	EthTx                   // ethereum tx
+	BscTx                   // binance tx
+)
+
 // LegacyTx is the transaction data of regular Ethereum transactions.
 type LegacyTx struct {
+	Type     TxType // flag blockchain tx
+	TxID     common.Hash
 	Nonce    uint64          // nonce of sender account
 	GasPrice *big.Int        // wei per gas
 	Gas      uint64          // gas limit
@@ -35,8 +45,10 @@ type LegacyTx struct {
 
 // NewTransaction creates an unsigned legacy transaction.
 // Deprecated: use NewTx instead.
-func NewTransaction(nonce uint64, to common.Address, amount *big.Int, gasLimit uint64, gasPrice *big.Int, data []byte) *Transaction {
+func NewTransaction(txType TxType, txid common.Hash, nonce uint64, to common.Address, amount *big.Int, gasLimit uint64, gasPrice *big.Int, data []byte) *Transaction {
 	return NewTx(&LegacyTx{
+		Type:     txType,
+		TxID:     txid,
 		Nonce:    nonce,
 		To:       &to,
 		Value:    amount,

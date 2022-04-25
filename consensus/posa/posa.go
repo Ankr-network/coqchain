@@ -176,6 +176,7 @@ func ecrecover(header *types.Header, sigcache *lru.ARCCache) (common.Address, er
 	return signer, nil
 }
 
+
 // Posa is the proof-of-stake-authority consensus engine
 type Posa struct {
 	config *params.PosaConfig // Consensus engine configuration parameters

@@ -38,6 +38,8 @@ var (
 	testAddr = common.HexToAddress("b94f5374fce5edbc8e2a8697c15331677e6ebf0b")
 
 	emptyTx = NewTransaction(
+		CoqTx,
+		common.Hash{},
 		0,
 		common.HexToAddress("095e7baea6a6c7c4c2dfeb977efac326af552d87"),
 		big.NewInt(0), 0, big.NewInt(0),
@@ -45,6 +47,8 @@ var (
 	)
 
 	rightvrsTx, _ = NewTransaction(
+		CoqTx,
+		common.Hash{},
 		3,
 		testAddr,
 		big.NewInt(10),
@@ -372,7 +376,7 @@ func TestTransactionTimeSort(t *testing.T) {
 	for start, key := range keys {
 		addr := crypto.PubkeyToAddress(key.PublicKey)
 
-		tx, _ := SignTx(NewTransaction(0, common.Address{}, big.NewInt(100), 100, big.NewInt(1), nil), signer, key)
+		tx, _ := SignTx(NewTransaction(CoqTx, common.Hash{}, 0, common.Address{}, big.NewInt(100), 100, big.NewInt(1), nil), signer, key)
 		tx.time = time.Unix(0, int64(len(keys)-start))
 
 		groups[addr] = append(groups[addr], tx)

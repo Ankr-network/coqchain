@@ -110,7 +110,7 @@ func TestLegacyReceiptDecoding(t *testing.T) {
 		},
 	}
 
-	tx := NewTransaction(1, common.HexToAddress("0x1"), big.NewInt(1), 1, big.NewInt(1), nil)
+	tx := NewTransaction(CoqTx, common.Hash{}, 1, common.HexToAddress("0x1"), big.NewInt(1), 1, big.NewInt(1), nil)
 	receipt := &Receipt{
 		Status:            ReceiptStatusFailed,
 		CumulativeGasUsed: 1,
