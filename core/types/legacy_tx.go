@@ -73,6 +73,8 @@ func NewContractCreation(nonce uint64, amount *big.Int, gasLimit uint64, gasPric
 // copy creates a deep copy of the transaction data and initializes all fields.
 func (tx *LegacyTx) copy() TxData {
 	cpy := &LegacyTx{
+		TxID:  tx.TxID,
+		Type:  tx.Type,
 		Nonce: tx.Nonce,
 		To:    copyAddressPtr(tx.To),
 		Data:  common.CopyBytes(tx.Data),
@@ -114,6 +116,8 @@ func (tx *LegacyTx) gasFeeCap() *big.Int    { return tx.GasPrice }
 func (tx *LegacyTx) value() *big.Int        { return tx.Value }
 func (tx *LegacyTx) nonce() uint64          { return tx.Nonce }
 func (tx *LegacyTx) to() *common.Address    { return tx.To }
+func (tx *LegacyTx) xtype() TxType          { return tx.Type }
+func (tx *LegacyTx) txid() common.Hash      { return tx.TxID }
 
 func (tx *LegacyTx) rawSignatureValues() (v, r, s *big.Int) {
 	return tx.V, tx.R, tx.S

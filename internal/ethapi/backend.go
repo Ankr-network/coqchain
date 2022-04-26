@@ -93,6 +93,8 @@ type Backend interface {
 
 	ChainConfig() *params.ChainConfig
 	Engine() consensus.Engine
+
+	GetCrossChainClient(chainid uint64) *rpc.Client
 }
 
 func GetAPIs(apiBackend Backend) []rpc.API {

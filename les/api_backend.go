@@ -47,6 +47,10 @@ type LesApiBackend struct {
 	gpo                 *gasprice.Oracle
 }
 
+func (b *LesApiBackend) GetCrossChainClient(chainid uint64) *rpc.Client {
+	return nil
+}
+
 func (b *LesApiBackend) ChainConfig() *params.ChainConfig {
 	return b.eth.chainConfig
 }

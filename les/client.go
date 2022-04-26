@@ -52,6 +52,7 @@ import (
 type LightEthereum struct {
 	lesCommons
 
+	config             *ethconfig.Config
 	peers              *serverPeerSet
 	reqDist            *requestDistributor
 	retriever          *retrieveManager

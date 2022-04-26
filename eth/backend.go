@@ -67,6 +67,7 @@ type Ethereum struct {
 	config *ethconfig.Config
 
 	// Handlers
+	pendingTxPool      *core.TxPool // save unconfirm crosschain tx
 	txPool             *core.TxPool
 	blockchain         *core.BlockChain
 	handler            *handler
@@ -205,6 +206,7 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 		config.TxPool.Journal = stack.ResolvePath(config.TxPool.Journal)
 	}
 	eth.txPool = core.NewTxPool(config.TxPool, chainConfig, eth.blockchain)
+	eth.pendingTxPool = core.NewTxPool(config.TxPool, chainConfig, eth.blockchain)
 
 	// Permit the downloader to use the trie cache allowance during fast sync
 	cacheLimit := cacheConfig.TrieCleanLimit + cacheConfig.TrieDirtyLimit + cacheConfig.SnapshotLimit

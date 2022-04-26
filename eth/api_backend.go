@@ -48,6 +48,10 @@ type EthAPIBackend struct {
 	gpo                 *gasprice.Oracle
 }
 
+func (b *EthAPIBackend) GetCrossChainClient(chainid uint64) *rpc.Client {
+	return nil
+}
+
 // ChainConfig returns the active chain configuration.
 func (b *EthAPIBackend) ChainConfig() *params.ChainConfig {
 	return b.eth.blockchain.Config()
