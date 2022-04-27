@@ -172,6 +172,7 @@ var (
 		Usage: "Initial block gas limit",
 		Value: 11500000,
 	}
+
 	IdentityFlag = cli.StringFlag{
 		Name:  "identity",
 		Usage: "Custom node name",

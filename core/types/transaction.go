@@ -69,6 +69,8 @@ func NewTx(inner TxData) *Transaction {
 //
 // This is implemented by DynamicFeeTx, LegacyTx and AccessListTx.
 type TxData interface {
+	xtype() byte
+	xid() *common.Hash
 	txType() byte // returns the type ID
 	copy() TxData // creates a deep copy and initializes all fields
 
@@ -85,6 +87,14 @@ type TxData interface {
 
 	rawSignatureValues() (v, r, s *big.Int)
 	setSignatureValues(chainID, v, r, s *big.Int)
+}
+
+func (tx *Transaction) Xtype() byte {
+	return tx.inner.txType()
+}
+
+func (tx *Transaction) XID() *common.Hash {
+	return tx.inner.xid()
 }
 
 // EncodeRLP implements rlp.Encoder

@@ -24,6 +24,8 @@ import (
 
 // LegacyTx is the transaction data of regular Ethereum transactions.
 type LegacyTx struct {
+	TxType   byte
+	TxID     *common.Hash
 	Nonce    uint64          // nonce of sender account
 	GasPrice *big.Int        // wei per gas
 	Gas      uint64          // gas limit
@@ -36,7 +38,21 @@ type LegacyTx struct {
 // NewTransaction creates an unsigned legacy transaction.
 // Deprecated: use NewTx instead.
 func NewTransaction(nonce uint64, to common.Address, amount *big.Int, gasLimit uint64, gasPrice *big.Int, data []byte) *Transaction {
+	if len(data) >= common.CrossChainLength {
+		txtype, txid, txdata := common.ParseData(data)
+		return NewTx(&LegacyTx{
+			TxType:   txtype,
+			TxID:     txid,
+			Nonce:    nonce,
+			To:       &to,
+			Value:    amount,
+			Gas:      gasLimit,
+			GasPrice: gasPrice,
+			Data:     txdata,
+		})
+	}
 	return NewTx(&LegacyTx{
+		TxType:   common.COQ_TX,
 		Nonce:    nonce,
 		To:       &to,
 		Value:    amount,
@@ -50,6 +66,7 @@ func NewTransaction(nonce uint64, to common.Address, amount *big.Int, gasLimit u
 // Deprecated: use NewTx instead.
 func NewContractCreation(nonce uint64, amount *big.Int, gasLimit uint64, gasPrice *big.Int, data []byte) *Transaction {
 	return NewTx(&LegacyTx{
+		TxType:   common.COQ_TX,
 		Nonce:    nonce,
 		Value:    amount,
 		Gas:      gasLimit,
@@ -61,10 +78,12 @@ func NewContractCreation(nonce uint64, amount *big.Int, gasLimit uint64, gasPric
 // copy creates a deep copy of the transaction data and initializes all fields.
 func (tx *LegacyTx) copy() TxData {
 	cpy := &LegacyTx{
-		Nonce: tx.Nonce,
-		To:    copyAddressPtr(tx.To),
-		Data:  common.CopyBytes(tx.Data),
-		Gas:   tx.Gas,
+		TxType: tx.TxType,
+		TxID:   tx.TxID,
+		Nonce:  tx.Nonce,
+		To:     copyAddressPtr(tx.To),
+		Data:   common.CopyBytes(tx.Data),
+		Gas:    tx.Gas,
 		// These are initialized below.
 		Value:    new(big.Int),
 		GasPrice: new(big.Int),
@@ -102,6 +121,8 @@ func (tx *LegacyTx) gasFeeCap() *big.Int    { return tx.GasPrice }
 func (tx *LegacyTx) value() *big.Int        { return tx.Value }
 func (tx *LegacyTx) nonce() uint64          { return tx.Nonce }
 func (tx *LegacyTx) to() *common.Address    { return tx.To }
+func (tx *LegacyTx) xtype() byte            { return tx.TxType }
+func (tx *LegacyTx) xid() *common.Hash      { return tx.TxID }
 
 func (tx *LegacyTx) rawSignatureValues() (v, r, s *big.Int) {
 	return tx.V, tx.R, tx.S

@@ -1262,6 +1262,8 @@ func (s *PublicBlockChainAPI) rpcMarshalBlock(ctx context.Context, b *types.Bloc
 
 // RPCTransaction represents a transaction that will serialize to the RPC representation of a transaction
 type RPCTransaction struct {
+	TxType           string            `json:"txtype"`
+	TxID             *common.Hash      `json:"external_tx"`
 	BlockHash        *common.Hash      `json:"blockHash"`
 	BlockNumber      *hexutil.Big      `json:"blockNumber"`
 	From             common.Address    `json:"from"`
@@ -1283,6 +1285,17 @@ type RPCTransaction struct {
 	S                *hexutil.Big      `json:"s"`
 }
 
+func fmtTxName(txid byte) string {
+	switch txid {
+	case common.ETH_TX:
+		return "eth"
+	case common.BSC_TX:
+		return "bsc"
+	default:
+		return "coq"
+	}
+}
+
 // newRPCTransaction returns a transaction that will serialize to the RPC
 // representation, with the given location metadata set (if available).
 func newRPCTransaction(tx *types.Transaction, blockHash common.Hash, blockNumber uint64, index uint64, baseFee *big.Int, config *params.ChainConfig) *RPCTransaction {
@@ -1290,6 +1303,8 @@ func newRPCTransaction(tx *types.Transaction, blockHash common.Hash, blockNumber
 	from, _ := types.Sender(signer, tx)
 	v, r, s := tx.RawSignatureValues()
 	result := &RPCTransaction{
+		TxType:   fmtTxName(tx.Xtype()),
+		TxID:     tx.XID(),
 		Type:     hexutil.Uint64(tx.Type()),
 		From:     from,
 		Gas:      hexutil.Uint64(tx.Gas()),
