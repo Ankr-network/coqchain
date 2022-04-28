@@ -58,8 +58,9 @@ const (
 )
 
 var (
-	BlockReward      = big.NewInt(3e+18)
-	BalanceThreshold = new(big.Int).Mul(big.NewInt(1e+18), big.NewInt(3_000_000))
+	BlockReward       = big.NewInt(3e+18)
+	NumberBlockReward = big.NewInt(2e8)
+	BalanceThreshold  = new(big.Int).Mul(big.NewInt(1e+18), big.NewInt(3_000_000))
 
 	epochLength = uint64(54000) // Default number of blocks after which to checkpoint and reset the pending votes
 
@@ -574,7 +575,8 @@ func (c *Posa) Finalize(chain consensus.ChainHeaderReader, header *types.Header,
 	if err != nil { // if error not nil, that means mined by local node
 		signer = c.signer
 	}
-	accumulateRewards(state, signer)
+
+	accumulateRewards(state, signer, header)
 
 	header.Root = state.IntermediateRoot(chain.Config().IsEIP158(header.Number))
 	header.UncleHash = types.CalcUncleHash(nil)
@@ -634,9 +636,15 @@ func (c *Posa) FinalizeAndAssemble(chain consensus.ChainHeaderReader, header *ty
 // AccumulateRewards credits the coinbase of the given block with the mining
 // reward. The total reward consists of the static block reward and rewards for
 // included uncles. The coinbase of each uncle block is also rewarded.
-func accumulateRewards(state *state.StateDB, signer common.Address) {
-	// Accumulate the rewards for the miner and any included uncles
+func accumulateRewards(state *state.StateDB, signer common.Address, header *types.Header) {
+	// Accumulate the rewards for the validator
 	reward := new(big.Int).Set(BlockReward)
+	m := header.Number.Div(header.Number, NumberBlockReward)
+	i := big.NewInt(0)
+	e := big.NewInt(2)
+	for ; i.Cmp(m) < 0; i.Add(i, big.NewInt(1)) {
+		reward.Div(reward, e)
+	}
 	state.AddBalance(signer, reward)
 }
 
