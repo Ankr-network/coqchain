@@ -610,6 +610,7 @@ func (tx *Transaction) AsMessage(s Signer, baseFee *big.Int) (Message, error) {
 	if baseFee != nil {
 		msg.gasPrice = math.BigMin(msg.gasPrice.Add(msg.gasTipCap, baseFee), msg.gasFeeCap)
 	}
+
 	var err error
 	msg.from, err = Sender(s, tx)
 	return msg, err
