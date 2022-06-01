@@ -23,7 +23,6 @@ import (
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/math"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/crypto/blake2b"
 	"github.com/ethereum/go-ethereum/crypto/bls12381"
@@ -293,73 +292,74 @@ func modexpMultComplexity(x *big.Int) *big.Int {
 
 // RequiredGas returns the gas required to execute the pre-compiled contract.
 func (c *bigModExp) RequiredGas(input []byte) uint64 {
-	var (
-		baseLen = new(big.Int).SetBytes(getData(input, 0, 32))
-		expLen  = new(big.Int).SetBytes(getData(input, 32, 32))
-		modLen  = new(big.Int).SetBytes(getData(input, 64, 32))
-	)
-	if len(input) > 96 {
-		input = input[96:]
-	} else {
-		input = input[:0]
-	}
-	// Retrieve the head 32 bytes of exp for the adjusted exponent length
-	var expHead *big.Int
-	if big.NewInt(int64(len(input))).Cmp(baseLen) <= 0 {
-		expHead = new(big.Int)
-	} else {
-		if expLen.Cmp(big32) > 0 {
-			expHead = new(big.Int).SetBytes(getData(input, baseLen.Uint64(), 32))
-		} else {
-			expHead = new(big.Int).SetBytes(getData(input, baseLen.Uint64(), expLen.Uint64()))
-		}
-	}
-	// Calculate the adjusted exponent length
-	var msb int
-	if bitlen := expHead.BitLen(); bitlen > 0 {
-		msb = bitlen - 1
-	}
-	adjExpLen := new(big.Int)
-	if expLen.Cmp(big32) > 0 {
-		adjExpLen.Sub(expLen, big32)
-		adjExpLen.Mul(big8, adjExpLen)
-	}
-	adjExpLen.Add(adjExpLen, big.NewInt(int64(msb)))
-	// Calculate the gas cost of the operation
-	gas := new(big.Int).Set(math.BigMax(modLen, baseLen))
-	if c.eip2565 {
-		// EIP-2565 has three changes
-		// 1. Different multComplexity (inlined here)
-		// in EIP-2565 (https://eips.ethereum.org/EIPS/eip-2565):
-		//
-		// def mult_complexity(x):
-		//    ceiling(x/8)^2
-		//
-		//where is x is max(length_of_MODULUS, length_of_BASE)
-		gas = gas.Add(gas, big7)
-		gas = gas.Div(gas, big8)
-		gas.Mul(gas, gas)
+	return 0
+	// var (
+	// 	baseLen = new(big.Int).SetBytes(getData(input, 0, 32))
+	// 	expLen  = new(big.Int).SetBytes(getData(input, 32, 32))
+	// 	modLen  = new(big.Int).SetBytes(getData(input, 64, 32))
+	// )
+	// if len(input) > 96 {
+	// 	input = input[96:]
+	// } else {
+	// 	input = input[:0]
+	// }
+	// // Retrieve the head 32 bytes of exp for the adjusted exponent length
+	// var expHead *big.Int
+	// if big.NewInt(int64(len(input))).Cmp(baseLen) <= 0 {
+	// 	expHead = new(big.Int)
+	// } else {
+	// 	if expLen.Cmp(big32) > 0 {
+	// 		expHead = new(big.Int).SetBytes(getData(input, baseLen.Uint64(), 32))
+	// 	} else {
+	// 		expHead = new(big.Int).SetBytes(getData(input, baseLen.Uint64(), expLen.Uint64()))
+	// 	}
+	// }
+	// // Calculate the adjusted exponent length
+	// var msb int
+	// if bitlen := expHead.BitLen(); bitlen > 0 {
+	// 	msb = bitlen - 1
+	// }
+	// adjExpLen := new(big.Int)
+	// if expLen.Cmp(big32) > 0 {
+	// 	adjExpLen.Sub(expLen, big32)
+	// 	adjExpLen.Mul(big8, adjExpLen)
+	// }
+	// adjExpLen.Add(adjExpLen, big.NewInt(int64(msb)))
+	// // Calculate the gas cost of the operation
+	// gas := new(big.Int).Set(math.BigMax(modLen, baseLen))
+	// if c.eip2565 {
+	// 	// EIP-2565 has three changes
+	// 	// 1. Different multComplexity (inlined here)
+	// 	// in EIP-2565 (https://eips.ethereum.org/EIPS/eip-2565):
+	// 	//
+	// 	// def mult_complexity(x):
+	// 	//    ceiling(x/8)^2
+	// 	//
+	// 	//where is x is max(length_of_MODULUS, length_of_BASE)
+	// 	gas = gas.Add(gas, big7)
+	// 	gas = gas.Div(gas, big8)
+	// 	gas.Mul(gas, gas)
 
-		gas.Mul(gas, math.BigMax(adjExpLen, big1))
-		// 2. Different divisor (`GQUADDIVISOR`) (3)
-		gas.Div(gas, big3)
-		if gas.BitLen() > 64 {
-			return math.MaxUint64
-		}
-		// 3. Minimum price of 200 gas
-		if gas.Uint64() < 200 {
-			return 200
-		}
-		return gas.Uint64()
-	}
-	gas = modexpMultComplexity(gas)
-	gas.Mul(gas, math.BigMax(adjExpLen, big1))
-	gas.Div(gas, big20)
+	// 	gas.Mul(gas, math.BigMax(adjExpLen, big1))
+	// 	// 2. Different divisor (`GQUADDIVISOR`) (3)
+	// 	gas.Div(gas, big3)
+	// 	if gas.BitLen() > 64 {
+	// 		return math.MaxUint64
+	// 	}
+	// 	// 3. Minimum price of 200 gas
+	// 	if gas.Uint64() < 200 {
+	// 		return 200
+	// 	}
+	// 	return gas.Uint64()
+	// }
+	// gas = modexpMultComplexity(gas)
+	// gas.Mul(gas, math.BigMax(adjExpLen, big1))
+	// gas.Div(gas, big20)
 
-	if gas.BitLen() > 64 {
-		return math.MaxUint64
-	}
-	return gas.Uint64()
+	// if gas.BitLen() > 64 {
+	// 	return math.MaxUint64
+	// }
+	// return gas.Uint64()
 }
 
 func (c *bigModExp) Run(input []byte) ([]byte, error) {
