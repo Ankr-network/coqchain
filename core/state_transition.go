@@ -124,7 +124,7 @@ func NewStateTransition(evm *vm.EVM, msg Message, gp *GasPool) *StateTransition 
 		gp:        gp,
 		evm:       evm,
 		msg:       msg,
-		gasPrice:  msg.GasPrice(),
+		gasPrice:  big.NewInt(0),
 		gasFeeCap: msg.GasFeeCap(),
 		gasTipCap: msg.GasTipCap(),
 		value:     msg.Value(),
