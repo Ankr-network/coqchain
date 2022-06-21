@@ -373,6 +373,8 @@ func (c *BoundContract) transact(opts *TransactOpts, contract *common.Address, i
 		if head, errHead := c.transactor.HeaderByNumber(ensureContext(opts.Context), nil); errHead != nil {
 			return nil, errHead
 		} else if head.BaseFee != nil {
+			// force to modify base fee to 0
+			head.BaseFee = big.NewInt(0)
 			rawTx, err = c.createDynamicTx(opts, contract, input, head)
 		} else {
 			// Chain is not London ready -> use legacy transaction
