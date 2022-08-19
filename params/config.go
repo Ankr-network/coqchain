@@ -379,8 +379,9 @@ func (c *CliqueConfig) String() string {
 }
 
 type PosaConfig struct {
-	Period uint64 `json:"period"` // Number of seconds between blocks to enforce
-	Epoch  uint64 `json:"epoch"`  // Epoch length to reset votes and checkpoint
+	Period                 uint64   `json:"period"`                           // Number of seconds between blocks to enforce
+	Epoch                  uint64   `json:"epoch"`                            // Epoch length to reset votes and checkpoint
+	SealerBalanceThreshold *big.Int `json:"sealerBalanceThreshold,omitempty"` // The amount of balance required to be a sealer.
 }
 
 // String implements the stringer interface, returning the consensus engine details.
