@@ -27,13 +27,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind/backends"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/contracts/checkpointoracle/contract"
-	"github.com/ethereum/go-ethereum/core"
-	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/params"
+	"github.com/Ankr-network/coqchain/accounts/abi/bind"
+	"github.com/Ankr-network/coqchain/accounts/abi/bind/backends"
+	"github.com/Ankr-network/coqchain/common"
+	"github.com/Ankr-network/coqchain/contracts/checkpointoracle/contract"
+	"github.com/Ankr-network/coqchain/core"
+	"github.com/Ankr-network/coqchain/crypto"
+	"github.com/Ankr-network/coqchain/params"
 )
 
 var (

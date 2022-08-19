@@ -21,8 +21,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/rawdb"
+	"github.com/Ankr-network/coqchain/common"
+	"github.com/Ankr-network/coqchain/core/rawdb"
 )
 
 func filledStateDB() *StateDB {

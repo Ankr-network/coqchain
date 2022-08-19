@@ -20,9 +20,9 @@ import (
 	"math/rand"
 	"testing"
 
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/rawdb"
-	"github.com/ethereum/go-ethereum/ethdb/memorydb"
+	"github.com/Ankr-network/coqchain/common"
+	"github.com/Ankr-network/coqchain/core/rawdb"
+	"github.com/Ankr-network/coqchain/ethdb/memorydb"
 )
 
 // Tests that given a database with random data content, all parts of a snapshot

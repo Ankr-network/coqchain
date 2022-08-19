@@ -21,9 +21,9 @@ import (
 	"math/big"
 	"testing"
 
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/ethdb/memorydb"
+	"github.com/Ankr-network/coqchain/common"
+	"github.com/Ankr-network/coqchain/crypto"
+	"github.com/Ankr-network/coqchain/ethdb/memorydb"
 )
 
 func TestStackTrieInsertAndHash(t *testing.T) {

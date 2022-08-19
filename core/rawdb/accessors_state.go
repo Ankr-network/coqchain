@@ -17,9 +17,9 @@
 package rawdb
 
 import (
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/ethdb"
-	"github.com/ethereum/go-ethereum/log"
+	"github.com/Ankr-network/coqchain/common"
+	"github.com/Ankr-network/coqchain/ethdb"
+	"github.com/Ankr-network/coqchain/log"
 )
 
 // ReadPreimage retrieves a single preimage of the provided hash.

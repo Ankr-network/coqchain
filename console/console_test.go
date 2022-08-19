@@ -26,15 +26,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/consensus/ethash"
-	"github.com/ethereum/go-ethereum/console/prompt"
-	"github.com/ethereum/go-ethereum/core"
-	"github.com/ethereum/go-ethereum/eth"
-	"github.com/ethereum/go-ethereum/eth/ethconfig"
-	"github.com/ethereum/go-ethereum/internal/jsre"
-	"github.com/ethereum/go-ethereum/miner"
-	"github.com/ethereum/go-ethereum/node"
+	"github.com/Ankr-network/coqchain/common"
+	"github.com/Ankr-network/coqchain/consensus/ethash"
+	"github.com/Ankr-network/coqchain/console/prompt"
+	"github.com/Ankr-network/coqchain/core"
+	"github.com/Ankr-network/coqchain/eth"
+	"github.com/Ankr-network/coqchain/eth/ethconfig"
+	"github.com/Ankr-network/coqchain/internal/jsre"
+	"github.com/Ankr-network/coqchain/miner"
+	"github.com/Ankr-network/coqchain/node"
 )
 
 const (

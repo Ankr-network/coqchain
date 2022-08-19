@@ -22,12 +22,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ethereum/go-ethereum/cmd/devp2p/internal/v4test"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/p2p/discover"
-	"github.com/ethereum/go-ethereum/p2p/enode"
-	"github.com/ethereum/go-ethereum/params"
+	"github.com/Ankr-network/coqchain/cmd/devp2p/internal/v4test"
+	"github.com/Ankr-network/coqchain/common"
+	"github.com/Ankr-network/coqchain/crypto"
+	"github.com/Ankr-network/coqchain/p2p/discover"
+	"github.com/Ankr-network/coqchain/p2p/enode"
+	"github.com/Ankr-network/coqchain/params"
 	"gopkg.in/urfave/cli.v1"
 )
 

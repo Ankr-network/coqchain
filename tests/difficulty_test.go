@@ -20,8 +20,8 @@ import (
 	"math/big"
 	"testing"
 
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/params"
+	"github.com/Ankr-network/coqchain/common"
+	"github.com/Ankr-network/coqchain/params"
 )
 
 var (

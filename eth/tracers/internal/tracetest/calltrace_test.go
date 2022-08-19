@@ -26,22 +26,22 @@ import (
 	"testing"
 	"unicode"
 
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/ethereum/go-ethereum/common/math"
-	"github.com/ethereum/go-ethereum/core"
-	"github.com/ethereum/go-ethereum/core/rawdb"
-	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/core/vm"
-	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/eth/tracers"
-	"github.com/ethereum/go-ethereum/params"
-	"github.com/ethereum/go-ethereum/rlp"
-	"github.com/ethereum/go-ethereum/tests"
+	"github.com/Ankr-network/coqchain/common"
+	"github.com/Ankr-network/coqchain/common/hexutil"
+	"github.com/Ankr-network/coqchain/common/math"
+	"github.com/Ankr-network/coqchain/core"
+	"github.com/Ankr-network/coqchain/core/rawdb"
+	"github.com/Ankr-network/coqchain/core/types"
+	"github.com/Ankr-network/coqchain/core/vm"
+	"github.com/Ankr-network/coqchain/crypto"
+	"github.com/Ankr-network/coqchain/eth/tracers"
+	"github.com/Ankr-network/coqchain/params"
+	"github.com/Ankr-network/coqchain/rlp"
+	"github.com/Ankr-network/coqchain/tests"
 
 	// Force-load native and js pacakges, to trigger registration
-	_ "github.com/ethereum/go-ethereum/eth/tracers/js"
-	_ "github.com/ethereum/go-ethereum/eth/tracers/native"
+	_ "github.com/Ankr-network/coqchain/eth/tracers/js"
+	_ "github.com/Ankr-network/coqchain/eth/tracers/native"
 )
 
 // To generate a new callTracer test, copy paste the makeTest method below into

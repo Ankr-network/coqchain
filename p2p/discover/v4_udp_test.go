@@ -31,11 +31,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ethereum/go-ethereum/internal/testlog"
-	"github.com/ethereum/go-ethereum/log"
-	"github.com/ethereum/go-ethereum/p2p/discover/v4wire"
-	"github.com/ethereum/go-ethereum/p2p/enode"
-	"github.com/ethereum/go-ethereum/p2p/enr"
+	"github.com/Ankr-network/coqchain/internal/testlog"
+	"github.com/Ankr-network/coqchain/log"
+	"github.com/Ankr-network/coqchain/p2p/discover/v4wire"
+	"github.com/Ankr-network/coqchain/p2p/enode"
+	"github.com/Ankr-network/coqchain/p2p/enr"
 )
 
 // shared test variables

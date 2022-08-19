@@ -26,12 +26,12 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ethereum/go-ethereum/accounts/keystore"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/ethereum/go-ethereum/common/math"
-	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/signer/core"
+	"github.com/Ankr-network/coqchain/accounts/keystore"
+	"github.com/Ankr-network/coqchain/common"
+	"github.com/Ankr-network/coqchain/common/hexutil"
+	"github.com/Ankr-network/coqchain/common/math"
+	"github.com/Ankr-network/coqchain/crypto"
+	"github.com/Ankr-network/coqchain/signer/core"
 )
 
 var typesStandard = core.Types{

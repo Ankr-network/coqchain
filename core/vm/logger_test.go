@@ -20,9 +20,9 @@ import (
 	"math/big"
 	"testing"
 
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/state"
-	"github.com/ethereum/go-ethereum/params"
+	"github.com/Ankr-network/coqchain/common"
+	"github.com/Ankr-network/coqchain/core/state"
+	"github.com/Ankr-network/coqchain/params"
 	"github.com/holiman/uint256"
 )
 

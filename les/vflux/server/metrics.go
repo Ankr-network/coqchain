@@ -17,7 +17,7 @@
 package server
 
 import (
-	"github.com/ethereum/go-ethereum/metrics"
+	"github.com/Ankr-network/coqchain/metrics"
 )
 
 var (

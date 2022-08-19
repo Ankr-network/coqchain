@@ -20,10 +20,10 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/forkid"
-	"github.com/ethereum/go-ethereum/p2p"
-	"github.com/ethereum/go-ethereum/p2p/enode"
+	"github.com/Ankr-network/coqchain/common"
+	"github.com/Ankr-network/coqchain/core/forkid"
+	"github.com/Ankr-network/coqchain/p2p"
+	"github.com/Ankr-network/coqchain/p2p/enode"
 )
 
 // Tests that handshake failures are detected and reported correctly.

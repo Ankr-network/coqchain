@@ -22,8 +22,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ethereum/go-ethereum/log"
-	"github.com/ethereum/go-ethereum/metrics"
+	"github.com/Ankr-network/coqchain/log"
+	"github.com/Ankr-network/coqchain/metrics"
 )
 
 const (

@@ -21,11 +21,11 @@ import (
 	"math/big"
 	"testing"
 
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/ethereum/go-ethereum/core/rawdb"
-	"github.com/ethereum/go-ethereum/core/state"
-	"github.com/ethereum/go-ethereum/params"
+	"github.com/Ankr-network/coqchain/common"
+	"github.com/Ankr-network/coqchain/common/hexutil"
+	"github.com/Ankr-network/coqchain/core/rawdb"
+	"github.com/Ankr-network/coqchain/core/state"
+	"github.com/Ankr-network/coqchain/params"
 )
 
 func TestMemoryGasCost(t *testing.T) {

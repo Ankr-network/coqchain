@@ -24,7 +24,7 @@ import (
 	"os"
 	"runtime/trace"
 
-	"github.com/ethereum/go-ethereum/log"
+	"github.com/Ankr-network/coqchain/log"
 )
 
 // StartGoTrace turns on tracing, writing to the given file.

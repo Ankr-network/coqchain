@@ -20,9 +20,9 @@ import (
 	"crypto/rand"
 	"math/big"
 
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/Ankr-network/coqchain/common"
+	"github.com/Ankr-network/coqchain/common/hexutil"
+	"github.com/Ankr-network/coqchain/core/types"
 )
 
 // largeNumber returns a very large big.Int.

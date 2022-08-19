@@ -19,8 +19,8 @@ package les
 import (
 	"time"
 
-	"github.com/ethereum/go-ethereum/common/bitutil"
-	"github.com/ethereum/go-ethereum/light"
+	"github.com/Ankr-network/coqchain/common/bitutil"
+	"github.com/Ankr-network/coqchain/light"
 )
 
 const (

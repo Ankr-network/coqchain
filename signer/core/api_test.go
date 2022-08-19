@@ -27,17 +27,17 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ethereum/go-ethereum/accounts"
-	"github.com/ethereum/go-ethereum/accounts/keystore"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/internal/ethapi"
-	"github.com/ethereum/go-ethereum/rlp"
-	"github.com/ethereum/go-ethereum/signer/core"
-	"github.com/ethereum/go-ethereum/signer/core/apitypes"
-	"github.com/ethereum/go-ethereum/signer/fourbyte"
-	"github.com/ethereum/go-ethereum/signer/storage"
+	"github.com/Ankr-network/coqchain/accounts"
+	"github.com/Ankr-network/coqchain/accounts/keystore"
+	"github.com/Ankr-network/coqchain/common"
+	"github.com/Ankr-network/coqchain/common/hexutil"
+	"github.com/Ankr-network/coqchain/core/types"
+	"github.com/Ankr-network/coqchain/internal/ethapi"
+	"github.com/Ankr-network/coqchain/rlp"
+	"github.com/Ankr-network/coqchain/signer/core"
+	"github.com/Ankr-network/coqchain/signer/core/apitypes"
+	"github.com/Ankr-network/coqchain/signer/fourbyte"
+	"github.com/Ankr-network/coqchain/signer/storage"
 )
 
 //Used for testing

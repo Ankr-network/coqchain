@@ -27,10 +27,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ethereum/go-ethereum/common/mclock"
-	"github.com/ethereum/go-ethereum/log"
-	"github.com/ethereum/go-ethereum/p2p/enode"
-	"github.com/ethereum/go-ethereum/p2p/netutil"
+	"github.com/Ankr-network/coqchain/common/mclock"
+	"github.com/Ankr-network/coqchain/log"
+	"github.com/Ankr-network/coqchain/p2p/enode"
+	"github.com/Ankr-network/coqchain/p2p/netutil"
 )
 
 const (

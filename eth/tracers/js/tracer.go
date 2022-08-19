@@ -28,14 +28,14 @@ import (
 	"unicode"
 	"unsafe"
 
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/ethereum/go-ethereum/core"
-	"github.com/ethereum/go-ethereum/core/vm"
-	"github.com/ethereum/go-ethereum/crypto"
-	tracers2 "github.com/ethereum/go-ethereum/eth/tracers"
-	"github.com/ethereum/go-ethereum/eth/tracers/js/internal/tracers"
-	"github.com/ethereum/go-ethereum/log"
+	"github.com/Ankr-network/coqchain/common"
+	"github.com/Ankr-network/coqchain/common/hexutil"
+	"github.com/Ankr-network/coqchain/core"
+	"github.com/Ankr-network/coqchain/core/vm"
+	"github.com/Ankr-network/coqchain/crypto"
+	tracers2 "github.com/Ankr-network/coqchain/eth/tracers"
+	"github.com/Ankr-network/coqchain/eth/tracers/js/internal/tracers"
+	"github.com/Ankr-network/coqchain/log"
 	"gopkg.in/olebedev/go-duktape.v3"
 )
 

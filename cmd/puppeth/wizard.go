@@ -30,10 +30,10 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/console/prompt"
-	"github.com/ethereum/go-ethereum/core"
-	"github.com/ethereum/go-ethereum/log"
+	"github.com/Ankr-network/coqchain/common"
+	"github.com/Ankr-network/coqchain/console/prompt"
+	"github.com/Ankr-network/coqchain/core"
+	"github.com/Ankr-network/coqchain/log"
 	"github.com/peterh/liner"
 	"golang.org/x/crypto/ssh/terminal"
 )

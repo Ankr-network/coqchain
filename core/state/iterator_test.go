@@ -20,8 +20,8 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/ethdb"
+	"github.com/Ankr-network/coqchain/common"
+	"github.com/Ankr-network/coqchain/ethdb"
 )
 
 // Tests that the node iterator indeed walks over the entire database contents.

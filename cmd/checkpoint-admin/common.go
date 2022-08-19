@@ -19,15 +19,15 @@ package main
 import (
 	"strconv"
 
-	"github.com/ethereum/go-ethereum/accounts"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/accounts/external"
-	"github.com/ethereum/go-ethereum/cmd/utils"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/contracts/checkpointoracle"
-	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/ethereum/go-ethereum/params"
-	"github.com/ethereum/go-ethereum/rpc"
+	"github.com/Ankr-network/coqchain/accounts"
+	"github.com/Ankr-network/coqchain/accounts/abi/bind"
+	"github.com/Ankr-network/coqchain/accounts/external"
+	"github.com/Ankr-network/coqchain/cmd/utils"
+	"github.com/Ankr-network/coqchain/common"
+	"github.com/Ankr-network/coqchain/contracts/checkpointoracle"
+	"github.com/Ankr-network/coqchain/ethclient"
+	"github.com/Ankr-network/coqchain/params"
+	"github.com/Ankr-network/coqchain/rpc"
 	"gopkg.in/urfave/cli.v1"
 )
 

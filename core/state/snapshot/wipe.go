@@ -20,11 +20,11 @@ import (
 	"bytes"
 	"time"
 
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/rawdb"
-	"github.com/ethereum/go-ethereum/ethdb"
-	"github.com/ethereum/go-ethereum/log"
-	"github.com/ethereum/go-ethereum/metrics"
+	"github.com/Ankr-network/coqchain/common"
+	"github.com/Ankr-network/coqchain/core/rawdb"
+	"github.com/Ankr-network/coqchain/ethdb"
+	"github.com/Ankr-network/coqchain/log"
+	"github.com/Ankr-network/coqchain/metrics"
 )
 
 // wipeSnapshot starts a goroutine to iterate over the entire key-value database

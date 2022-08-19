@@ -27,11 +27,11 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/eth/protocols/eth"
-	"github.com/ethereum/go-ethereum/event"
-	"github.com/ethereum/go-ethereum/log"
-	"github.com/ethereum/go-ethereum/p2p/msgrate"
+	"github.com/Ankr-network/coqchain/common"
+	"github.com/Ankr-network/coqchain/eth/protocols/eth"
+	"github.com/Ankr-network/coqchain/event"
+	"github.com/Ankr-network/coqchain/log"
+	"github.com/Ankr-network/coqchain/p2p/msgrate"
 )
 
 const (

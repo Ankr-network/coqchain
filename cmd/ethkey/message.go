@@ -21,10 +21,10 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	"github.com/ethereum/go-ethereum/accounts/keystore"
-	"github.com/ethereum/go-ethereum/cmd/utils"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/Ankr-network/coqchain/accounts/keystore"
+	"github.com/Ankr-network/coqchain/cmd/utils"
+	"github.com/Ankr-network/coqchain/common"
+	"github.com/Ankr-network/coqchain/crypto"
 	"gopkg.in/urfave/cli.v1"
 )
 

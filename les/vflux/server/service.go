@@ -22,11 +22,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ethereum/go-ethereum/les/utils"
-	"github.com/ethereum/go-ethereum/les/vflux"
-	"github.com/ethereum/go-ethereum/log"
-	"github.com/ethereum/go-ethereum/p2p/enode"
-	"github.com/ethereum/go-ethereum/rlp"
+	"github.com/Ankr-network/coqchain/les/utils"
+	"github.com/Ankr-network/coqchain/les/vflux"
+	"github.com/Ankr-network/coqchain/log"
+	"github.com/Ankr-network/coqchain/p2p/enode"
+	"github.com/Ankr-network/coqchain/rlp"
 )
 
 type (

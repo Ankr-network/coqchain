@@ -1,4 +1,4 @@
-module github.com/ethereum/go-ethereum
+module github.com/Ankr-network/coqchain
 
 go 1.15
 

@@ -23,17 +23,17 @@ import (
 	"math/big"
 	"time"
 
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/consensus/misc"
-	"github.com/ethereum/go-ethereum/core"
-	"github.com/ethereum/go-ethereum/core/state"
-	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/eth"
-	"github.com/ethereum/go-ethereum/log"
-	"github.com/ethereum/go-ethereum/node"
-	chainParams "github.com/ethereum/go-ethereum/params"
-	"github.com/ethereum/go-ethereum/rpc"
-	"github.com/ethereum/go-ethereum/trie"
+	"github.com/Ankr-network/coqchain/common"
+	"github.com/Ankr-network/coqchain/consensus/misc"
+	"github.com/Ankr-network/coqchain/core"
+	"github.com/Ankr-network/coqchain/core/state"
+	"github.com/Ankr-network/coqchain/core/types"
+	"github.com/Ankr-network/coqchain/eth"
+	"github.com/Ankr-network/coqchain/log"
+	"github.com/Ankr-network/coqchain/node"
+	chainParams "github.com/Ankr-network/coqchain/params"
+	"github.com/Ankr-network/coqchain/rpc"
+	"github.com/Ankr-network/coqchain/trie"
 )
 
 // Register adds catalyst APIs to the node.

@@ -20,12 +20,12 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/ethereum/go-ethereum/cmd/devp2p/internal/ethtest"
-	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/internal/utesting"
-	"github.com/ethereum/go-ethereum/p2p"
-	"github.com/ethereum/go-ethereum/p2p/rlpx"
-	"github.com/ethereum/go-ethereum/rlp"
+	"github.com/Ankr-network/coqchain/cmd/devp2p/internal/ethtest"
+	"github.com/Ankr-network/coqchain/crypto"
+	"github.com/Ankr-network/coqchain/internal/utesting"
+	"github.com/Ankr-network/coqchain/p2p"
+	"github.com/Ankr-network/coqchain/p2p/rlpx"
+	"github.com/Ankr-network/coqchain/rlp"
 	"gopkg.in/urfave/cli.v1"
 )
 

@@ -27,9 +27,9 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/log"
-	"github.com/ethereum/go-ethereum/metrics"
+	"github.com/Ankr-network/coqchain/common"
+	"github.com/Ankr-network/coqchain/log"
+	"github.com/Ankr-network/coqchain/metrics"
 	"github.com/golang/snappy"
 )
 

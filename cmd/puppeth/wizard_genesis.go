@@ -29,10 +29,10 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core"
-	"github.com/ethereum/go-ethereum/log"
-	"github.com/ethereum/go-ethereum/params"
+	"github.com/Ankr-network/coqchain/common"
+	"github.com/Ankr-network/coqchain/core"
+	"github.com/Ankr-network/coqchain/log"
+	"github.com/Ankr-network/coqchain/params"
 )
 
 // makeGenesis creates a new genesis struct based on some user input.

@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ethereum/go-ethereum/metrics"
+	"github.com/Ankr-network/coqchain/metrics"
 )
 
 func TestMain(m *testing.M) {
