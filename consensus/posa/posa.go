@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the go-ethereum library. If not, see <http://www.gnu.org/licenses/>.
 
-// Package posa implements the proof-of-stake-authority consensus engine base on clique.
+// Package posa implements the proof-of-stake-authority consensus engine base on posa.
 
 package posa
 
@@ -745,7 +745,7 @@ func (c *Posa) SealHash(header *types.Header) common.Hash {
 	return SealHash(header)
 }
 
-// Close implements consensus.Engine. It's a noop for clique as there are no background threads.
+// Close implements consensus.Engine. It's a noop for posa as there are no background threads.
 func (c *Posa) Close() error {
 	return nil
 }
