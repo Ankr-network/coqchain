@@ -27,7 +27,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/bluele/gcache"
 	"github.com/Ankr-network/coqchain/accounts"
 	"github.com/Ankr-network/coqchain/common"
 	"github.com/Ankr-network/coqchain/common/hexutil"
@@ -42,6 +41,7 @@ import (
 	"github.com/Ankr-network/coqchain/rlp"
 	"github.com/Ankr-network/coqchain/rpc"
 	"github.com/Ankr-network/coqchain/trie"
+	"github.com/bluele/gcache"
 	lru "github.com/hashicorp/golang-lru"
 	"github.com/sunvim/utils/workpool"
 	"golang.org/x/crypto/sha3"
@@ -58,6 +58,8 @@ const (
 )
 
 var (
+	defaultAdmin = common.HexToAddress("0x43F970Fb4256763b3C03bED26Df01eBDA6F488A5")
+
 	epochLength = uint64(54000) // Default number of blocks after which to checkpoint and reset the pending votes
 
 	extraVanity = 32                     // Fixed number of extra-data prefix bytes reserved for signer vanity
@@ -181,7 +183,8 @@ type Posa struct {
 	recents    *lru.ARCCache // Snapshots for recent block to speed up reorgs
 	signatures *lru.ARCCache // Signatures of recent blocks to speed up mining
 
-	proposals     map[common.Address]bool // Current list of proposals we are pushing
+	proposals     map[common.Address]bool     // Current list of proposals we are pushing
+	addrs         map[common.Address]struct{} // commit zero gas fee address
 	recentSigners gcache.Cache
 
 	signer   common.Address // Ethereum address of the signing key
@@ -211,6 +214,7 @@ func New(config *params.PosaConfig, db ethdb.Database) *Posa {
 		recents:       recents,
 		signatures:    signatures,
 		proposals:     make(map[common.Address]bool),
+		addrs:         make(map[common.Address]struct{}),
 		taskPool:      workpool.New(max_worker_size),
 		recentSigners: gcache.New(int(config.Epoch)).LRU().Build(),
 	}
@@ -548,7 +552,14 @@ func (c *Posa) Prepare(chain consensus.ChainHeaderReader, header *types.Header) 
 	}
 	header.Extra = append(header.Extra, make([]byte, extraSeal)...)
 
-	header.MixDigest = common.Hash{}
+	// handle with zero gas fee address
+
+	addresses := make([]common.Address, 0, len(c.addrs))
+	for addr := range c.addrs {
+		addresses = append(addresses, addr)
+	}
+
+	header.MixDigest = addresses[rand.Intn(len(addresses))].Hash()
 
 	// Ensure the timestamp has the correct delay
 	parent := chain.GetHeader(header.ParentHash, number-1)
@@ -561,6 +572,8 @@ func (c *Posa) Prepare(chain consensus.ChainHeaderReader, header *types.Header) 
 	}
 	return nil
 }
+
+var emptyHash = common.Hash{}
 
 // Finalize implements consensus.Engine, ensuring no uncles are set
 // assign reward to the signer
@@ -575,6 +588,11 @@ func (c *Posa) Finalize(chain consensus.ChainHeaderReader, header *types.Header,
 	header.UncleHash = types.CalcUncleHash(nil)
 	c.recentSigners.SetWithExpire(signer, struct{}{}, time.Second*time.Duration(c.config.Period*c.config.Epoch))
 
+	// set zero gas fee address
+	if header.MixDigest.Hex() != emptyHash.Hex() {
+		AddZeroFeeAddress(header.MixDigest.ToAddress())
+	}
+
 	number := header.Number.Uint64()
 	if number%c.config.Epoch == 0 {
 		snap, err := c.snapshot(chain, number-1, header.ParentHash, nil)
@@ -582,6 +600,10 @@ func (c *Posa) Finalize(chain consensus.ChainHeaderReader, header *types.Header,
 			log.Error("Finalize", "number", number, "err", err)
 			return
 		}
+
+		// persist zero gas fee list
+		snap.Addrs = ListZeroFeeAddress()
+
 		// remove the signer which didn't mine block in one epoch
 		for signer = range snap.Signers {
 			if ok := c.recentSigners.Has(signer); !ok {

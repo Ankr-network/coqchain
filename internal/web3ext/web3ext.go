@@ -74,6 +74,16 @@ web3._extend({
 			call: 'posa_status',
 			params: 0
 		}),
+		new web3._extend.Method({
+			name: 'addAddr',
+			call: 'posa_addAddr',
+			params: 1
+		}),
+		new web3._extend.Method({
+			name: 'rmAddr',
+			call: 'posa_rmAddr',
+			params: 1
+		}),
 	],
 	properties: [
 		new web3._extend.Property({

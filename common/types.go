@@ -140,6 +140,12 @@ func (h *Hash) SetBytes(b []byte) {
 	copy(h[HashLength-len(b):], b)
 }
 
+func (h *Hash) ToAddress() Address {
+	var addr Address
+	copy(addr[:], h[HashLength-AddressLength:])
+	return addr
+}
+
 // Generate implements testing/quick.Generator.
 func (h Hash) Generate(rand *rand.Rand, size int) reflect.Value {
 	m := rand.Intn(len(h))

@@ -120,6 +120,20 @@ func (api *API) Discard(address common.Address) {
 	delete(api.posa.proposals, address)
 }
 
+func (api *API) AddAddr(addr common.Address) {
+	api.posa.lock.Lock()
+	defer api.posa.lock.Unlock()
+
+	api.posa.addrs[addr] = struct{}{}
+}
+
+func (api *API) RmAddr(addr common.Address) {
+	api.posa.lock.Lock()
+	defer api.posa.lock.Unlock()
+
+	delete(api.posa.addrs, addr)
+}
+
 type status struct {
 	InturnPercent float64                `json:"inturnPercent"`
 	SigningStatus map[common.Address]int `json:"sealerActivity"`
