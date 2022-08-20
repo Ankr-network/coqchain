@@ -27,6 +27,7 @@ import (
 	"github.com/Ankr-network/coqchain/ethdb"
 	"github.com/Ankr-network/coqchain/log"
 	"github.com/Ankr-network/coqchain/params"
+	"github.com/Ankr-network/coqchain/utils/zero"
 	lru "github.com/hashicorp/golang-lru"
 )
 
@@ -101,7 +102,7 @@ func loadSnapshot(config *params.PosaConfig, sigcache *lru.ARCCache, db ethdb.Da
 	snap.sigcache = sigcache
 
 	for _, addr := range snap.Addrs {
-		AddZeroFeeAddress(addr)
+		zero.AddZeroFeeAddress(addr)
 	}
 
 	return snap, nil

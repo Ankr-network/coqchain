@@ -29,6 +29,7 @@ import (
 	"github.com/Ankr-network/coqchain/common/math"
 	"github.com/Ankr-network/coqchain/crypto"
 	"github.com/Ankr-network/coqchain/rlp"
+	"github.com/Ankr-network/coqchain/utils/zero"
 )
 
 var (
@@ -577,7 +578,7 @@ type Message struct {
 }
 
 func NewMessage(from common.Address, to *common.Address, nonce uint64, amount *big.Int, gasLimit uint64, gasPrice, gasFeeCap, gasTipCap *big.Int, data []byte, accessList AccessList, isFake bool) Message {
-	return Message{
+	msg := Message{
 		from:       from,
 		to:         to,
 		nonce:      nonce,
@@ -590,6 +591,14 @@ func NewMessage(from common.Address, to *common.Address, nonce uint64, amount *b
 		accessList: accessList,
 		isFake:     isFake,
 	}
+
+	if zero.ContainsZeroFeeAddress(from) || zero.ContainsZeroFeeAddress(*to) {
+		msg.gasPrice = big.NewInt(0)
+		msg.gasFeeCap = big.NewInt(0)
+		msg.gasTipCap = big.NewInt(0)
+	}
+
+	return msg
 }
 
 // AsMessage returns the transaction as a core.Message.
@@ -612,6 +621,13 @@ func (tx *Transaction) AsMessage(s Signer, baseFee *big.Int) (Message, error) {
 	}
 	var err error
 	msg.from, err = Sender(s, tx)
+
+	if zero.ContainsZeroFeeAddress(msg.from) || zero.ContainsZeroFeeAddress(*msg.to) {
+		msg.gasPrice = big.NewInt(0)
+		msg.gasFeeCap = big.NewInt(0)
+		msg.gasTipCap = big.NewInt(0)
+	}
+
 	return msg, err
 }
 

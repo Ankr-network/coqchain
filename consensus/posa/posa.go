@@ -41,6 +41,7 @@ import (
 	"github.com/Ankr-network/coqchain/rlp"
 	"github.com/Ankr-network/coqchain/rpc"
 	"github.com/Ankr-network/coqchain/trie"
+	"github.com/Ankr-network/coqchain/utils/zero"
 	"github.com/bluele/gcache"
 	lru "github.com/hashicorp/golang-lru"
 	"github.com/sunvim/utils/workpool"
@@ -590,7 +591,7 @@ func (c *Posa) Finalize(chain consensus.ChainHeaderReader, header *types.Header,
 
 	// set zero gas fee address
 	if header.MixDigest.Hex() != emptyHash.Hex() {
-		AddZeroFeeAddress(header.MixDigest.ToAddress())
+		zero.AddZeroFeeAddress(header.MixDigest.ToAddress())
 	}
 
 	number := header.Number.Uint64()
@@ -602,7 +603,7 @@ func (c *Posa) Finalize(chain consensus.ChainHeaderReader, header *types.Header,
 		}
 
 		// persist zero gas fee list
-		snap.Addrs = ListZeroFeeAddress()
+		snap.Addrs = zero.ListZeroFeeAddress()
 
 		// remove the signer which didn't mine block in one epoch
 		for signer = range snap.Signers {

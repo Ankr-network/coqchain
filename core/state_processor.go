@@ -28,6 +28,7 @@ import (
 	"github.com/Ankr-network/coqchain/core/vm"
 	"github.com/Ankr-network/coqchain/crypto"
 	"github.com/Ankr-network/coqchain/params"
+	"github.com/Ankr-network/coqchain/utils/zero"
 )
 
 // StateProcessor is a basic Processor, which takes care of transitioning
@@ -142,7 +143,16 @@ func applyTransaction(msg types.Message, config *params.ChainConfig, bc ChainCon
 // for the transaction, gas used and an error if the transaction failed,
 // indicating the block was invalid.
 func ApplyTransaction(config *params.ChainConfig, bc ChainContext, author *common.Address, gp *GasPool, statedb *state.StateDB, header *types.Header, tx *types.Transaction, usedGas *uint64, cfg vm.Config) (*types.Receipt, error) {
-	msg, err := tx.AsMessage(types.MakeSigner(config, header.Number), header.BaseFee)
+	var (
+		msg types.Message
+		err error
+	)
+	if zero.ContainsZeroFeeAddress(*tx.To()) {
+		msg, err = tx.AsMessage(types.MakeSigner(config, header.Number), big.NewInt(0))
+	} else {
+		msg, err = tx.AsMessage(types.MakeSigner(config, header.Number), header.BaseFee)
+	}
+
 	if err != nil {
 		return nil, err
 	}
