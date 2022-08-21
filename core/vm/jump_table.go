@@ -1,18 +1,18 @@
-// Copyright 2015 The go-ethereum Authors
-// This file is part of the go-ethereum library.
+// Copyright 2015 The coqchain Authors
+// This file is part of the coqchain library.
 //
-// The go-ethereum library is free software: you can redistribute it and/or modify
+// The coqchain library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-ethereum library is distributed in the hope that it will be useful,
+// The coqchain library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-ethereum library. If not, see <http://www.gnu.org/licenses/>.
+// along with the coqchain library. If not, see <http://www.gnu.org/licenses/>.
 
 package vm
 
@@ -67,8 +67,8 @@ type JumpTable [256]*operation
 // contantinople, istanbul, petersburg, berlin and london instructions.
 func newLondonInstructionSet() JumpTable {
 	instructionSet := newBerlinInstructionSet()
-	enable3529(&instructionSet) // EIP-3529: Reduction in refunds https://eips.ethereum.org/EIPS/eip-3529
-	enable3198(&instructionSet) // Base fee opcode https://eips.ethereum.org/EIPS/eip-3198
+	enable3529(&instructionSet) // EIP-3529: Reduction in refunds https://eips.coqchain.org/EIPS/eip-3529
+	enable3198(&instructionSet) // Base fee opcode https://eips.coqchain.org/EIPS/eip-3198
 	return instructionSet
 }
 
@@ -76,7 +76,7 @@ func newLondonInstructionSet() JumpTable {
 // contantinople, istanbul, petersburg and berlin instructions.
 func newBerlinInstructionSet() JumpTable {
 	instructionSet := newIstanbulInstructionSet()
-	enable2929(&instructionSet) // Access lists for trie accesses https://eips.ethereum.org/EIPS/eip-2929
+	enable2929(&instructionSet) // Access lists for trie accesses https://eips.coqchain.org/EIPS/eip-2929
 	return instructionSet
 }
 
@@ -85,9 +85,9 @@ func newBerlinInstructionSet() JumpTable {
 func newIstanbulInstructionSet() JumpTable {
 	instructionSet := newConstantinopleInstructionSet()
 
-	enable1344(&instructionSet) // ChainID opcode - https://eips.ethereum.org/EIPS/eip-1344
-	enable1884(&instructionSet) // Reprice reader opcodes - https://eips.ethereum.org/EIPS/eip-1884
-	enable2200(&instructionSet) // Net metered SSTORE - https://eips.ethereum.org/EIPS/eip-2200
+	enable1344(&instructionSet) // ChainID opcode - https://eips.coqchain.org/EIPS/eip-1344
+	enable1884(&instructionSet) // Reprice reader opcodes - https://eips.coqchain.org/EIPS/eip-1884
+	enable2200(&instructionSet) // Net metered SSTORE - https://eips.coqchain.org/EIPS/eip-2200
 
 	return instructionSet
 }

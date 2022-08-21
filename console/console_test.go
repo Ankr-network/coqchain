@@ -1,18 +1,18 @@
-// Copyright 2015 The go-ethereum Authors
-// This file is part of the go-ethereum library.
+// Copyright 2015 The coqchain Authors
+// This file is part of the coqchain library.
 //
-// The go-ethereum library is free software: you can redistribute it and/or modify
+// The coqchain library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-ethereum library is distributed in the hope that it will be useful,
+// The coqchain library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-ethereum library. If not, see <http://www.gnu.org/licenses/>.
+// along with the coqchain library. If not, see <http://www.gnu.org/licenses/>.
 
 package console
 
@@ -78,7 +78,7 @@ func (p *hookedPrompter) SetWordCompleter(completer prompt.WordCompleter) {}
 type tester struct {
 	workspace string
 	stack     *node.Node
-	ethereum  *eth.Ethereum
+	coqchain  *eth.Coqchain
 	console   *Console
 	input     *hookedPrompter
 	output    *bytes.Buffer
@@ -93,7 +93,7 @@ func newTester(t *testing.T, confOverride func(*ethconfig.Config)) *tester {
 		t.Fatalf("failed to create temporary keystore: %v", err)
 	}
 
-	// Create a networkless protocol stack and start an Ethereum service within
+	// Create a networkless protocol stack and start an coqchain service within
 	stack, err := node.New(&node.Config{DataDir: workspace, UseLightweightKDF: true, Name: testInstance})
 	if err != nil {
 		t.Fatalf("failed to create node: %v", err)
@@ -112,7 +112,7 @@ func newTester(t *testing.T, confOverride func(*ethconfig.Config)) *tester {
 	}
 	ethBackend, err := eth.New(stack, ethConf)
 	if err != nil {
-		t.Fatalf("failed to register Ethereum protocol: %v", err)
+		t.Fatalf("failed to register coqchain protocol: %v", err)
 	}
 	// Start the node and assemble the JavaScript console around it
 	if err = stack.Start(); err != nil {
@@ -140,7 +140,7 @@ func newTester(t *testing.T, confOverride func(*ethconfig.Config)) *tester {
 	return &tester{
 		workspace: workspace,
 		stack:     stack,
-		ethereum:  ethBackend,
+		coqchain:  ethBackend,
 		console:   console,
 		input:     prompter,
 		output:    printer,

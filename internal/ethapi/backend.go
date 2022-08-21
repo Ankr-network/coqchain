@@ -1,20 +1,20 @@
-// Copyright 2015 The go-ethereum Authors
-// This file is part of the go-ethereum library.
+// Copyright 2015 The coqchain Authors
+// This file is part of the coqchain library.
 //
-// The go-ethereum library is free software: you can redistribute it and/or modify
+// The coqchain library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-ethereum library is distributed in the hope that it will be useful,
+// The coqchain library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-ethereum library. If not, see <http://www.gnu.org/licenses/>.
+// along with the coqchain library. If not, see <http://www.gnu.org/licenses/>.
 
-// Package ethapi implements the general Ethereum API functions.
+// Package ethapi implements the general coqchain API functions.
 package ethapi
 
 import (
@@ -40,8 +40,8 @@ import (
 // Backend interface provides the common API services (that are provided by
 // both full and light clients) with access to necessary functions.
 type Backend interface {
-	// General Ethereum API
-	SyncProgress() ethereum.SyncProgress
+	// General coqchain API
+	SyncProgress() coqchain.SyncProgress
 
 	SuggestGasTipCap(ctx context.Context) (*big.Int, error)
 	FeeHistory(ctx context.Context, blockCount int, lastBlock rpc.BlockNumber, rewardPercentiles []float64) (*big.Int, [][]*big.Int, []*big.Int, []float64, error)
@@ -101,7 +101,7 @@ func GetAPIs(apiBackend Backend) []rpc.API {
 		{
 			Namespace: "eth",
 			Version:   "1.0",
-			Service:   NewPublicEthereumAPI(apiBackend),
+			Service:   NewPubliccoqchainAPI(apiBackend),
 			Public:    true,
 		}, {
 			Namespace: "eth",

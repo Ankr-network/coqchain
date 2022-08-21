@@ -1,18 +1,18 @@
-// Copyright 2020 The go-ethereum Authors
-// This file is part of the go-ethereum library.
+// Copyright 2020 The coqchain Authors
+// This file is part of the coqchain library.
 //
-// The go-ethereum library is free software: you can redistribute it and/or modify
+// The coqchain library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-ethereum library is distributed in the hope that it will be useful,
+// The coqchain library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-ethereum library. If not, see <http://www.gnu.org/licenses/>.
+// along with the coqchain library. If not, see <http://www.gnu.org/licenses/>.
 
 package snap
 
@@ -377,7 +377,7 @@ type SyncPeer interface {
 	Log() log.Logger
 }
 
-// Syncer is an Ethereum account and storage trie syncer based on snapshots and
+// Syncer is an coqchain account and storage trie syncer based on snapshots and
 // the  snap protocol. It's purpose is to download all the accounts and storage
 // slots from remote peers and reassemble chunks of the state trie, on top of
 // which a state sync can be run to fix any gaps / overlaps.
@@ -448,7 +448,7 @@ type Syncer struct {
 	lock sync.RWMutex   // Protects fields that can change outside of sync (peers, reqs, root)
 }
 
-// NewSyncer creates a new snapshot syncer to download the Ethereum state over the
+// NewSyncer creates a new snapshot syncer to download the coqchain state over the
 // snap protocol.
 func NewSyncer(db ethdb.KeyValueStore) *Syncer {
 	return &Syncer{

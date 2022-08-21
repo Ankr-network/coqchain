@@ -1,18 +1,18 @@
-// Copyright 2017 The go-ethereum Authors
-// This file is part of the go-ethereum library.
+// Copyright 2017 The coqchain Authors
+// This file is part of the coqchain library.
 //
-// The go-ethereum library is free software: you can redistribute it and/or modify
+// The coqchain library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-ethereum library is distributed in the hope that it will be useful,
+// The coqchain library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-ethereum library. If not, see <http://www.gnu.org/licenses/>.
+// along with the coqchain library. If not, see <http://www.gnu.org/licenses/>.
 
 package core
 
@@ -21,22 +21,14 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/Ankr-network/coqchain/common"
 	"github.com/Ankr-network/coqchain/consensus/ethash"
 	"github.com/Ankr-network/coqchain/core/rawdb"
 	"github.com/Ankr-network/coqchain/core/vm"
 	"github.com/Ankr-network/coqchain/ethdb"
 	"github.com/Ankr-network/coqchain/params"
+	"github.com/davecgh/go-spew/spew"
 )
-
-func TestInvalidCliqueConfig(t *testing.T) {
-	block := DefaultGoerliGenesisBlock()
-	block.ExtraData = []byte{}
-	if _, err := block.Commit(nil); err == nil {
-		t.Fatal("Expected error on invalid clique config")
-	}
-}
 
 func TestSetupGenesis(t *testing.T) {
 	var (
@@ -66,23 +58,6 @@ func TestSetupGenesis(t *testing.T) {
 			wantConfig: params.AllEthashProtocolChanges,
 		},
 		{
-			name: "no block in DB, genesis == nil",
-			fn: func(db ethdb.Database) (*params.ChainConfig, common.Hash, error) {
-				return SetupGenesisBlock(db, nil)
-			},
-			wantHash:   params.MainnetGenesisHash,
-			wantConfig: params.MainnetChainConfig,
-		},
-		{
-			name: "mainnet block in DB, genesis == nil",
-			fn: func(db ethdb.Database) (*params.ChainConfig, common.Hash, error) {
-				DefaultGenesisBlock().MustCommit(db)
-				return SetupGenesisBlock(db, nil)
-			},
-			wantHash:   params.MainnetGenesisHash,
-			wantConfig: params.MainnetChainConfig,
-		},
-		{
 			name: "custom block in DB, genesis == nil",
 			fn: func(db ethdb.Database) (*params.ChainConfig, common.Hash, error) {
 				customg.MustCommit(db)
@@ -90,16 +65,6 @@ func TestSetupGenesis(t *testing.T) {
 			},
 			wantHash:   customghash,
 			wantConfig: customg.Config,
-		},
-		{
-			name: "custom block in DB, genesis == ropsten",
-			fn: func(db ethdb.Database) (*params.ChainConfig, common.Hash, error) {
-				customg.MustCommit(db)
-				return SetupGenesisBlock(db, DefaultRopstenGenesisBlock())
-			},
-			wantErr:    &GenesisMismatchError{Stored: customghash, New: params.RopstenGenesisHash},
-			wantHash:   params.RopstenGenesisHash,
-			wantConfig: params.RopstenChainConfig,
 		},
 		{
 			name: "compatible config in DB",
@@ -156,30 +121,6 @@ func TestSetupGenesis(t *testing.T) {
 			if stored.Hash() != test.wantHash {
 				t.Errorf("%s: block in DB has hash %s, want %s", test.name, stored.Hash(), test.wantHash)
 			}
-		}
-	}
-}
-
-// TestGenesisHashes checks the congruity of default genesis data to
-// corresponding hardcoded genesis hash values.
-func TestGenesisHashes(t *testing.T) {
-	for i, c := range []struct {
-		genesis *Genesis
-		want    common.Hash
-	}{
-		{DefaultGenesisBlock(), params.MainnetGenesisHash},
-		{DefaultGoerliGenesisBlock(), params.GoerliGenesisHash},
-		{DefaultRopstenGenesisBlock(), params.RopstenGenesisHash},
-		{DefaultRinkebyGenesisBlock(), params.RinkebyGenesisHash},
-		{DefaultSepoliaGenesisBlock(), params.SepoliaGenesisHash},
-	} {
-		// Test via MustCommit
-		if have := c.genesis.MustCommit(rawdb.NewMemoryDatabase()).Hash(); have != c.want {
-			t.Errorf("case: %d a), want: %s, got: %s", i, c.want.Hex(), have.Hex())
-		}
-		// Test via ToBlock
-		if have := c.genesis.ToBlock(nil).Hash(); have != c.want {
-			t.Errorf("case: %d a), want: %s, got: %s", i, c.want.Hex(), have.Hex())
 		}
 	}
 }

@@ -1,18 +1,18 @@
-// Copyright 2015 The go-ethereum Authors
-// This file is part of the go-ethereum library.
+// Copyright 2015 The coqchain Authors
+// This file is part of the coqchain library.
 //
-// The go-ethereum library is free software: you can redistribute it and/or modify
+// The coqchain library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-ethereum library is distributed in the hope that it will be useful,
+// The coqchain library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-ethereum library. If not, see <http://www.gnu.org/licenses/>.
+// along with the coqchain library. If not, see <http://www.gnu.org/licenses/>.
 
 package eth
 
@@ -41,40 +41,40 @@ import (
 	"github.com/Ankr-network/coqchain/trie"
 )
 
-// PublicEthereumAPI provides an API to access Ethereum full node-related
+// PubliccoqchainAPI provides an API to access coqchain full node-related
 // information.
-type PublicEthereumAPI struct {
-	e *Ethereum
+type PubliccoqchainAPI struct {
+	e *Coqchain
 }
 
-// NewPublicEthereumAPI creates a new Ethereum protocol API for full nodes.
-func NewPublicEthereumAPI(e *Ethereum) *PublicEthereumAPI {
-	return &PublicEthereumAPI{e}
+// NewPubliccoqchainAPI creates a new coqchain protocol API for full nodes.
+func NewPubliccoqchainAPI(e *Coqchain) *PubliccoqchainAPI {
+	return &PubliccoqchainAPI{e}
 }
 
 // Etherbase is the address that mining rewards will be send to
-func (api *PublicEthereumAPI) Etherbase() (common.Address, error) {
+func (api *PubliccoqchainAPI) Etherbase() (common.Address, error) {
 	return api.e.Etherbase()
 }
 
 // Coinbase is the address that mining rewards will be send to (alias for Etherbase)
-func (api *PublicEthereumAPI) Coinbase() (common.Address, error) {
+func (api *PubliccoqchainAPI) Coinbase() (common.Address, error) {
 	return api.Etherbase()
 }
 
 // Hashrate returns the POW hashrate
-func (api *PublicEthereumAPI) Hashrate() hexutil.Uint64 {
+func (api *PubliccoqchainAPI) Hashrate() hexutil.Uint64 {
 	return hexutil.Uint64(api.e.Miner().Hashrate())
 }
 
 // PublicMinerAPI provides an API to control the miner.
 // It offers only methods that operate on data that pose no security risk when it is publicly accessible.
 type PublicMinerAPI struct {
-	e *Ethereum
+	e *Coqchain
 }
 
 // NewPublicMinerAPI create a new PublicMinerAPI instance.
-func NewPublicMinerAPI(e *Ethereum) *PublicMinerAPI {
+func NewPublicMinerAPI(e *Coqchain) *PublicMinerAPI {
 	return &PublicMinerAPI{e}
 }
 
@@ -86,11 +86,11 @@ func (api *PublicMinerAPI) Mining() bool {
 // PrivateMinerAPI provides private RPC methods to control the miner.
 // These methods can be abused by external users and must be considered insecure for use by untrusted users.
 type PrivateMinerAPI struct {
-	e *Ethereum
+	e *Coqchain
 }
 
 // NewPrivateMinerAPI create a new RPC service which controls the miner of this node.
-func NewPrivateMinerAPI(e *Ethereum) *PrivateMinerAPI {
+func NewPrivateMinerAPI(e *Coqchain) *PrivateMinerAPI {
 	return &PrivateMinerAPI{e: e}
 }
 
@@ -147,15 +147,15 @@ func (api *PrivateMinerAPI) SetRecommitInterval(interval int) {
 	api.e.Miner().SetRecommitInterval(time.Duration(interval) * time.Millisecond)
 }
 
-// PrivateAdminAPI is the collection of Ethereum full node-related APIs
+// PrivateAdminAPI is the collection of coqchain full node-related APIs
 // exposed over the private admin endpoint.
 type PrivateAdminAPI struct {
-	eth *Ethereum
+	eth *Coqchain
 }
 
 // NewPrivateAdminAPI creates a new API definition for the full node private
-// admin methods of the Ethereum service.
-func NewPrivateAdminAPI(eth *Ethereum) *PrivateAdminAPI {
+// admin methods of the coqchain service.
+func NewPrivateAdminAPI(eth *Coqchain) *PrivateAdminAPI {
 	return &PrivateAdminAPI{eth: eth}
 }
 
@@ -257,15 +257,15 @@ func (api *PrivateAdminAPI) ImportChain(file string) (bool, error) {
 	return true, nil
 }
 
-// PublicDebugAPI is the collection of Ethereum full node APIs exposed
+// PublicDebugAPI is the collection of coqchain full node APIs exposed
 // over the public debugging endpoint.
 type PublicDebugAPI struct {
-	eth *Ethereum
+	eth *Coqchain
 }
 
 // NewPublicDebugAPI creates a new API definition for the full node-
-// related public debug methods of the Ethereum service.
-func NewPublicDebugAPI(eth *Ethereum) *PublicDebugAPI {
+// related public debug methods of the coqchain service.
+func NewPublicDebugAPI(eth *Coqchain) *PublicDebugAPI {
 	return &PublicDebugAPI{eth: eth}
 }
 
@@ -298,15 +298,15 @@ func (api *PublicDebugAPI) DumpBlock(blockNr rpc.BlockNumber) (state.Dump, error
 	return stateDb.RawDump(opts), nil
 }
 
-// PrivateDebugAPI is the collection of Ethereum full node APIs exposed over
+// PrivateDebugAPI is the collection of coqchain full node APIs exposed over
 // the private debugging endpoint.
 type PrivateDebugAPI struct {
-	eth *Ethereum
+	eth *Coqchain
 }
 
 // NewPrivateDebugAPI creates a new API definition for the full node-related
-// private debug methods of the Ethereum service.
-func NewPrivateDebugAPI(eth *Ethereum) *PrivateDebugAPI {
+// private debug methods of the coqchain service.
+func NewPrivateDebugAPI(eth *Coqchain) *PrivateDebugAPI {
 	return &PrivateDebugAPI{eth: eth}
 }
 

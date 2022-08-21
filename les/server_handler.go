@@ -1,18 +1,18 @@
-// Copyright 2019 The go-ethereum Authors
-// This file is part of the go-ethereum library.
+// Copyright 2019 The coqchain Authors
+// This file is part of the coqchain library.
 //
-// The go-ethereum library is free software: you can redistribute it and/or modify
+// The coqchain library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-ethereum library is distributed in the hope that it will be useful,
+// The coqchain library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-ethereum library. If not, see <http://www.gnu.org/licenses/>.
+// along with the coqchain library. If not, see <http://www.gnu.org/licenses/>.
 
 package les
 
@@ -108,7 +108,7 @@ func (h *serverHandler) runPeer(version uint, p *p2p.Peer, rw p2p.MsgReadWriter)
 }
 
 func (h *serverHandler) handle(p *clientPeer) error {
-	p.Log().Debug("Light Ethereum peer connected", "name", p.Name())
+	p.Log().Debug("Light coqchain peer connected", "name", p.Name())
 
 	// Execute the LES handshake
 	var (
@@ -119,7 +119,7 @@ func (h *serverHandler) handle(p *clientPeer) error {
 		forkID = forkid.NewID(h.blockchain.Config(), h.blockchain.Genesis().Hash(), h.blockchain.CurrentBlock().NumberU64())
 	)
 	if err := p.Handshake(td, hash, number, h.blockchain.Genesis().Hash(), forkID, h.forkFilter, h.server); err != nil {
-		p.Log().Debug("Light Ethereum handshake failed", "err", err)
+		p.Log().Debug("Light coqchain handshake failed", "err", err)
 		return err
 	}
 	// Connected to another server, no messages expected, just wait for disconnection
@@ -170,12 +170,12 @@ func (h *serverHandler) handle(p *clientPeer) error {
 	for {
 		select {
 		case err := <-p.errCh:
-			p.Log().Debug("Failed to send light ethereum response", "err", err)
+			p.Log().Debug("Failed to send light coqchain response", "err", err)
 			return err
 		default:
 		}
 		if err := h.handleMsg(p, &wg); err != nil {
-			p.Log().Debug("Light Ethereum message handling failed", "err", err)
+			p.Log().Debug("Light coqchain message handling failed", "err", err)
 			return err
 		}
 	}
@@ -273,7 +273,7 @@ func (h *serverHandler) handleMsg(p *clientPeer, wg *sync.WaitGroup) error {
 	if err != nil {
 		return err
 	}
-	p.Log().Trace("Light Ethereum message arrived", "code", msg.Code, "bytes", msg.Size)
+	p.Log().Trace("Light coqchain message arrived", "code", msg.Code, "bytes", msg.Size)
 
 	// Discard large message which exceeds the limitation.
 	if msg.Size > ProtocolMaxMsgSize {

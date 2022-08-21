@@ -1,20 +1,20 @@
-// Copyright 2017 The go-ethereum Authors
-// This file is part of the go-ethereum library.
+// Copyright 2017 The coqchain Authors
+// This file is part of the coqchain library.
 //
-// The go-ethereum library is free software: you can redistribute it and/or modify
+// The coqchain library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-ethereum library is distributed in the hope that it will be useful,
+// The coqchain library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-ethereum library. If not, see <http://www.gnu.org/licenses/>.
+// along with the coqchain library. If not, see <http://www.gnu.org/licenses/>.
 
-// Package accounts implements high level Ethereum account management.
+// Package accounts implements high level coqchain account management.
 package accounts
 
 import (
@@ -28,10 +28,10 @@ import (
 	"golang.org/x/crypto/sha3"
 )
 
-// Account represents an Ethereum account located at a specific location defined
+// Account represents an coqchain account located at a specific location defined
 // by the optional URL field.
 type Account struct {
-	Address common.Address `json:"address"` // Ethereum account address derived from the key
+	Address common.Address `json:"address"` // coqchain account address derived from the key
 	URL     URL            `json:"url"`     // Optional resource locator within a backend
 }
 
@@ -99,7 +99,7 @@ type Wallet interface {
 	//
 	// You can disable automatic account discovery by calling SelfDerive with a nil
 	// chain state reader.
-	SelfDerive(bases []DerivationPath, chain ethereum.ChainStateReader)
+	SelfDerive(bases []DerivationPath, chain coqchain.ChainStateReader)
 
 	// SignData requests the wallet to sign the hash of the given data
 	// It looks up the account specified either solely via its address contained within,
@@ -120,7 +120,7 @@ type Wallet interface {
 	SignDataWithPassphrase(account Account, passphrase, mimeType string, data []byte) ([]byte, error)
 
 	// SignText requests the wallet to sign the hash of a given piece of data, prefixed
-	// by the Ethereum prefix scheme
+	// by the coqchain prefix scheme
 	// It looks up the account specified either solely via its address contained within,
 	// or optionally with the aid of any location metadata from the embedded URL field.
 	//
@@ -178,7 +178,7 @@ type Backend interface {
 // safely used to calculate a signature from.
 //
 // The hash is calulcated as
-//   keccak256("\x19Ethereum Signed Message:\n"${message length}${message}).
+//   keccak256("\x19coqchain Signed Message:\n"${message length}${message}).
 //
 // This gives context to the signed message and prevents signing of transactions.
 func TextHash(data []byte) []byte {
@@ -190,11 +190,11 @@ func TextHash(data []byte) []byte {
 // safely used to calculate a signature from.
 //
 // The hash is calulcated as
-//   keccak256("\x19Ethereum Signed Message:\n"${message length}${message}).
+//   keccak256("\x19coqchain Signed Message:\n"${message length}${message}).
 //
 // This gives context to the signed message and prevents signing of transactions.
 func TextAndHash(data []byte) ([]byte, string) {
-	msg := fmt.Sprintf("\x19Ethereum Signed Message:\n%d%s", len(data), string(data))
+	msg := fmt.Sprintf("\x19coqchain Signed Message:\n%d%s", len(data), string(data))
 	hasher := sha3.NewLegacyKeccak256()
 	hasher.Write([]byte(msg))
 	return hasher.Sum(nil), msg

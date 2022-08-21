@@ -1,18 +1,18 @@
-// Copyright 2014 The go-ethereum Authors
-// This file is part of the go-ethereum library.
+// Copyright 2014 The coqchain Authors
+// This file is part of the coqchain library.
 //
-// The go-ethereum library is free software: you can redistribute it and/or modify
+// The coqchain library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-ethereum library is distributed in the hope that it will be useful,
+// The coqchain library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-ethereum library. If not, see <http://www.gnu.org/licenses/>.
+// along with the coqchain library. If not, see <http://www.gnu.org/licenses/>.
 
 package state
 
@@ -57,7 +57,7 @@ func (s Storage) Copy() Storage {
 	return cpy
 }
 
-// stateObject represents an Ethereum account which is being modified.
+// stateObject represents an coqchain account which is being modified.
 //
 // The usage pattern is as follows:
 // First you need to obtain a state object.
@@ -65,7 +65,7 @@ func (s Storage) Copy() Storage {
 // Finally, call CommitTrie to write the modified storage trie into a database.
 type stateObject struct {
 	address  common.Address
-	addrHash common.Hash // hash of ethereum address of the account
+	addrHash common.Hash // hash of coqchain address of the account
 	data     types.StateAccount
 	db       *StateDB
 

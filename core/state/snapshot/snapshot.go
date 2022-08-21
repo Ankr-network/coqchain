@@ -1,18 +1,18 @@
-// Copyright 2019 The go-ethereum Authors
-// This file is part of the go-ethereum library.
+// Copyright 2019 The coqchain Authors
+// This file is part of the coqchain library.
 //
-// The go-ethereum library is free software: you can redistribute it and/or modify
+// The coqchain library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-ethereum library is distributed in the hope that it will be useful,
+// The coqchain library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-ethereum library. If not, see <http://www.gnu.org/licenses/>.
+// along with the coqchain library. If not, see <http://www.gnu.org/licenses/>.
 
 // Package snapshot implements a journalled, dynamic state dump.
 package snapshot
@@ -148,7 +148,7 @@ type snapshot interface {
 	StorageIterator(account common.Hash, seek common.Hash) (StorageIterator, bool)
 }
 
-// Tree is an Ethereum state snapshot tree. It consists of one persistent base
+// Tree is an coqchain state snapshot tree. It consists of one persistent base
 // layer backed by a key-value store, on top of which arbitrarily many in-memory
 // diff layers are topped. The memory diffs can form a tree with branching, but
 // the disk layer is singleton and common to all. If a reorg goes deeper than the

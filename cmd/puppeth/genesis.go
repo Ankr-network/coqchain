@@ -1,18 +1,18 @@
-// Copyright 2017 The go-ethereum Authors
-// This file is part of go-ethereum.
+// Copyright 2017 The coqchain Authors
+// This file is part of coqchain.
 //
-// go-ethereum is free software: you can redistribute it and/or modify
+// coqchain is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// go-ethereum is distributed in the hope that it will be useful,
+// coqchain is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with go-ethereum. If not, see <http://www.gnu.org/licenses/>.
+// along with coqchain. If not, see <http://www.gnu.org/licenses/>.
 
 package main
 
@@ -32,7 +32,7 @@ import (
 )
 
 // alethGenesisSpec represents the genesis specification format used by the
-// C++ Ethereum implementation.
+// C++ coqchain implementation.
 type alethGenesisSpec struct {
 	SealEngine string `json:"sealEngine"`
 	Params     struct {
@@ -93,10 +93,10 @@ type alethGenesisSpecLinearPricing struct {
 	Word uint64 `json:"word"`
 }
 
-// newAlethGenesisSpec converts a go-ethereum genesis block into a Aleth-specific
+// newAlethGenesisSpec converts a coqchain genesis block into a Aleth-specific
 // chain specification format.
 func newAlethGenesisSpec(network string, genesis *core.Genesis) (*alethGenesisSpec, error) {
-	// Only ethash is currently supported between go-ethereum and aleth
+	// Only ethash is currently supported between coqchain and aleth
 	if genesis.Config.Ethash == nil {
 		return nil, errors.New("unsupported consensus engine")
 	}
@@ -275,10 +275,10 @@ type parityChainSpec struct {
 
 	Genesis struct {
 		Seal struct {
-			Ethereum struct {
+			coqchain struct {
 				Nonce   types.BlockNonce `json:"nonce"`
 				MixHash hexutil.Bytes    `json:"mixHash"`
-			} `json:"ethereum"`
+			} `json:"coqchain"`
 		} `json:"seal"`
 
 		Difficulty *hexutil.Big   `json:"difficulty"`
@@ -314,7 +314,7 @@ type parityChainSpecPricing struct {
 	Linear *parityChainSpecLinearPricing `json:"linear,omitempty"`
 	ModExp *parityChainSpecModExpPricing `json:"modexp,omitempty"`
 
-	// Before the https://github.com/paritytech/parity-ethereum/pull/11039,
+	// Before the https://github.com/paritytech/parity-coqchain/pull/11039,
 	// Parity uses this format to config bn pairing price policy.
 	AltBnPairing *parityChainSepcAltBnPairingPricing `json:"alt_bn128_pairing,omitempty"`
 
@@ -361,10 +361,10 @@ type parityChainSpecVersionedPricing struct {
 	Info  string                           `json:"info,omitempty"`
 }
 
-// newParityChainSpec converts a go-ethereum genesis block into a Parity specific
+// newParityChainSpec converts a coqchain genesis block into a Parity specific
 // chain specification format.
 func newParityChainSpec(network string, genesis *core.Genesis, bootnodes []string) (*parityChainSpec, error) {
-	// Only ethash is currently supported between go-ethereum and Parity
+	// Only ethash is currently supported between coqchain and Parity
 	if genesis.Config.Ethash == nil {
 		return nil, errors.New("unsupported consensus engine")
 	}
@@ -386,11 +386,11 @@ func newParityChainSpec(network string, genesis *core.Genesis, bootnodes []strin
 	spec.Engine.Ethash.Params.HomesteadTransition = hexutil.Uint64(genesis.Config.HomesteadBlock.Uint64())
 
 	// Tangerine Whistle : 150
-	// https://github.com/ethereum/EIPs/blob/master/EIPS/eip-608.md
+	// https://github.com/coqchain/EIPs/blob/master/EIPS/eip-608.md
 	spec.Params.EIP150Transition = hexutil.Uint64(genesis.Config.EIP150Block.Uint64())
 
 	// Spurious Dragon: 155, 160, 161, 170
-	// https://github.com/ethereum/EIPs/blob/master/EIPS/eip-607.md
+	// https://github.com/coqchain/EIPs/blob/master/EIPS/eip-607.md
 	spec.Params.EIP155Transition = hexutil.Uint64(genesis.Config.EIP155Block.Uint64())
 	spec.Params.EIP160Transition = hexutil.Uint64(genesis.Config.EIP155Block.Uint64())
 	spec.Params.EIP161abcTransition = hexutil.Uint64(genesis.Config.EIP158Block.Uint64())
@@ -424,8 +424,8 @@ func newParityChainSpec(network string, genesis *core.Genesis, bootnodes []strin
 	// Disable this one
 	spec.Params.EIP98Transition = math.MaxInt64
 
-	spec.Genesis.Seal.Ethereum.Nonce = types.EncodeNonce(genesis.Nonce)
-	spec.Genesis.Seal.Ethereum.MixHash = genesis.Mixhash[:]
+	spec.Genesis.Seal.coqchain.Nonce = types.EncodeNonce(genesis.Nonce)
+	spec.Genesis.Seal.coqchain.MixHash = genesis.Mixhash[:]
 	spec.Genesis.Difficulty = (*hexutil.Big)(genesis.Difficulty)
 	spec.Genesis.Author = genesis.Coinbase
 	spec.Genesis.Timestamp = (hexutil.Uint64)(genesis.Timestamp)
@@ -590,9 +590,9 @@ func (spec *parityChainSpec) setIstanbul(num *big.Int) {
 	spec.Params.EIP1283ReenableTransition = hexutil.Uint64(num.Uint64())
 }
 
-// pyEthereumGenesisSpec represents the genesis specification format used by the
-// Python Ethereum implementation.
-type pyEthereumGenesisSpec struct {
+// pycoqchainGenesisSpec represents the genesis specification format used by the
+// Python coqchain implementation.
+type pycoqchainGenesisSpec struct {
 	Nonce      types.BlockNonce  `json:"nonce"`
 	Timestamp  hexutil.Uint64    `json:"timestamp"`
 	ExtraData  hexutil.Bytes     `json:"extraData"`
@@ -604,14 +604,14 @@ type pyEthereumGenesisSpec struct {
 	ParentHash common.Hash       `json:"parentHash"`
 }
 
-// newPyEthereumGenesisSpec converts a go-ethereum genesis block into a Parity specific
+// newPycoqchainGenesisSpec converts a coqchain genesis block into a Parity specific
 // chain specification format.
-func newPyEthereumGenesisSpec(network string, genesis *core.Genesis) (*pyEthereumGenesisSpec, error) {
-	// Only ethash is currently supported between go-ethereum and pyethereum
+func newPycoqchainGenesisSpec(network string, genesis *core.Genesis) (*pycoqchainGenesisSpec, error) {
+	// Only ethash is currently supported between coqchain and pycoqchain
 	if genesis.Config.Ethash == nil {
 		return nil, errors.New("unsupported consensus engine")
 	}
-	spec := &pyEthereumGenesisSpec{
+	spec := &pycoqchainGenesisSpec{
 		Nonce:      types.EncodeNonce(genesis.Nonce),
 		Timestamp:  (hexutil.Uint64)(genesis.Timestamp),
 		ExtraData:  genesis.ExtraData,

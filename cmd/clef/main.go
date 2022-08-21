@@ -1,18 +1,18 @@
-// Copyright 2018 The go-ethereum Authors
-// This file is part of go-ethereum.
+// Copyright 2018 The coqchain Authors
+// This file is part of coqchain.
 //
-// go-ethereum is free software: you can redistribute it and/or modify
+// coqchain is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// go-ethereum is distributed in the hope that it will be useful,
+// coqchain is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with go-ethereum. If not, see <http://www.gnu.org/licenses/>.
+// along with coqchain. If not, see <http://www.gnu.org/licenses/>.
 
 package main
 
@@ -99,7 +99,7 @@ var (
 	}
 	chainIdFlag = cli.Int64Flag{
 		Name:  "chainid",
-		Value: params.MainnetChainConfig.ChainID.Int64(),
+		Value: params.TestChainConfig.ChainID.Int64(),
 		Usage: "Chain id to use for signing (1=mainnet, 3=Ropsten, 4=Rinkeby, 5=Goerli)",
 	}
 	rpcPortFlag = cli.IntFlag{
@@ -227,8 +227,6 @@ var AppHelpFlagGroups = []flags.FlagGroup{
 			configdirFlag,
 			chainIdFlag,
 			utils.LightKDFFlag,
-			utils.NoUSBFlag,
-			utils.SmartCardDaemonPathFlag,
 			utils.HTTPListenAddrFlag,
 			utils.HTTPVirtualHostsFlag,
 			utils.IPCDisabledFlag,
@@ -249,15 +247,13 @@ var AppHelpFlagGroups = []flags.FlagGroup{
 
 func init() {
 	app.Name = "Clef"
-	app.Usage = "Manage Ethereum account operations"
+	app.Usage = "Manage coqchain account operations"
 	app.Flags = []cli.Flag{
 		logLevelFlag,
 		keystoreFlag,
 		configdirFlag,
 		chainIdFlag,
 		utils.LightKDFFlag,
-		utils.NoUSBFlag,
-		utils.SmartCardDaemonPathFlag,
 		utils.HTTPListenAddrFlag,
 		utils.HTTPVirtualHostsFlag,
 		utils.IPCDisabledFlag,
@@ -620,13 +616,11 @@ func signer(c *cli.Context) error {
 		ksLoc    = c.GlobalString(keystoreFlag.Name)
 		lightKdf = c.GlobalBool(utils.LightKDFFlag.Name)
 		advanced = c.GlobalBool(advancedMode.Name)
-		nousb    = c.GlobalBool(utils.NoUSBFlag.Name)
-		scpath   = c.GlobalString(utils.SmartCardDaemonPathFlag.Name)
 	)
 	log.Info("Starting signer", "chainid", chainId, "keystore", ksLoc,
 		"light-kdf", lightKdf, "advanced", advanced)
-	am := core.StartClefAccountManager(ksLoc, nousb, lightKdf, scpath)
-	apiImpl := core.NewSignerAPI(am, chainId, nousb, ui, db, advanced, pwStorage)
+	am := core.StartClefAccountManager(ksLoc, true, lightKdf, "")
+	apiImpl := core.NewSignerAPI(am, chainId, true, ui, db, advanced, pwStorage)
 
 	// Establish the bidirectional communication, by creating a new UI backend and registering
 	// it with the UI.

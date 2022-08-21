@@ -1,18 +1,18 @@
-// Copyright 2019 The go-ethereum Authors
-// This file is part of the go-ethereum library.
+// Copyright 2019 The coqchain Authors
+// This file is part of the coqchain library.
 //
-// The go-ethereum library is free software: you can redistribute it and/or modify
+// The coqchain library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-ethereum library is distributed in the hope that it will be useful,
+// The coqchain library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-ethereum library. If not, see <http://www.gnu.org/licenses/>.
+// along with the coqchain library. If not, see <http://www.gnu.org/licenses/>.
 
 package posa
 
@@ -54,7 +54,7 @@ func TestReimportMirroredState(t *testing.T) {
 	genesis := genspec.MustCommit(db)
 
 	// Generate a batch of blocks, each properly signed
-	chain, _ := core.NewBlockChain(db, nil, params.AllCliqueProtocolChanges, engine, vm.Config{}, nil, nil)
+	chain, _ := core.NewBlockChain(db, nil, params.AllPosaProtocolChanges, engine, vm.Config{}, nil, nil)
 	defer chain.Stop()
 
 	blocks, _ := core.GenerateChain(params.AllCliqueProtocolChanges, genesis, engine, db, 3, func(i int, block *core.BlockGen) {
@@ -88,7 +88,7 @@ func TestReimportMirroredState(t *testing.T) {
 	db = rawdb.NewMemoryDatabase()
 	genspec.MustCommit(db)
 
-	chain, _ = core.NewBlockChain(db, nil, params.AllCliqueProtocolChanges, engine, vm.Config{}, nil, nil)
+	chain, _ = core.NewBlockChain(db, nil, params.AllPosaProtocolChanges, engine, vm.Config{}, nil, nil)
 	defer chain.Stop()
 
 	if _, err := chain.InsertChain(blocks[:2]); err != nil {
@@ -101,7 +101,7 @@ func TestReimportMirroredState(t *testing.T) {
 	// Simulate a crash by creating a new chain on top of the database, without
 	// flushing the dirty states out. Insert the last block, triggering a sidechain
 	// reimport.
-	chain, _ = core.NewBlockChain(db, nil, params.AllCliqueProtocolChanges, engine, vm.Config{}, nil, nil)
+	chain, _ = core.NewBlockChain(db, nil, params.AllPosaProtocolChanges, engine, vm.Config{}, nil, nil)
 	defer chain.Stop()
 
 	if _, err := chain.InsertChain(blocks[2:]); err != nil {

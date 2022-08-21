@@ -1,18 +1,18 @@
-// Copyright 2015 The go-ethereum Authors
-// This file is part of the go-ethereum library.
+// Copyright 2015 The coqchain Authors
+// This file is part of the coqchain library.
 //
-// The go-ethereum library is free software: you can redistribute it and/or modify
+// The coqchain library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-ethereum library is distributed in the hope that it will be useful,
+// The coqchain library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-ethereum library. If not, see <http://www.gnu.org/licenses/>.
+// along with the coqchain library. If not, see <http://www.gnu.org/licenses/>.
 
 package eth
 
@@ -44,7 +44,7 @@ import (
 type EthAPIBackend struct {
 	extRPCEnabled       bool
 	allowUnprotectedTxs bool
-	eth                 *Ethereum
+	eth                 *Coqchain
 	gpo                 *gasprice.Oracle
 }
 
@@ -281,7 +281,7 @@ func (b *EthAPIBackend) SubscribeNewTxsEvent(ch chan<- core.NewTxsEvent) event.S
 	return b.eth.TxPool().SubscribeNewTxsEvent(ch)
 }
 
-func (b *EthAPIBackend) SyncProgress() ethereum.SyncProgress {
+func (b *EthAPIBackend) SyncProgress() coqchain.SyncProgress {
 	return b.eth.Downloader().Progress()
 }
 

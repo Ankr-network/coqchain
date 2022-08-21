@@ -1,18 +1,18 @@
-// Copyright 2018 The go-ethereum Authors
-// This file is part of the go-ethereum library.
+// Copyright 2018 The coqchain Authors
+// This file is part of the coqchain library.
 //
-// The go-ethereum library is free software: you can redistribute it and/or modify
+// The coqchain library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-ethereum library is distributed in the hope that it will be useful,
+// The coqchain library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-ethereum library. If not, see <http://www.gnu.org/licenses/>.
+// along with the coqchain library. If not, see <http://www.gnu.org/licenses/>.
 
 // +build none
 
@@ -88,13 +88,13 @@ var (
 	licenseCommentRE = regexp.MustCompile(`^//\s*(Copyright|This file is part of).*?\n(?://.*?\n)*\n*`)
 
 	// this text appears at the start of AUTHORS
-	authorsFileHeader = "# This is the official list of go-ethereum authors for copyright purposes.\n\n"
+	authorsFileHeader = "# This is the official list of coqchain authors for copyright purposes.\n\n"
 )
 
 // this template generates the license comment.
 // its input is an info structure.
 var licenseT = template.Must(template.New("").Parse(`
-// Copyright {{.Year}} The go-ethereum Authors
+// Copyright {{.Year}} The coqchain Authors
 // This file is part of {{.Whole false}}.
 //
 // {{.Whole true}} is free software: you can redistribute it and/or modify
@@ -133,12 +133,12 @@ func (i info) ShortLicense() string {
 
 func (i info) Whole(startOfSentence bool) string {
 	if i.gpl() {
-		return "go-ethereum"
+		return "coqchain"
 	}
 	if startOfSentence {
-		return "The go-ethereum library"
+		return "The coqchain library"
 	}
-	return "the go-ethereum library"
+	return "the coqchain library"
 }
 
 func (i info) gpl() bool {

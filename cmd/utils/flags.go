@@ -1,20 +1,20 @@
-// Copyright 2015 The go-ethereum Authors
-// This file is part of go-ethereum.
+// Copyright 2015 The coqchain Authors
+// This file is part of coqchain.
 //
-// go-ethereum is free software: you can redistribute it and/or modify
+// coqchain is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// go-ethereum is distributed in the hope that it will be useful,
+// coqchain is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with go-ethereum. If not, see <http://www.gnu.org/licenses/>.
+// along with coqchain. If not, see <http://www.gnu.org/licenses/>.
 
-// Package utils contains internal helper functions for go-ethereum commands.
+// Package utils contains internal helper functions for coqchain commands.
 package utils
 
 import (
@@ -24,8 +24,6 @@ import (
 	"io/ioutil"
 	"math"
 	"math/big"
-	"os"
-	"path/filepath"
 	godebug "runtime/debug"
 	"strconv"
 	"strings"
@@ -66,7 +64,6 @@ import (
 	"github.com/Ankr-network/coqchain/p2p/nat"
 	"github.com/Ankr-network/coqchain/p2p/netutil"
 	"github.com/Ankr-network/coqchain/params"
-	pcsclite "github.com/gballet/go-libpcsclite"
 	gopsutil "github.com/shirou/gopsutil/mem"
 	"gopkg.in/urfave/cli.v1"
 )
@@ -125,39 +122,10 @@ var (
 		Name:  "keystore",
 		Usage: "Directory for the keystore (default = inside the datadir)",
 	}
-	USBFlag = cli.BoolFlag{
-		Name:  "usb",
-		Usage: "Enable monitoring and management of USB hardware wallets",
-	}
-	SmartCardDaemonPathFlag = cli.StringFlag{
-		Name:  "pcscdpath",
-		Usage: "Path to the smartcard daemon (pcscd) socket file",
-		Value: pcsclite.PCSCDSockName,
-	}
 	NetworkIdFlag = cli.Uint64Flag{
 		Name:  "networkid",
 		Usage: "Explicitly set network id (integer)(For testnets: use --ropsten, --rinkeby, --goerli instead)",
 		Value: ethconfig.Defaults.NetworkId,
-	}
-	MainnetFlag = cli.BoolFlag{
-		Name:  "mainnet",
-		Usage: "Ethereum mainnet",
-	}
-	GoerliFlag = cli.BoolFlag{
-		Name:  "goerli",
-		Usage: "Görli network: pre-configured proof-of-authority test network",
-	}
-	RinkebyFlag = cli.BoolFlag{
-		Name:  "rinkeby",
-		Usage: "Rinkeby network: pre-configured proof-of-authority test network",
-	}
-	RopstenFlag = cli.BoolFlag{
-		Name:  "ropsten",
-		Usage: "Ropsten network: pre-configured proof-of-work test network",
-	}
-	SepoliaFlag = cli.BoolFlag{
-		Name:  "sepolia",
-		Usage: "Sepolia network: pre-configured proof-of-work test network",
 	}
 	DeveloperFlag = cli.BoolFlag{
 		Name:  "dev",
@@ -795,23 +763,6 @@ var (
 // if none (or the empty string) is specified. If the node is starting a testnet,
 // then a subdirectory of the specified datadir will be used.
 func MakeDataDir(ctx *cli.Context) string {
-	if path := ctx.GlobalString(DataDirFlag.Name); path != "" {
-		if ctx.GlobalBool(RopstenFlag.Name) {
-			// Maintain compatibility with older Geth configurations storing the
-			// Ropsten database in `testnet` instead of `ropsten`.
-			return filepath.Join(path, "ropsten")
-		}
-		if ctx.GlobalBool(RinkebyFlag.Name) {
-			return filepath.Join(path, "rinkeby")
-		}
-		if ctx.GlobalBool(GoerliFlag.Name) {
-			return filepath.Join(path, "goerli")
-		}
-		if ctx.GlobalBool(SepoliaFlag.Name) {
-			return filepath.Join(path, "sepolia")
-		}
-		return path
-	}
 	Fatalf("Cannot determine default data directory, please set manually (--datadir)")
 	return ""
 }
@@ -846,38 +797,6 @@ func setNodeKey(ctx *cli.Context, cfg *p2p.Config) {
 func setNodeUserIdent(ctx *cli.Context, cfg *node.Config) {
 	if identity := ctx.GlobalString(IdentityFlag.Name); len(identity) > 0 {
 		cfg.UserIdent = identity
-	}
-}
-
-// setBootstrapNodes creates a list of bootstrap nodes from the command line
-// flags, reverting to pre-configured ones if none have been specified.
-func setBootstrapNodes(ctx *cli.Context, cfg *p2p.Config) {
-	urls := params.MainnetBootnodes
-	switch {
-	case ctx.GlobalIsSet(BootnodesFlag.Name):
-		urls = SplitAndTrim(ctx.GlobalString(BootnodesFlag.Name))
-	case ctx.GlobalBool(RopstenFlag.Name):
-		urls = params.RopstenBootnodes
-	case ctx.GlobalBool(SepoliaFlag.Name):
-		urls = params.SepoliaBootnodes
-	case ctx.GlobalBool(RinkebyFlag.Name):
-		urls = params.RinkebyBootnodes
-	case ctx.GlobalBool(GoerliFlag.Name):
-		urls = params.GoerliBootnodes
-	case cfg.BootstrapNodes != nil:
-		return // already set, don't apply defaults.
-	}
-
-	cfg.BootstrapNodes = make([]*enode.Node, 0, len(urls))
-	for _, url := range urls {
-		if url != "" {
-			node, err := enode.Parse(enode.ValidSchemes, url)
-			if err != nil {
-				log.Crit("Bootstrap URL invalid", "enode", url, "err", err)
-				continue
-			}
-			cfg.BootstrapNodes = append(cfg.BootstrapNodes, node)
-		}
 	}
 }
 
@@ -1137,7 +1056,6 @@ func SetP2PConfig(ctx *cli.Context, cfg *p2p.Config) {
 	setNodeKey(ctx, cfg)
 	setNAT(ctx, cfg)
 	setListenAddress(ctx, cfg)
-	setBootstrapNodes(ctx, cfg)
 	setBootstrapNodesV5(ctx, cfg)
 
 	lightClient := ctx.GlobalString(SyncModeFlag.Name) == "light"
@@ -1215,7 +1133,6 @@ func SetNodeConfig(ctx *cli.Context, cfg *node.Config) {
 	setWS(ctx, cfg)
 	setNodeUserIdent(ctx, cfg)
 	setDataDir(ctx, cfg)
-	setSmartCard(ctx, cfg)
 
 	if ctx.GlobalIsSet(ExternalSignerFlag.Name) {
 		cfg.ExternalSigner = ctx.GlobalString(ExternalSignerFlag.Name)
@@ -1230,35 +1147,9 @@ func SetNodeConfig(ctx *cli.Context, cfg *node.Config) {
 	if ctx.GlobalIsSet(LightKDFFlag.Name) {
 		cfg.UseLightweightKDF = ctx.GlobalBool(LightKDFFlag.Name)
 	}
-	if ctx.GlobalIsSet(NoUSBFlag.Name) || cfg.NoUSB {
-		log.Warn("Option nousb is deprecated and USB is deactivated by default. Use --usb to enable")
-	}
-	if ctx.GlobalIsSet(USBFlag.Name) {
-		cfg.USB = ctx.GlobalBool(USBFlag.Name)
-	}
 	if ctx.GlobalIsSet(InsecureUnlockAllowedFlag.Name) {
 		cfg.InsecureUnlockAllowed = ctx.GlobalBool(InsecureUnlockAllowedFlag.Name)
 	}
-}
-
-func setSmartCard(ctx *cli.Context, cfg *node.Config) {
-	// Skip enabling smartcards if no path is set
-	path := ctx.GlobalString(SmartCardDaemonPathFlag.Name)
-	if path == "" {
-		return
-	}
-	// Sanity check that the smartcard path is valid
-	fi, err := os.Stat(path)
-	if err != nil {
-		log.Info("Smartcard socket not found, disabling", "err", err)
-		return
-	}
-	if fi.Mode()&os.ModeType != os.ModeSocket {
-		log.Error("Invalid smartcard daemon path", "path", path, "type", fi.Mode().String())
-		return
-	}
-	// Smartcard daemon path exists and is a socket, enable it
-	cfg.SmartCardDaemonPath = path
 }
 
 func setDataDir(ctx *cli.Context, cfg *node.Config) {
@@ -1267,24 +1158,6 @@ func setDataDir(ctx *cli.Context, cfg *node.Config) {
 		cfg.DataDir = ctx.GlobalString(DataDirFlag.Name)
 	case ctx.GlobalBool(DeveloperFlag.Name):
 		cfg.DataDir = "" // unless explicitly requested, use memory databases
-	case ctx.GlobalBool(RopstenFlag.Name) && cfg.DataDir == node.DefaultDataDir():
-		// Maintain compatibility with older Geth configurations storing the
-		// Ropsten database in `testnet` instead of `ropsten`.
-		legacyPath := filepath.Join(node.DefaultDataDir(), "testnet")
-		if _, err := os.Stat(legacyPath); !os.IsNotExist(err) {
-			log.Warn("Using the deprecated `testnet` datadir. Future versions will store the Ropsten chain in `ropsten`.")
-			cfg.DataDir = legacyPath
-		} else {
-			cfg.DataDir = filepath.Join(node.DefaultDataDir(), "ropsten")
-		}
-
-		cfg.DataDir = filepath.Join(node.DefaultDataDir(), "ropsten")
-	case ctx.GlobalBool(RinkebyFlag.Name) && cfg.DataDir == node.DefaultDataDir():
-		cfg.DataDir = filepath.Join(node.DefaultDataDir(), "rinkeby")
-	case ctx.GlobalBool(GoerliFlag.Name) && cfg.DataDir == node.DefaultDataDir():
-		cfg.DataDir = filepath.Join(node.DefaultDataDir(), "goerli")
-	case ctx.GlobalBool(SepoliaFlag.Name) && cfg.DataDir == node.DefaultDataDir():
-		cfg.DataDir = filepath.Join(node.DefaultDataDir(), "sepolia")
 	}
 }
 
@@ -1470,7 +1343,7 @@ func CheckExclusive(ctx *cli.Context, args ...interface{}) {
 // SetEthConfig applies eth-related command line flags to the config.
 func SetEthConfig(ctx *cli.Context, stack *node.Node, cfg *ethconfig.Config) {
 	// Avoid conflicting network flags
-	CheckExclusive(ctx, MainnetFlag, DeveloperFlag, RopstenFlag, RinkebyFlag, GoerliFlag, SepoliaFlag)
+	CheckExclusive(ctx, DeveloperFlag)
 	CheckExclusive(ctx, LightServeFlag, SyncModeFlag, "light")
 	CheckExclusive(ctx, DeveloperFlag, ExternalSignerFlag) // Can't use both ephemeral unlocked and external signer
 	if ctx.GlobalString(GCModeFlag.Name) == "archive" && ctx.GlobalUint64(TxLookupLimitFlag.Name) != 0 {
@@ -1602,36 +1475,6 @@ func SetEthConfig(ctx *cli.Context, stack *node.Node, cfg *ethconfig.Config) {
 	}
 	// Override any default configs for hard coded networks.
 	switch {
-	case ctx.GlobalBool(MainnetFlag.Name):
-		if !ctx.GlobalIsSet(NetworkIdFlag.Name) {
-			cfg.NetworkId = 1
-		}
-		cfg.Genesis = core.DefaultGenesisBlock()
-		SetDNSDiscoveryDefaults(cfg, params.MainnetGenesisHash)
-	case ctx.GlobalBool(RopstenFlag.Name):
-		if !ctx.GlobalIsSet(NetworkIdFlag.Name) {
-			cfg.NetworkId = 3
-		}
-		cfg.Genesis = core.DefaultRopstenGenesisBlock()
-		SetDNSDiscoveryDefaults(cfg, params.RopstenGenesisHash)
-	case ctx.GlobalBool(SepoliaFlag.Name):
-		if !ctx.GlobalIsSet(NetworkIdFlag.Name) {
-			cfg.NetworkId = 11155111
-		}
-		cfg.Genesis = core.DefaultSepoliaGenesisBlock()
-		SetDNSDiscoveryDefaults(cfg, params.SepoliaGenesisHash)
-	case ctx.GlobalBool(RinkebyFlag.Name):
-		if !ctx.GlobalIsSet(NetworkIdFlag.Name) {
-			cfg.NetworkId = 4
-		}
-		cfg.Genesis = core.DefaultRinkebyGenesisBlock()
-		SetDNSDiscoveryDefaults(cfg, params.RinkebyGenesisHash)
-	case ctx.GlobalBool(GoerliFlag.Name):
-		if !ctx.GlobalIsSet(NetworkIdFlag.Name) {
-			cfg.NetworkId = 5
-		}
-		cfg.Genesis = core.DefaultGoerliGenesisBlock()
-		SetDNSDiscoveryDefaults(cfg, params.GoerliGenesisHash)
 	case ctx.GlobalBool(DeveloperFlag.Name):
 		if !ctx.GlobalIsSet(NetworkIdFlag.Name) {
 			cfg.NetworkId = 1337
@@ -1680,9 +1523,6 @@ func SetEthConfig(ctx *cli.Context, stack *node.Node, cfg *ethconfig.Config) {
 			cfg.Miner.GasPrice = big.NewInt(1)
 		}
 	default:
-		if cfg.NetworkId == 1 {
-			SetDNSDiscoveryDefaults(cfg, params.MainnetGenesisHash)
-		}
 	}
 }
 
@@ -1702,21 +1542,21 @@ func SetDNSDiscoveryDefaults(cfg *ethconfig.Config, genesis common.Hash) {
 	}
 }
 
-// RegisterEthService adds an Ethereum client to the stack.
+// RegisterEthService adds an coqchain client to the stack.
 // The second return value is the full node instance, which may be nil if the
 // node is running as a light client.
-func RegisterEthService(stack *node.Node, cfg *ethconfig.Config) (ethapi.Backend, *eth.Ethereum) {
+func RegisterEthService(stack *node.Node, cfg *ethconfig.Config) (ethapi.Backend, *eth.Coqchain) {
 	if cfg.SyncMode == downloader.LightSync {
 		backend, err := les.New(stack, cfg)
 		if err != nil {
-			Fatalf("Failed to register the Ethereum service: %v", err)
+			Fatalf("Failed to register the coqchain service: %v", err)
 		}
 		stack.RegisterAPIs(tracers.APIs(backend.ApiBackend))
 		return backend.ApiBackend, nil
 	}
 	backend, err := eth.New(stack, cfg)
 	if err != nil {
-		Fatalf("Failed to register the Ethereum service: %v", err)
+		Fatalf("Failed to register the coqchain service: %v", err)
 	}
 	if cfg.LightServ > 0 {
 		_, err := les.NewLesServer(stack, backend, cfg)
@@ -1728,11 +1568,11 @@ func RegisterEthService(stack *node.Node, cfg *ethconfig.Config) (ethapi.Backend
 	return backend.APIBackend, backend
 }
 
-// RegisterEthStatsService configures the Ethereum Stats daemon and adds it to
+// RegisterEthStatsService configures the coqchain Stats daemon and adds it to
 // the given node.
 func RegisterEthStatsService(stack *node.Node, backend ethapi.Backend, url string) {
 	if err := ethstats.New(stack, backend, backend.Engine(), url); err != nil {
-		Fatalf("Failed to register the Ethereum Stats service: %v", err)
+		Fatalf("Failed to register the coqchain Stats service: %v", err)
 	}
 }
 
@@ -1844,16 +1684,6 @@ func MakeChainDatabase(ctx *cli.Context, stack *node.Node, readonly bool) ethdb.
 func MakeGenesis(ctx *cli.Context) *core.Genesis {
 	var genesis *core.Genesis
 	switch {
-	case ctx.GlobalBool(MainnetFlag.Name):
-		genesis = core.DefaultGenesisBlock()
-	case ctx.GlobalBool(RopstenFlag.Name):
-		genesis = core.DefaultRopstenGenesisBlock()
-	case ctx.GlobalBool(SepoliaFlag.Name):
-		genesis = core.DefaultSepoliaGenesisBlock()
-	case ctx.GlobalBool(RinkebyFlag.Name):
-		genesis = core.DefaultRinkebyGenesisBlock()
-	case ctx.GlobalBool(GoerliFlag.Name):
-		genesis = core.DefaultGoerliGenesisBlock()
 	case ctx.GlobalBool(DeveloperFlag.Name):
 		Fatalf("Developer chains are ephemeral")
 	}

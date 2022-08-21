@@ -1,18 +1,18 @@
-// Copyright 2021 The go-ethereum Authors
-// This file is part of the go-ethereum library.
+// Copyright 2021 The coqchain Authors
+// This file is part of the coqchain library.
 //
-// The go-ethereum library is free software: you can redistribute it and/or modify
+// The coqchain library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-ethereum library is distributed in the hope that it will be useful,
+// The coqchain library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-ethereum library. If not, see <http://www.gnu.org/licenses/>.
+// along with the coqchain library. If not, see <http://www.gnu.org/licenses/>.
 
 // This file contains a miner stress test for eip 1559.
 package main
@@ -68,7 +68,7 @@ func main() {
 
 	var (
 		stacks []*node.Node
-		nodes  []*eth.Ethereum
+		nodes  []*eth.Coqchain
 		enodes []*enode.Node
 	)
 	for i := 0; i < 4; i++ {
@@ -194,7 +194,7 @@ func makeTransaction(nonce uint64, privKey *ecdsa.PrivateKey, signer types.Signe
 // makeGenesis creates a custom Ethash genesis block based on some pre-defined
 // faucet accounts.
 func makeGenesis(faucets []*ecdsa.PrivateKey) *core.Genesis {
-	genesis := core.DefaultRopstenGenesisBlock()
+	genesis := core.DefaultGenesisBlock()
 
 	genesis.Config = params.AllEthashProtocolChanges
 	genesis.Config.LondonBlock = londonBlock
@@ -220,8 +220,8 @@ func makeGenesis(faucets []*ecdsa.PrivateKey) *core.Genesis {
 	return genesis
 }
 
-func makeMiner(genesis *core.Genesis) (*node.Node, *eth.Ethereum, error) {
-	// Define the basic configurations for the Ethereum node
+func makeMiner(genesis *core.Genesis) (*node.Node, *eth.Coqchain, error) {
+	// Define the basic configurations for the coqchain node
 	datadir, _ := ioutil.TempDir("", "")
 
 	config := &node.Config{
@@ -235,7 +235,7 @@ func makeMiner(genesis *core.Genesis) (*node.Node, *eth.Ethereum, error) {
 		},
 		UseLightweightKDF: true,
 	}
-	// Create the node and configure a full Ethereum node on it
+	// Create the node and configure a full coqchain node on it
 	stack, err := node.New(config)
 	if err != nil {
 		return nil, nil, err

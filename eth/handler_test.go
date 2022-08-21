@@ -1,18 +1,18 @@
-// Copyright 2015 The go-ethereum Authors
-// This file is part of the go-ethereum library.
+// Copyright 2015 The coqchain Authors
+// This file is part of the coqchain library.
 //
-// The go-ethereum library is free software: you can redistribute it and/or modify
+// The coqchain library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-ethereum library is distributed in the hope that it will be useful,
+// The coqchain library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-ethereum library. If not, see <http://www.gnu.org/licenses/>.
+// along with the coqchain library. If not, see <http://www.gnu.org/licenses/>.
 
 package eth
 
@@ -38,7 +38,7 @@ var (
 	// testKey is a private key to use for funding a tester account.
 	testKey, _ = crypto.HexToECDSA("b71c71a67e1177ad4e901695e1b4b9ee17ae16c6668d313eac2f96dbcda3f291")
 
-	// testAddr is the Ethereum address of the tester account.
+	// testAddr is the coqchain address of the tester account.
 	testAddr = crypto.PubkeyToAddress(testKey.PublicKey)
 )
 
@@ -112,7 +112,7 @@ func (p *testTxPool) SubscribeNewTxsEvent(ch chan<- core.NewTxsEvent) event.Subs
 	return p.txFeed.Subscribe(ch)
 }
 
-// testHandler is a live implementation of the Ethereum protocol handler, just
+// testHandler is a live implementation of the coqchain protocol handler, just
 // preinitialized with some sane testing defaults and the transaction pool mocked
 // out.
 type testHandler struct {

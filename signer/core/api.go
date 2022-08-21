@@ -1,18 +1,18 @@
-// Copyright 2018 The go-ethereum Authors
-// This file is part of the go-ethereum library.
+// Copyright 2018 The coqchain Authors
+// This file is part of the coqchain library.
 //
-// The go-ethereum library is free software: you can redistribute it and/or modify
+// The coqchain library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-ethereum library is distributed in the hope that it will be useful,
+// The coqchain library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-ethereum library. If not, see <http://www.gnu.org/licenses/>.
+// along with the coqchain library. If not, see <http://www.gnu.org/licenses/>.
 
 package core
 
@@ -27,8 +27,6 @@ import (
 
 	"github.com/Ankr-network/coqchain/accounts"
 	"github.com/Ankr-network/coqchain/accounts/keystore"
-	"github.com/Ankr-network/coqchain/accounts/scwallet"
-	"github.com/Ankr-network/coqchain/accounts/usbwallet"
 	"github.com/Ankr-network/coqchain/common"
 	"github.com/Ankr-network/coqchain/common/hexutil"
 	"github.com/Ankr-network/coqchain/internal/ethapi"
@@ -139,29 +137,6 @@ func StartClefAccountManager(ksLocation string, nousb, lightKDF bool, scpath str
 	if len(ksLocation) > 0 {
 		backends = append(backends, keystore.NewKeyStore(ksLocation, n, p))
 	}
-	if !nousb {
-		// Start a USB hub for Ledger hardware wallets
-		if ledgerhub, err := usbwallet.NewLedgerHub(); err != nil {
-			log.Warn(fmt.Sprintf("Failed to start Ledger hub, disabling: %v", err))
-		} else {
-			backends = append(backends, ledgerhub)
-			log.Debug("Ledger support enabled")
-		}
-		// Start a USB hub for Trezor hardware wallets (HID version)
-		if trezorhub, err := usbwallet.NewTrezorHubWithHID(); err != nil {
-			log.Warn(fmt.Sprintf("Failed to start HID Trezor hub, disabling: %v", err))
-		} else {
-			backends = append(backends, trezorhub)
-			log.Debug("Trezor support enabled via HID")
-		}
-		// Start a USB hub for Trezor hardware wallets (WebUSB version)
-		if trezorhub, err := usbwallet.NewTrezorHubWithWebUSB(); err != nil {
-			log.Warn(fmt.Sprintf("Failed to start WebUSB Trezor hub, disabling: %v", err))
-		} else {
-			backends = append(backends, trezorhub)
-			log.Debug("Trezor support enabled via WebUSB")
-		}
-	}
 
 	// Start a smart card hub
 	if len(scpath) > 0 {
@@ -172,12 +147,6 @@ func StartClefAccountManager(ksLocation string, nousb, lightKDF bool, scpath str
 		} else {
 			if fi.Mode()&os.ModeType != os.ModeSocket {
 				log.Error("Invalid smartcard socket file type", "path", scpath, "type", fi.Mode().String())
-			} else {
-				if schub, err := scwallet.NewHub(scpath, scwallet.Scheme, ksLocation); err != nil {
-					log.Warn(fmt.Sprintf("Failed to start smart card hub, disabling: %v", err))
-				} else {
-					backends = append(backends, schub)
-				}
 			}
 		}
 	}
@@ -284,9 +253,6 @@ func NewSignerAPI(am *accounts.Manager, chainID int64, noUSB bool, ui UIClientAP
 		log.Info("Clef is in advanced mode: will warn instead of reject")
 	}
 	signer := &SignerAPI{big.NewInt(chainID), am, ui, validator, !advancedMode, credentials}
-	if !noUSB {
-		signer.startUSBListener()
-	}
 	return signer
 }
 func (api *SignerAPI) openTrezor(url accounts.URL) {
@@ -320,23 +286,6 @@ func (api *SignerAPI) openTrezor(url accounts.URL) {
 
 }
 
-// startUSBListener starts a listener for USB events, for hardware wallet interaction
-func (api *SignerAPI) startUSBListener() {
-	eventCh := make(chan accounts.WalletEvent, 16)
-	am := api.am
-	am.Subscribe(eventCh)
-	// Open any wallets already attached
-	for _, wallet := range am.Wallets() {
-		if err := wallet.Open(""); err != nil {
-			log.Warn("Failed to open wallet", "url", wallet.URL(), "err", err)
-			if err == usbwallet.ErrTrezorPINNeeded {
-				go api.openTrezor(wallet.URL())
-			}
-		}
-	}
-	go api.derivationLoop(eventCh)
-}
-
 // derivationLoop listens for wallet events
 func (api *SignerAPI) derivationLoop(events chan accounts.WalletEvent) {
 	// Listen for wallet event till termination
@@ -345,9 +294,6 @@ func (api *SignerAPI) derivationLoop(events chan accounts.WalletEvent) {
 		case accounts.WalletArrived:
 			if err := event.Wallet.Open(""); err != nil {
 				log.Warn("New wallet appeared, failed to open", "url", event.Wallet.URL(), "err", err)
-				if err == usbwallet.ErrTrezorPINNeeded {
-					go api.openTrezor(event.Wallet.URL())
-				}
 			}
 		case accounts.WalletOpened:
 			status, _ := event.Wallet.Status()

@@ -1,18 +1,18 @@
-// Copyright 2017 The go-ethereum Authors
-// This file is part of go-ethereum.
+// Copyright 2017 The coqchain Authors
+// This file is part of coqchain.
 //
-// go-ethereum is free software: you can redistribute it and/or modify
+// coqchain is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// go-ethereum is distributed in the hope that it will be useful,
+// coqchain is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with go-ethereum. If not, see <http://www.gnu.org/licenses/>.
+// along with coqchain. If not, see <http://www.gnu.org/licenses/>.
 
 package main
 
@@ -269,7 +269,7 @@ func (w *wizard) manageGenesis() {
 		}
 		log.Info("Saved native genesis chain spec", "path", gethJson)
 
-		// Export the genesis spec used by Aleth (formerly C++ Ethereum)
+		// Export the genesis spec used by Aleth (formerly C++ coqchain)
 		if spec, err := newAlethGenesisSpec(w.network, w.conf.Genesis); err != nil {
 			log.Error("Failed to create Aleth chain spec", "err", err)
 		} else {
@@ -281,7 +281,7 @@ func (w *wizard) manageGenesis() {
 		} else {
 			saveGenesis(folder, w.network, "parity", spec)
 		}
-		// Export the genesis spec used by Harmony (formerly EthereumJ)
+		// Export the genesis spec used by Harmony (formerly coqchainJ)
 		saveGenesis(folder, w.network, "harmony", w.conf.Genesis)
 
 	case "3":

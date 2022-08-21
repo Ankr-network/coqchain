@@ -1,18 +1,18 @@
-// Copyright 2017 The go-ethereum Authors
-// This file is part of go-ethereum.
+// Copyright 2017 The coqchain Authors
+// This file is part of coqchain.
 //
-// go-ethereum is free software: you can redistribute it and/or modify
+// coqchain is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// go-ethereum is distributed in the hope that it will be useful,
+// coqchain is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with go-ethereum. If not, see <http://www.gnu.org/licenses/>.
+// along with coqchain. If not, see <http://www.gnu.org/licenses/>.
 
 package main
 
@@ -75,7 +75,7 @@ type wizard struct {
 	conf    config // Configurations from previous runs
 
 	servers  map[string]*sshClient // SSH connections to servers to administer
-	services map[string][]string   // Ethereum services known to be running on servers
+	services map[string][]string   // coqchain services known to be running on servers
 
 	lock sync.Mutex // Lock to protect configs during concurrent service discovery
 }
@@ -238,7 +238,7 @@ func (w *wizard) readPassword() string {
 }
 
 // readAddress reads a single line from stdin, trimming if from spaces and converts
-// it to an Ethereum address.
+// it to an coqchain address.
 func (w *wizard) readAddress() *common.Address {
 	for {
 		text := promptInput("> 0x")
@@ -257,7 +257,7 @@ func (w *wizard) readAddress() *common.Address {
 }
 
 // readDefaultAddress reads a single line from stdin, trimming if from spaces and
-// converts it to an Ethereum address. If an empty line is entered, the default
+// converts it to an coqchain address. If an empty line is entered, the default
 // value is returned.
 func (w *wizard) readDefaultAddress(def common.Address) common.Address {
 	for {

@@ -1,18 +1,18 @@
-// Copyright 2017 The go-ethereum Authors
-// This file is part of go-ethereum.
+// Copyright 2017 The coqchain Authors
+// This file is part of coqchain.
 //
-// go-ethereum is free software: you can redistribute it and/or modify
+// coqchain is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// go-ethereum is distributed in the hope that it will be useful,
+// coqchain is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with go-ethereum. If not, see <http://www.gnu.org/licenses/>.
+// along with coqchain. If not, see <http://www.gnu.org/licenses/>.
 
 package main
 
@@ -65,7 +65,7 @@ services:
             - VIRTUAL_HOST={{.VHost}}
             - VIRTUAL_PORT=4000{{end}}
         volumes:
-            - {{.Datadir}}:/opt/app/.ethereum
+            - {{.Datadir}}:/opt/app/.coqchain
             - {{.DBDir}}:/var/lib/postgresql/data
         logging:
           driver: "json-file"
@@ -139,7 +139,7 @@ func (info *explorerInfos) Report() map[string]string {
 	report := map[string]string{
 		"Website address ":        info.host,
 		"Website listener port ":  strconv.Itoa(info.port),
-		"Ethereum listener port ": strconv.Itoa(info.node.port),
+		"coqchain listener port ": strconv.Itoa(info.node.port),
 		"Ethstats username":       info.node.ethstats,
 	}
 	return report
@@ -182,7 +182,7 @@ func checkExplorer(client *sshClient, network string) (*explorerInfos, error) {
 	// Assemble and return the useful infos
 	stats := &explorerInfos{
 		node: &nodeInfos{
-			datadir:  infos.volumes["/opt/app/.ethereum"],
+			datadir:  infos.volumes["/opt/app/.coqchain"],
 			port:     infos.portmap[infos.envvars["ETH_PORT"]+"/tcp"],
 			ethstats: infos.envvars["ETH_NAME"],
 		},

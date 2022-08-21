@@ -1,23 +1,22 @@
-// Copyright 2018 The go-ethereum Authors
-// This file is part of the go-ethereum library.
+// Copyright 2018 The coqchain Authors
+// This file is part of the coqchain library.
 //
-// The go-ethereum library is free software: you can redistribute it and/or modify
+// The coqchain library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-ethereum library is distributed in the hope that it will be useful,
+// The coqchain library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-ethereum library. If not, see <http://www.gnu.org/licenses/>.
+// along with the coqchain library. If not, see <http://www.gnu.org/licenses/>.
 
 package rawdb
 
 import (
-	"bytes"
 	"hash"
 	"math/big"
 	"testing"
@@ -25,7 +24,6 @@ import (
 	"github.com/Ankr-network/coqchain/common"
 	"github.com/Ankr-network/coqchain/core/types"
 	"github.com/Ankr-network/coqchain/ethdb"
-	"github.com/Ankr-network/coqchain/params"
 	"github.com/Ankr-network/coqchain/rlp"
 	"golang.org/x/crypto/sha3"
 )
@@ -133,47 +131,4 @@ func TestLookupStorage(t *testing.T) {
 			}
 		})
 	}
-}
-
-func TestDeleteBloomBits(t *testing.T) {
-	// Prepare testing data
-	db := NewMemoryDatabase()
-	for i := uint(0); i < 2; i++ {
-		for s := uint64(0); s < 2; s++ {
-			WriteBloomBits(db, i, s, params.MainnetGenesisHash, []byte{0x01, 0x02})
-			WriteBloomBits(db, i, s, params.RinkebyGenesisHash, []byte{0x01, 0x02})
-		}
-	}
-	check := func(bit uint, section uint64, head common.Hash, exist bool) {
-		bits, _ := ReadBloomBits(db, bit, section, head)
-		if exist && !bytes.Equal(bits, []byte{0x01, 0x02}) {
-			t.Fatalf("Bloombits mismatch")
-		}
-		if !exist && len(bits) > 0 {
-			t.Fatalf("Bloombits should be removed")
-		}
-	}
-	// Check the existence of written data.
-	check(0, 0, params.MainnetGenesisHash, true)
-	check(0, 0, params.RinkebyGenesisHash, true)
-
-	// Check the existence of deleted data.
-	DeleteBloombits(db, 0, 0, 1)
-	check(0, 0, params.MainnetGenesisHash, false)
-	check(0, 0, params.RinkebyGenesisHash, false)
-	check(0, 1, params.MainnetGenesisHash, true)
-	check(0, 1, params.RinkebyGenesisHash, true)
-
-	// Check the existence of deleted data.
-	DeleteBloombits(db, 0, 0, 2)
-	check(0, 0, params.MainnetGenesisHash, false)
-	check(0, 0, params.RinkebyGenesisHash, false)
-	check(0, 1, params.MainnetGenesisHash, false)
-	check(0, 1, params.RinkebyGenesisHash, false)
-
-	// Bit1 shouldn't be affect.
-	check(1, 0, params.MainnetGenesisHash, true)
-	check(1, 0, params.RinkebyGenesisHash, true)
-	check(1, 1, params.MainnetGenesisHash, true)
-	check(1, 1, params.RinkebyGenesisHash, true)
 }

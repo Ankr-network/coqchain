@@ -1,18 +1,18 @@
-// Copyright 2016 The go-ethereum Authors
-// This file is part of the go-ethereum library.
+// Copyright 2016 The coqchain Authors
+// This file is part of the coqchain library.
 //
-// The go-ethereum library is free software: you can redistribute it and/or modify
+// The coqchain library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-ethereum library is distributed in the hope that it will be useful,
+// The coqchain library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-ethereum library. If not, see <http://www.gnu.org/licenses/>.
+// along with the coqchain library. If not, see <http://www.gnu.org/licenses/>.
 
 package console
 
@@ -24,19 +24,17 @@ import (
 	"strings"
 	"time"
 
-	"github.com/dop251/goja"
-	"github.com/Ankr-network/coqchain/accounts/scwallet"
-	"github.com/Ankr-network/coqchain/accounts/usbwallet"
 	"github.com/Ankr-network/coqchain/common/hexutil"
 	"github.com/Ankr-network/coqchain/console/prompt"
 	"github.com/Ankr-network/coqchain/internal/jsre"
 	"github.com/Ankr-network/coqchain/rpc"
+	"github.com/dop251/goja"
 )
 
 // bridge is a collection of JavaScript utility methods to bride the .js runtime
 // environment and the Go RPC connection backing the remote method calls.
 type bridge struct {
-	client   *rpc.Client         // RPC client to execute Ethereum requests through
+	client   *rpc.Client         // RPC client to execute coqchain requests through
 	prompter prompt.UserPrompter // Input prompter to allow interactive user feedback
 	printer  io.Writer           // Output writer to serialize any display strings to
 }
@@ -122,71 +120,6 @@ func (b *bridge) OpenWallet(call jsre.Call) (goja.Value, error) {
 		return val, nil
 	}
 
-	// Wallet open failed, report error unless it's a PIN or PUK entry
-	switch {
-	case strings.HasSuffix(err.Error(), usbwallet.ErrTrezorPINNeeded.Error()):
-		val, err = b.readPinAndReopenWallet(call)
-		if err == nil {
-			return val, nil
-		}
-		val, err = b.readPassphraseAndReopenWallet(call)
-		if err != nil {
-			return nil, err
-		}
-
-	case strings.HasSuffix(err.Error(), scwallet.ErrPairingPasswordNeeded.Error()):
-		// PUK input requested, fetch from the user and call open again
-		input, err := b.prompter.PromptPassword("Please enter the pairing password: ")
-		if err != nil {
-			return nil, err
-		}
-		passwd = call.VM.ToValue(input)
-		if val, err = openWallet(goja.Null(), wallet, passwd); err != nil {
-			if !strings.HasSuffix(err.Error(), scwallet.ErrPINNeeded.Error()) {
-				return nil, err
-			}
-			// PIN input requested, fetch from the user and call open again
-			input, err := b.prompter.PromptPassword("Please enter current PIN: ")
-			if err != nil {
-				return nil, err
-			}
-			if val, err = openWallet(goja.Null(), wallet, call.VM.ToValue(input)); err != nil {
-				return nil, err
-			}
-		}
-
-	case strings.HasSuffix(err.Error(), scwallet.ErrPINUnblockNeeded.Error()):
-		// PIN unblock requested, fetch PUK and new PIN from the user
-		var pukpin string
-		input, err := b.prompter.PromptPassword("Please enter current PUK: ")
-		if err != nil {
-			return nil, err
-		}
-		pukpin = input
-		input, err = b.prompter.PromptPassword("Please enter new PIN: ")
-		if err != nil {
-			return nil, err
-		}
-		pukpin += input
-
-		if val, err = openWallet(goja.Null(), wallet, call.VM.ToValue(pukpin)); err != nil {
-			return nil, err
-		}
-
-	case strings.HasSuffix(err.Error(), scwallet.ErrPINNeeded.Error()):
-		// PIN input requested, fetch from the user and call open again
-		input, err := b.prompter.PromptPassword("Please enter current PIN: ")
-		if err != nil {
-			return nil, err
-		}
-		if val, err = openWallet(goja.Null(), wallet, call.VM.ToValue(input)); err != nil {
-			return nil, err
-		}
-
-	default:
-		// Unknown error occurred, drop to the user
-		return nil, err
-	}
 	return val, nil
 }
 

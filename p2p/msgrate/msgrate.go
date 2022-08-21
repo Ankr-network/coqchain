@@ -1,18 +1,18 @@
-// Copyright 2021 The go-ethereum Authors
-// This file is part of the go-ethereum library.
+// Copyright 2021 The coqchain Authors
+// This file is part of the coqchain library.
 //
-// The go-ethereum library is free software: you can redistribute it and/or modify
+// The coqchain library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-ethereum library is distributed in the hope that it will be useful,
+// The coqchain library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-ethereum library. If not, see <http://www.gnu.org/licenses/>.
+// along with the coqchain library. If not, see <http://www.gnu.org/licenses/>.
 
 // Package msgrate allows estimating the throughput of peers for more balanced syncs.
 package msgrate
@@ -30,7 +30,7 @@ import (
 // measurementImpact is the impact a single measurement has on a peer's final
 // capacity value. A value closer to 0 reacts slower to sudden network changes,
 // but it is also more stable against temporary hiccups. 0.1 worked well for
-// most of Ethereum's existence, so might as well go with it.
+// most of coqchain's existence, so might as well go with it.
 const measurementImpact = 0.1
 
 // capacityOverestimation is the ratio of items to over-estimate when retrieving
@@ -39,7 +39,7 @@ const measurementImpact = 0.1
 const capacityOverestimation = 1.01
 
 // qosTuningPeers is the number of best peers to tune round trip times based on.
-// An Ethereum node doesn't need hundreds of connections to operate correctly,
+// An coqchain node doesn't need hundreds of connections to operate correctly,
 // so instead of lowering our download speed to the median of potentially many
 // bad nodes, we can target a smaller set of vey good nodes. At worse this will
 // result in less nodes to sync from, but that's still better than some hogging

@@ -1,18 +1,18 @@
-// Copyright 2016 The go-ethereum Authors
-// This file is part of go-ethereum.
+// Copyright 2016 The coqchain Authors
+// This file is part of coqchain.
 //
-// go-ethereum is free software: you can redistribute it and/or modify
+// coqchain is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// go-ethereum is distributed in the hope that it will be useful,
+// coqchain is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with go-ethereum. If not, see <http://www.gnu.org/licenses/>.
+// along with coqchain. If not, see <http://www.gnu.org/licenses/>.
 
 package main
 
@@ -45,11 +45,11 @@ var (
 	// Flags needed by abigen
 	abiFlag = cli.StringFlag{
 		Name:  "abi",
-		Usage: "Path to the Ethereum contract ABI json to bind, - for STDIN",
+		Usage: "Path to the coqchain contract ABI json to bind, - for STDIN",
 	}
 	binFlag = cli.StringFlag{
 		Name:  "bin",
-		Usage: "Path to the Ethereum contract bytecode (generate deploy method)",
+		Usage: "Path to the coqchain contract bytecode (generate deploy method)",
 	}
 	typeFlag = cli.StringFlag{
 		Name:  "type",
@@ -61,7 +61,7 @@ var (
 	}
 	solFlag = cli.StringFlag{
 		Name:  "sol",
-		Usage: "Path to the Ethereum contract Solidity source to build and bind",
+		Usage: "Path to the coqchain contract Solidity source to build and bind",
 	}
 	solcFlag = cli.StringFlag{
 		Name:  "solc",
@@ -70,7 +70,7 @@ var (
 	}
 	vyFlag = cli.StringFlag{
 		Name:  "vy",
-		Usage: "Path to the Ethereum contract Vyper source to build and bind",
+		Usage: "Path to the coqchain contract Vyper source to build and bind",
 	}
 	vyperFlag = cli.StringFlag{
 		Name:  "vyper",
@@ -101,7 +101,7 @@ var (
 )
 
 func init() {
-	app = flags.NewApp(gitCommit, gitDate, "ethereum checkpoint helper tool")
+	app = flags.NewApp(gitCommit, gitDate, "coqchain checkpoint helper tool")
 	app.Flags = []cli.Flag{
 		abiFlag,
 		binFlag,

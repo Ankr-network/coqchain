@@ -1,18 +1,18 @@
-// Copyright 2017 The go-ethereum Authors
-// This file is part of go-ethereum.
+// Copyright 2017 The coqchain Authors
+// This file is part of coqchain.
 //
-// go-ethereum is free software: you can redistribute it and/or modify
+// coqchain is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// go-ethereum is distributed in the hope that it will be useful,
+// coqchain is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with go-ethereum. If not, see <http://www.gnu.org/licenses/>.
+// along with coqchain. If not, see <http://www.gnu.org/licenses/>.
 
 package main
 
@@ -83,9 +83,9 @@ var dashboardContent = `
 									{{if .FaucetPage}}<li id="faucet_menu"><a onclick="load('#faucet')"><i class="fa fa-bath"></i> Crypto Faucet</a></li>{{end}}
 									<li id="connect_menu"><a><i class="fa fa-plug"></i> Connect Yourself</a>
 										<ul id="connect_list" class="nav child_menu">
-											<li><a onclick="$('#connect_menu').removeClass('active'); $('#connect_list').toggle(); load('#geth')">Go Ethereum: Geth</a></li>
-											<li><a onclick="$('#connect_menu').removeClass('active'); $('#connect_list').toggle(); load('#mobile')">Go Ethereum: Android & iOS</a></li>{{if .Ethash}}
-											<li><a onclick="$('#connect_menu').removeClass('active'); $('#connect_list').toggle(); load('#other')">Other Ethereum Clients</a></li>{{end}}
+											<li><a onclick="$('#connect_menu').removeClass('active'); $('#connect_list').toggle(); load('#geth')">Go coqchain: Geth</a></li>
+											<li><a onclick="$('#connect_menu').removeClass('active'); $('#connect_list').toggle(); load('#mobile')">Go coqchain: Android & iOS</a></li>{{if .Ethash}}
+											<li><a onclick="$('#connect_menu').removeClass('active'); $('#connect_list').toggle(); load('#other')">Other coqchain Clients</a></li>{{end}}
 										</ul>
 									</li>
 									<li id="about_menu"><a onclick="load('#about')"><i class="fa fa-heartbeat"></i> About Puppeth</a></li>
@@ -98,7 +98,7 @@ var dashboardContent = `
 					<div id="geth" hidden style="padding: 16px;">
 						<div class="page-title">
 							<div class="title_left">
-								<h3>Connect Yourself &ndash; Go Ethereum: Geth</h3>
+								<h3>Connect Yourself &ndash; Go coqchain: Geth</h3>
 							</div>
 						</div>
 						<div class="clearfix"></div>
@@ -118,7 +118,7 @@ var dashboardContent = `
 											<pre>geth --networkid={{.NetworkID}} --datadir=$HOME/.{{.Network}} --cache=1024 --syncmode=full{{if .Ethstats}} --ethstats='{{.Ethstats}}'{{end}} --bootnodes={{.BootnodesFlat}}</pre>
 										</p>
 										<br/>
-										<p>You can download Geth from <a href="https://geth.ethereum.org/downloads/" target="about:blank">https://geth.ethereum.org/downloads/</a>.</p>
+										<p>You can download Geth from <a href="https://geth.coqchain.org/downloads/" target="about:blank">https://geth.coqchain.org/downloads/</a>.</p>
 									</div>
 								</div>
 							</div>
@@ -137,7 +137,7 @@ var dashboardContent = `
 											<pre>geth --networkid={{.NetworkID}} --datadir=$HOME/.{{.Network}} --cache=512{{if .Ethstats}} --ethstats='{{.Ethstats}}'{{end}} --bootnodes={{.BootnodesFlat}}</pre>
 										</p>
 										<br/>
-										<p>You can download Geth from <a href="https://geth.ethereum.org/downloads/" target="about:blank">https://geth.ethereum.org/downloads/</a>.</p>
+										<p>You can download Geth from <a href="https://geth.coqchain.org/downloads/" target="about:blank">https://geth.coqchain.org/downloads/</a>.</p>
 									</div>
 								</div>
 							</div>
@@ -159,7 +159,7 @@ var dashboardContent = `
 											<pre>geth --networkid={{.NetworkID}} --datadir=$HOME/.{{.Network}} --syncmode=light{{if .Ethstats}} --ethstats='{{.Ethstats}}'{{end}} --bootnodes={{.BootnodesFlat}}</pre>
 										</p>
 										<br/>
-										<p>You can download Geth from <a href="https://geth.ethereum.org/downloads/" target="about:blank">https://geth.ethereum.org/downloads/</a>.</p>
+										<p>You can download Geth from <a href="https://geth.coqchain.org/downloads/" target="about:blank">https://geth.coqchain.org/downloads/</a>.</p>
 									</div>
 								</div>
 							</div>
@@ -178,7 +178,7 @@ var dashboardContent = `
 											<pre>geth --networkid={{.NetworkID}} --datadir=$HOME/.{{.Network}} --cache=16 --ethash.cachesinmem=1 --syncmode=light{{if .Ethstats}} --ethstats='{{.Ethstats}}'{{end}} --bootnodes={{.BootnodesFlat}}</pre>
 										</p>
 										<br/>
-										<p>You can download Geth from <a href="https://geth.ethereum.org/downloads/" target="about:blank">https://geth.ethereum.org/downloads/</a>.</p>
+										<p>You can download Geth from <a href="https://geth.coqchain.org/downloads/" target="about:blank">https://geth.coqchain.org/downloads/</a>.</p>
 									</div>
 								</div>
 							</div>
@@ -187,7 +187,7 @@ var dashboardContent = `
 					<div id="mobile" hidden style="padding: 16px;">
 						<div class="page-title">
 							<div class="title_left">
-								<h3>Connect Yourself &ndash; Go Ethereum: Android &amp; iOS</h3>
+								<h3>Connect Yourself &ndash; Go coqchain: Android &amp; iOS</h3>
 							</div>
 						</div>
 						<div class="clearfix"></div>
@@ -195,26 +195,26 @@ var dashboardContent = `
 							<div class="col-md-6">
 								<div class="x_panel">
 									<div class="x_title">
-										<h2><i class="fa fa-android" aria-hidden="true"></i> Android devices <small>Accesses Ethereum via Java</small></h2>
+										<h2><i class="fa fa-android" aria-hidden="true"></i> Android devices <small>Accesses coqchain via Java</small></h2>
 										<div class="clearfix"></div>
 									</div>
 									<div class="x_content">
-										<p>Starting with the 1.5 release of go-ethereum, we've transitioned away from shipping only full blown Ethereum clients and started focusing on releasing the code as reusable packages initially for Go projects, then later for Java based Android projects too. Mobile support is still evolving, hence is bound to change often and hard, but the Ethereum network can nonetheless be accessed from Android too.</p>
-										<p>Under the hood the Android library is backed by a go-ethereum light node, meaning that given a not-too-old Android device, you should be able to join the network without significant issues. Certain functionality is not yet available and rough edges are bound to appear here and there, please report issues if you find any.</p>
+										<p>Starting with the 1.5 release of coqchain, we've transitioned away from shipping only full blown coqchain clients and started focusing on releasing the code as reusable packages initially for Go projects, then later for Java based Android projects too. Mobile support is still evolving, hence is bound to change often and hard, but the coqchain network can nonetheless be accessed from Android too.</p>
+										<p>Under the hood the Android library is backed by a coqchain light node, meaning that given a not-too-old Android device, you should be able to join the network without significant issues. Certain functionality is not yet available and rough edges are bound to appear here and there, please report issues if you find any.</p>
 										<br/>
 										<p>The stable Android archives are distributed via Maven Central, and the develop snapshots via the Sonatype repositories. Before proceeding, please ensure you have a recent version configured in your Android project. You can find details in <a href="https://github.com/Ankr-network/coqchain/wiki/Mobile:-Introduction#android-archive" target="about:blank">Mobile: Introduction &ndash; Android archive</a>.
-										<p>Before connecting to the Ethereum network, download the <a href="/{{.GethGenesis}}"><code>{{.GethGenesis}}</code></a> genesis json file and either store it in your Android project as a resource file you can access, or save it as a string in a variable. You're going to need to initialize your client.</p>
-										<p>Inside your Java code you can now import the geth archive and connect to Ethereum:
-											<pre>import org.ethereum.geth.*;</pre>
+										<p>Before connecting to the coqchain network, download the <a href="/{{.GethGenesis}}"><code>{{.GethGenesis}}</code></a> genesis json file and either store it in your Android project as a resource file you can access, or save it as a string in a variable. You're going to need to initialize your client.</p>
+										<p>Inside your Java code you can now import the geth archive and connect to coqchain:
+											<pre>import org.coqchain.geth.*;</pre>
 <pre>
 Enodes bootnodes = new Enodes();{{range .Bootnodes}}
 bootnodes.append(new Enode("{{.}}"));{{end}}
 
 NodeConfig config = new NodeConfig();
 config.setBootstrapNodes(bootnodes);
-config.setEthereumNetworkID({{.NetworkID}});
-config.setEthereumGenesis(genesis);{{if .Ethstats}}
-config.setEthereumNetStats("{{.Ethstats}}");{{end}}
+config.setcoqchainNetworkID({{.NetworkID}});
+config.setcoqchainGenesis(genesis);{{if .Ethstats}}
+config.setcoqchainNetStats("{{.Ethstats}}");{{end}}
 
 Node node = new Node(getFilesDir() + "/.{{.Network}}", config);
 node.start();
@@ -226,16 +226,16 @@ node.start();
 							<div class="col-md-6">
 								<div class="x_panel">
 									<div class="x_title">
-										<h2><i class="fa fa-apple" aria-hidden="true"></i> iOS devices <small>Accesses Ethereum via ObjC/Swift</small></h2>
+										<h2><i class="fa fa-apple" aria-hidden="true"></i> iOS devices <small>Accesses coqchain via ObjC/Swift</small></h2>
 										<div class="clearfix"></div>
 									</div>
 									<div class="x_content">
-										<p>Starting with the 1.5 release of go-ethereum, we've transitioned away from shipping only full blown Ethereum clients and started focusing on releasing the code as reusable packages initially for Go projects, then later for ObjC/Swift based iOS projects too. Mobile support is still evolving, hence is bound to change often and hard, but the Ethereum network can nonetheless be accessed from iOS too.</p>
-										<p>Under the hood the iOS library is backed by a go-ethereum light node, meaning that given a not-too-old Apple device, you should be able to join the network without significant issues. Certain functionality is not yet available and rough edges are bound to appear here and there, please report issues if you find any.</p>
+										<p>Starting with the 1.5 release of coqchain, we've transitioned away from shipping only full blown coqchain clients and started focusing on releasing the code as reusable packages initially for Go projects, then later for ObjC/Swift based iOS projects too. Mobile support is still evolving, hence is bound to change often and hard, but the coqchain network can nonetheless be accessed from iOS too.</p>
+										<p>Under the hood the iOS library is backed by a coqchain light node, meaning that given a not-too-old Apple device, you should be able to join the network without significant issues. Certain functionality is not yet available and rough edges are bound to appear here and there, please report issues if you find any.</p>
 										<br/>
 										<p>Both stable and develop builds of the iOS framework are available via CocoaPods. Before proceeding, please ensure you have a recent version configured in your iOS project. You can find details in <a href="https://github.com/Ankr-network/coqchain/wiki/Mobile:-Introduction#ios-framework" target="about:blank">Mobile: Introduction &ndash; iOS framework</a>.
-										<p>Before connecting to the Ethereum network, download the <a href="/{{.GethGenesis}}"><code>{{.GethGenesis}}</code></a> genesis json file and either store it in your iOS project as a resource file you can access, or save it as a string in a variable. You're going to need to initialize your client.</p>
-										<p>Inside your Swift code you can now import the geth framework and connect to Ethereum (ObjC should be analogous):
+										<p>Before connecting to the coqchain network, download the <a href="/{{.GethGenesis}}"><code>{{.GethGenesis}}</code></a> genesis json file and either store it in your iOS project as a resource file you can access, or save it as a string in a variable. You're going to need to initialize your client.</p>
+										<p>Inside your Swift code you can now import the geth framework and connect to coqchain (ObjC should be analogous):
 											<pre>import Geth</pre>
 <pre>
 var error: NSError?
@@ -245,9 +245,9 @@ bootnodes?.append(GethNewEnode("{{.}}", &error)){{end}}
 
 let config = GethNewNodeConfig()
 config?.setBootstrapNodes(bootnodes)
-config?.setEthereumNetworkID({{.NetworkID}})
-config?.setEthereumGenesis(genesis){{if .Ethstats}}
-config?.setEthereumNetStats("{{.Ethstats}}"){{end}}
+config?.setcoqchainNetworkID({{.NetworkID}})
+config?.setcoqchainGenesis(genesis){{if .Ethstats}}
+config?.setcoqchainNetStats("{{.Ethstats}}"){{end}}
 
 let datadir = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0]
 let node = GethNewNode(datadir + "/.{{.Network}}", config, &error);
@@ -262,7 +262,7 @@ try! node?.start();
 					<div id="other" hidden style="padding: 16px;">
 						<div class="page-title">
 							<div class="title_left">
-								<h3>Connect Yourself &ndash; Other Ethereum Clients</h3>
+								<h3>Connect Yourself &ndash; Other coqchain Clients</h3>
 							</div>
 						</div>
 						<div class="clearfix"></div>
@@ -272,18 +272,18 @@ try! node?.start();
 									<div class="x_title">
 										<h2>
 											<svg height="14px" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 115 115"><path fill="#5C8DBC" d="M9.7 83.3V35.5s0-3.4 3.3-5.2c3.3-1.8 39.6-23.5 39.6-23.5s4.6-3.1 9.4 0c0 0 43.1 23.9 42.4 25.3L85.3 43.3s-3.6-8.4-13.1-13c-11.3-5.5-29.7-6.2-42.9 13.3 0 0-8.6 13.5.3 31.6l-19 10.7s-.9-.6-.9-2.6z"/><path fill="#5C8DBC" d="M71 51.3c-2.8-4.7-7.9-7.9-13.8-7.9-8.8 0-16 7.2-16 16 0 2.8.7 5.4 2 7.7L71 51.3z"/><path fill="#194674" d="M43.1 67c2.8 4.7 7.9 7.9 13.8 7.9 8.8 0 16-7.2 16-16 0-2.8-.7-5.4-2-7.7L43.1 67z"/><path fill="#1B598E" d="M104.4 32.1s1.3 52.6-.3 53.6L58 58.6l46.4-26.5z"/><path fill="#FFF" d="M90 57h-3.9v-4.1h-4.2V57h-4v4.1h4V65h4.2v-3.9H90zm13.6 0h-3.9v-4.1h-4.2V57h-4v4.1h4V65h4.2v-3.9h3.9z"/><path fill="#194674" d="M29.5 75.1s9.2 17 28.5 16.1 27.3-16.6 27.3-16.6L104 85.4s4.1.8-41.6 25.7c0 0-4.9 3.3-10.2 0 0 0-41.3-23.1-41.6-25.3l18.9-10.7z"/></svg>
-											C++ Ethereum <small>Official C++ client from the Ethereum Foundation</small>
+											C++ coqchain <small>Official C++ client from the coqchain Foundation</small>
 										</h2>
 										<div class="clearfix"></div>
 									</div>
 									<div class="x_content">
-										<p>C++ Ethereum is the third most popular of the Ethereum clients, focusing on code portability to a broad range of operating systems and hardware. The client is currently a full node with transaction processing based synchronization.</p>
+										<p>C++ coqchain is the third most popular of the coqchain clients, focusing on code portability to a broad range of operating systems and hardware. The client is currently a full node with transaction processing based synchronization.</p>
 										<br/>
-										<p>To run a cpp-ethereum node, download <a href="/{{.CppGenesis}}"><code>{{.CppGenesis}}</code></a> and start the node with:
+										<p>To run a cpp-coqchain node, download <a href="/{{.CppGenesis}}"><code>{{.CppGenesis}}</code></a> and start the node with:
 											<pre>eth --config {{.CppGenesis}} --datadir $HOME/.{{.Network}} --peerset "{{.CppBootnodes}}"</pre>
 										</p>
 										<br/>
-										<p>You can find cpp-ethereum at <a href="https://github.com/ethereum/cpp-ethereum/" target="about:blank">https://github.com/ethereum/cpp-ethereum/</a>.</p>
+										<p>You can find cpp-coqchain at <a href="https://github.com/coqchain/cpp-coqchain/" target="about:blank">https://github.com/coqchain/cpp-coqchain/</a>.</p>
 									</div>
 								</div>
 							</div>
@@ -292,18 +292,18 @@ try! node?.start();
 									<div class="x_title">
 										<h2>
 											<svg height="14px" version="1.1" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><path d="M46.42,13.07S24.51,18.54,35,30.6c3.09,3.55-.81,6.75-0.81,6.75s7.84-4,4.24-9.11C35,23.51,32.46,21.17,46.42,13.07ZM32.1,16.88C45.05,6.65,38.4,0,38.4,0c2.68,10.57-9.46,13.76-13.84,20.34-3,4.48,1.46,9.3,7.53,14.77C29.73,29.77,21.71,25.09,32.1,16.88Z" transform="translate(-8.4)" fill="#e57125"/><path d="M23.6,49.49c-9.84,2.75,6,8.43,18.51,3.06a23.06,23.06,0,0,1-3.52-1.72,36.62,36.62,0,0,1-13.25.56C21.16,50.92,23.6,49.49,23.6,49.49Zm17-5.36a51.7,51.7,0,0,1-17.1.82c-4.19-.43-1.45-2.46-1.45-2.46-10.84,3.6,6,7.68,21.18,3.25A7.59,7.59,0,0,1,40.62,44.13ZM51.55,54.68s1.81,1.49-2,2.64c-7.23,2.19-30.1,2.85-36.45.09-2.28-1,2-2.37,3.35-2.66a8.69,8.69,0,0,1,2.21-.25c-2.54-1.79-16.41,3.51-7,5C37.15,63.67,58.17,57.67,51.55,54.68ZM42.77,39.12a20.42,20.42,0,0,1,2.93-1.57s-4.83.86-9.65,1.27A87.37,87.37,0,0,1,20.66,39c-7.51-1,4.12-3.77,4.12-3.77A22,22,0,0,0,14.7,37.61C8.14,40.79,31,42.23,42.77,39.12Zm2.88,7.77a1,1,0,0,1-.24.31C61.44,43,55.54,32.35,47.88,35a2.19,2.19,0,0,0-1,.79,9,9,0,0,1,1.37-.37C52.1,34.66,57.65,40.65,45.64,46.89Zm0.43,14.75a94.76,94.76,0,0,1-29.17.45s1.47,1.22,9,1.7c11.53,0.74,29.22-.41,29.64-5.86C55.6,57.94,54.79,60,46.08,61.65Z" transform="translate(-8.4)" fill="#5482a2"/></svg>
-											Ethereum Harmony<small>Third party Java client from EtherCamp</small>
+											coqchain Harmony<small>Third party Java client from EtherCamp</small>
 										</h2>
 										<div class="clearfix"></div>
 									</div>
 									<div class="x_content">
-										<p>Ethereum Harmony is a web user-interface based graphical Ethereum client built on top of the EthereumJ Java implementation of the Ethereum protocol. The client currently is a full node with state download based synchronization.</p>
+										<p>coqchain Harmony is a web user-interface based graphical coqchain client built on top of the coqchainJ Java implementation of the coqchain protocol. The client currently is a full node with state download based synchronization.</p>
 										<br/>
-										<p>To run an Ethereum Harmony node, download <a href="/{{.HarmonyGenesis}}"><code>{{.HarmonyGenesis}}</code></a> and start the node with:
+										<p>To run an coqchain Harmony node, download <a href="/{{.HarmonyGenesis}}"><code>{{.HarmonyGenesis}}</code></a> and start the node with:
 											<pre>./gradlew runCustom -DgenesisFile={{.HarmonyGenesis}} -Dpeer.networkId={{.NetworkID}} -Ddatabase.dir=$HOME/.harmony/{{.Network}} {{.HarmonyBootnodes}} </pre>
 										</p>
 										<br/>
-										<p>You can find Ethereum Harmony at <a href="https://github.com/ether-camp/ethereum-harmony/" target="about:blank">https://github.com/ether-camp/ethereum-harmony/</a>.</p>
+										<p>You can find coqchain Harmony at <a href="https://github.com/ether-camp/coqchain-harmony/" target="about:blank">https://github.com/ether-camp/coqchain-harmony/</a>.</p>
 									</div>
 								</div>
 							</div>
@@ -320,7 +320,7 @@ try! node?.start();
 										<div class="clearfix"></div>
 									</div>
 									<div class="x_content">
-										<p>Parity is a fast, light and secure Ethereum client, supporting both headless mode of operation as well as a web user interface for direct manual interaction. The client is currently a full node with transaction processing based synchronization and state pruning enabled.</p>
+										<p>Parity is a fast, light and secure coqchain client, supporting both headless mode of operation as well as a web user interface for direct manual interaction. The client is currently a full node with transaction processing based synchronization and state pruning enabled.</p>
 										<br/>
 										<p>To run a Parity node, download <a href="/{{.ParityGenesis}}"><code>{{.ParityGenesis}}</code></a> and start the node with:
 											<pre>parity --chain={{.ParityGenesis}}</pre>
@@ -335,19 +335,19 @@ try! node?.start();
 									<div class="x_title">
 										<h2>
 											<svg height="14px" version="1.1" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><defs><linearGradient id="a" x1="13.79" y1="38.21" x2="75.87" y2="-15.2" gradientTransform="matrix(0.56, 0, 0, -0.57, -8.96, 23.53)" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#5c9fd3"/><stop offset="1" stop-color="#316a99"/></linearGradient><linearGradient id="b" x1="99.87" y1="-47.53" x2="77.7" y2="-16.16" gradientTransform="matrix(0.56, 0, 0, -0.57, -8.96, 23.53)" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#ffd43d"/><stop offset="1" stop-color="#fee875"/></linearGradient></defs><g><path d="M31.62,0a43.6,43.6,0,0,0-7.3.62c-6.46,1.14-7.63,3.53-7.63,7.94v5.82H32v1.94H11a9.53,9.53,0,0,0-9.54,7.74,28.54,28.54,0,0,0,0,15.52c1.09,4.52,3.68,7.74,8.11,7.74h5.25v-7a9.7,9.7,0,0,1,9.54-9.48H39.58a7.69,7.69,0,0,0,7.63-7.76V8.56c0-4.14-3.49-7.25-7.63-7.94A47.62,47.62,0,0,0,31.62,0ZM23.37,4.68A2.91,2.91,0,1,1,20.5,7.6,2.9,2.9,0,0,1,23.37,4.68Z" transform="translate(-0.35)" fill="url(#a)"/><path d="M49.12,16.32V23.1a9.79,9.79,0,0,1-9.54,9.68H24.33a7.79,7.79,0,0,0-7.63,7.76V55.08c0,4.14,3.6,6.57,7.63,7.76a25.55,25.55,0,0,0,15.25,0c3.84-1.11,7.63-3.35,7.63-7.76V49.26H32V47.32H54.85c4.44,0,6.09-3.1,7.63-7.74s1.53-9.38,0-15.52c-1.1-4.42-3.19-7.74-7.63-7.74H49.12ZM40.54,53.14A2.91,2.91,0,1,1,37.67,56,2.88,2.88,0,0,1,40.54,53.14Z" transform="translate(-0.35)" fill="url(#b)"/></g></svg>
-											PyEthApp<small>Official Python client from the Ethereum Foundation</small>
+											PyEthApp<small>Official Python client from the coqchain Foundation</small>
 										</h2>
 										<div class="clearfix"></div>
 									</div>
 									<div class="x_content">
-										<p>Pyethapp is the Ethereum Foundation's research client, aiming to provide an easily hackable and extendable codebase. The client is currently a full node with transaction processing based synchronization and state pruning enabled.</p>
+										<p>Pyethapp is the coqchain Foundation's research client, aiming to provide an easily hackable and extendable codebase. The client is currently a full node with transaction processing based synchronization and state pruning enabled.</p>
 										<br/>
 										<p>To run a pyethapp node, download <a href="/{{.PythonGenesis}}"><code>{{.PythonGenesis}}</code></a> and start the node with:
 											<pre>mkdir -p $HOME/.config/pyethapp/{{.Network}}</pre>
 											<pre>pyethapp -c eth.genesis="$(cat {{.PythonGenesis}})" -c eth.network_id={{.NetworkID}} -c data_dir=$HOME/.config/pyethapp/{{.Network}} -c discovery.bootstrap_nodes="[{{.PythonBootnodes}}]" -c eth.block.HOMESTEAD_FORK_BLKNUM={{.Homestead}} -c eth.block.ANTI_DOS_FORK_BLKNUM={{.Tangerine}} -c eth.block.SPURIOUS_DRAGON_FORK_BLKNUM={{.Spurious}} -c eth.block.METROPOLIS_FORK_BLKNUM={{.Byzantium}} -c eth.block.DAO_FORK_BLKNUM=18446744073709551615 run --console</pre>
 										</p>
 										<br/>
-										<p>You can find pyethapp at <a href="https://github.com/ethereum/pyethapp/" target="about:blank">https://github.com/ethereum/pyethapp/</a>.</p>
+										<p>You can find pyethapp at <a href="https://github.com/coqchain/pyethapp/" target="about:blank">https://github.com/coqchain/pyethapp/</a>.</p>
 									</div>
 								</div>
 							</div>
@@ -358,16 +358,16 @@ try! node?.start();
 							<div style="margin: 0 auto;">
 								<div class="x_panel">
 									<div class="x_title">
-										<h3>Puppeth &ndash; Your Ethereum private network manager</h3>
+										<h3>Puppeth &ndash; Your coqchain private network manager</h3>
 										<div class="clearfix"></div>
 									</div>
 									<div style="display: inline-block; vertical-align: bottom; width: 623px; margin-top: 16px;">
-										<p>Puppeth is a tool to aid you in creating a new Ethereum network down to the genesis block, bootnodes, signers, ethstats server, crypto faucet,  block explorer, dashboard and more; without the hassle that it would normally entail to manually configure all these services one by one.</p>
+										<p>Puppeth is a tool to aid you in creating a new coqchain network down to the genesis block, bootnodes, signers, ethstats server, crypto faucet,  block explorer, dashboard and more; without the hassle that it would normally entail to manually configure all these services one by one.</p>
 										<p>Puppeth uses ssh to dial in to remote servers, and builds its network components out of docker containers using docker-compose. The user is guided through the process via a command line wizard that does the heavy lifting and topology configuration automatically behind the scenes.</p>
 										<br/>
-										<p>Puppeth is distributed as part of the <a href="https://geth.ethereum.org/downloads/" target="about:blank">Geth &amp; Tools</a> bundles, but can also be installed separately via:<pre>go get github.com/Ankr-network/coqchain/cmd/puppeth</pre></p>
+										<p>Puppeth is distributed as part of the <a href="https://geth.coqchain.org/downloads/" target="about:blank">Geth &amp; Tools</a> bundles, but can also be installed separately via:<pre>go get github.com/Ankr-network/coqchain/cmd/puppeth</pre></p>
 										<br/>
-										<p><em>Copyright 2017. The go-ethereum Authors.</em></p>
+										<p><em>Copyright 2017. The coqchain Authors.</em></p>
 									</div>
 									<div style="display: inline-block; vertical-align: bottom; width: 217px;">
 										<img src="puppeth.png" style="height: 256px; margin: 16px 16px 16px 16px"></img>
@@ -579,7 +579,7 @@ func deployDashboard(client *sshClient, network string, conf *config, config *da
 	})
 	files[filepath.Join(workdir, "index.html")] = indexfile.Bytes()
 
-	// Marshal the genesis spec files for go-ethereum and all the other clients
+	// Marshal the genesis spec files for coqchain and all the other clients
 	genesis, _ := conf.Genesis.MarshalJSON()
 	files[filepath.Join(workdir, network+".json")] = genesis
 
@@ -601,7 +601,7 @@ func deployDashboard(client *sshClient, network string, conf *config, config *da
 		paritySpecJSON, _ := json.Marshal(paritySpec)
 		files[filepath.Join(workdir, network+"-parity.json")] = paritySpecJSON
 
-		pyethSpec, err := newPyEthereumGenesisSpec(network, conf.Genesis)
+		pyethSpec, err := newPycoqchainGenesisSpec(network, conf.Genesis)
 		if err != nil {
 			return nil, err
 		}
