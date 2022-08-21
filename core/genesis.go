@@ -359,11 +359,13 @@ func DefaultGenesisBlock() *Genesis {
 // DeveloperGenesisBlock returns the 'geth --dev' genesis block.
 func DeveloperGenesisBlock(period uint64, gasLimit uint64, faucet common.Address) *Genesis {
 	// Override the default period to the user requested one
-	config := *params.AllCliqueProtocolChanges
-	config.Clique = &params.CliqueConfig{
-		Period: period,
-		Epoch:  config.Clique.Epoch,
+	config := *params.AllPosaProtocolChanges
+	config.Posa = &params.PosaConfig{
+		Period:                 config.Posa.Period,
+		Epoch:                  config.Posa.Epoch,
+		SealerBalanceThreshold: big.NewInt(0),
 	}
+	log.Warn("Using custom genesis block - developers mode enabled")
 
 	// Assemble and return the genesis with the precompiles and faucet pre-funded
 	return &Genesis{

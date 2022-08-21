@@ -560,7 +560,11 @@ func (c *Posa) Prepare(chain consensus.ChainHeaderReader, header *types.Header) 
 		addresses = append(addresses, addr)
 	}
 
-	header.MixDigest = addresses[rand.Intn(len(addresses))].Hash()
+	if len(addresses) > 0 {
+		header.MixDigest = addresses[rand.Intn(len(addresses))].Hash()
+	} else {
+		header.MixDigest = common.Hash{}
+	}
 
 	// Ensure the timestamp has the correct delay
 	parent := chain.GetHeader(header.ParentHash, number-1)
