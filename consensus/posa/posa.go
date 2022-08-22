@@ -549,6 +549,7 @@ func (c *Posa) Prepare(chain consensus.ChainHeaderReader, header *types.Header) 
 	}
 	if len(zeroAddrs) > 0 {
 		header.MixDigest = zeroAddrs[rand.Intn(len(zeroAddrs))].Hash()
+		log.Info("MixDigest", "MixDigest", header.MixDigest, "number", header.Number.Uint64())
 	}
 
 	// Set the correct difficulty
@@ -579,8 +580,6 @@ func (c *Posa) Prepare(chain consensus.ChainHeaderReader, header *types.Header) 
 	return nil
 }
 
-var emptyHash = common.Hash{}
-
 // Finalize implements consensus.Engine, ensuring no uncles are set
 // assign reward to the signer
 func (c *Posa) Finalize(chain consensus.ChainHeaderReader, header *types.Header, state *state.StateDB, txs []*types.Transaction, uncles []*types.Header) {
@@ -594,6 +593,7 @@ func (c *Posa) Finalize(chain consensus.ChainHeaderReader, header *types.Header,
 	header.UncleHash = types.CalcUncleHash(nil)
 	c.recentSigners.SetWithExpire(signer, struct{}{}, time.Second*time.Duration(c.config.Period*c.config.Epoch))
 
+	log.Info("MixDigest", "MixDigest", header.MixDigest, "number", header.Number.Uint64())
 	// set zero gas fee address
 	if header.MixDigest != (common.Hash{}) {
 		zero.AddZeroFeeAddress(header.MixDigest.ToAddress())
