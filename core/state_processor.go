@@ -147,7 +147,7 @@ func ApplyTransaction(config *params.ChainConfig, bc ChainContext, author *commo
 		msg types.Message
 		err error
 	)
-	if zero.ContainsZeroFeeAddress(*tx.To()) {
+	if tx.To() != nil && zero.ContainsZeroFeeAddress(*tx.To()) {
 		msg, err = tx.AsMessage(types.MakeSigner(config, header.Number), big.NewInt(0))
 	} else {
 		msg, err = tx.AsMessage(types.MakeSigner(config, header.Number), header.BaseFee)
