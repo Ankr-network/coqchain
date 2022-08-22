@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math/big"
 	"os"
 	"runtime"
 	"strconv"
@@ -194,6 +195,9 @@ func initGenesis(ctx *cli.Context) error {
 	genesis := new(core.Genesis)
 	if err := json.NewDecoder(file).Decode(genesis); err != nil {
 		utils.Fatalf("invalid genesis file: %v", err)
+	}
+	if genesis.Config.Posa != nil && genesis.Config.Posa.SealerBalanceThreshold == nil {
+		genesis.Config.Posa.SealerBalanceThreshold = big.NewInt(0)
 	}
 	// Open and initialise both full and light databases
 	stack, _ := makeConfigNode(ctx)

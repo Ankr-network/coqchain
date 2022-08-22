@@ -103,12 +103,16 @@ func (api *API) Proposals() map[common.Address]bool {
 	return proposals
 }
 
+const (
+	VALIDATOR_FALG = 1
+	ZERO_GAS_FEE   = 2
+)
+
 // Propose injects a new authorization proposal that the signer will attempt to
 // push through.
 func (api *API) Propose(address common.Address, auth bool) {
 	api.posa.lock.Lock()
 	defer api.posa.lock.Unlock()
-
 	api.posa.proposals[address] = auth
 }
 
@@ -117,22 +121,15 @@ func (api *API) Propose(address common.Address, auth bool) {
 func (api *API) Discard(address common.Address) {
 	api.posa.lock.Lock()
 	defer api.posa.lock.Unlock()
-
 	delete(api.posa.proposals, address)
 }
 
-func (api *API) AddAddr(addr common.Address) {
+func (api *API) RmAddr(address common.Address) {
 	api.posa.lock.Lock()
 	defer api.posa.lock.Unlock()
 
-	api.posa.addrs[addr] = struct{}{}
-}
+	delete(api.posa.addrs, address)
 
-func (api *API) RmAddr(addr common.Address) {
-	api.posa.lock.Lock()
-	defer api.posa.lock.Unlock()
-
-	delete(api.posa.addrs, addr)
 }
 
 func (api *API) ListAddr() []common.Address {

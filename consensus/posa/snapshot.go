@@ -27,7 +27,6 @@ import (
 	"github.com/Ankr-network/coqchain/ethdb"
 	"github.com/Ankr-network/coqchain/log"
 	"github.com/Ankr-network/coqchain/params"
-	"github.com/Ankr-network/coqchain/utils/zero"
 	lru "github.com/hashicorp/golang-lru"
 )
 
@@ -58,7 +57,6 @@ type Snapshot struct {
 	Recents map[uint64]common.Address   `json:"recents"` // Set of recent signers for spam protections
 	Votes   []*Vote                     `json:"votes"`   // List of votes cast in chronological order
 	Tally   map[common.Address]Tally    `json:"tally"`   // Current vote tally to avoid recalculating
-	Addrs   []common.Address            `json:"addrs"`   // 0 gas fee address list
 }
 
 // signersAscending implements the sort interface to allow sorting a list of addresses
@@ -80,11 +78,11 @@ func newSnapshot(config *params.PosaConfig, sigcache *lru.ARCCache, number uint6
 		Signers:  make(map[common.Address]struct{}),
 		Recents:  make(map[uint64]common.Address),
 		Tally:    make(map[common.Address]Tally),
-		Addrs:    make([]common.Address, 0),
 	}
 	for _, signer := range signers {
 		snap.Signers[signer] = struct{}{}
 	}
+
 	return snap
 }
 
@@ -100,10 +98,6 @@ func loadSnapshot(config *params.PosaConfig, sigcache *lru.ARCCache, db ethdb.Da
 	}
 	snap.config = config
 	snap.sigcache = sigcache
-
-	for _, addr := range snap.Addrs {
-		zero.AddZeroFeeAddress(addr)
-	}
 
 	return snap, nil
 }

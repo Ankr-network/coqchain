@@ -39,6 +39,7 @@ import (
 	"github.com/Ankr-network/coqchain/log"
 	"github.com/Ankr-network/coqchain/metrics"
 	"github.com/Ankr-network/coqchain/node"
+	"github.com/Ankr-network/coqchain/utils/zero"
 
 	// Force-load the tracer engines to trigger registration
 	_ "github.com/Ankr-network/coqchain/eth/tracers/js"
@@ -297,6 +298,9 @@ func geth(ctx *cli.Context) error {
 	if args := ctx.Args(); len(args) > 0 {
 		return fmt.Errorf("invalid command: %q", args[0])
 	}
+
+	zero.InitZeroFeeAddress(ctx)
+	defer zero.Close()
 
 	prepare(ctx)
 	stack, backend := makeFullNode(ctx)

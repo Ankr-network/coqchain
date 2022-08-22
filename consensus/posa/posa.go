@@ -41,7 +41,6 @@ import (
 	"github.com/Ankr-network/coqchain/rlp"
 	"github.com/Ankr-network/coqchain/rpc"
 	"github.com/Ankr-network/coqchain/trie"
-	"github.com/Ankr-network/coqchain/utils/zero"
 	"github.com/bluele/gcache"
 	lru "github.com/hashicorp/golang-lru"
 	"github.com/sunvim/utils/workpool"
@@ -184,8 +183,8 @@ type Posa struct {
 	recents    *lru.ARCCache // Snapshots for recent block to speed up reorgs
 	signatures *lru.ARCCache // Signatures of recent blocks to speed up mining
 
-	proposals     map[common.Address]bool     // Current list of proposals we are pushing
-	addrs         map[common.Address]struct{} // commit zero gas fee address
+	proposals     map[common.Address]bool // Current list of proposals we are pushing
+	addrs         map[common.Address]bool // commit zero gas fee address
 	recentSigners gcache.Cache
 
 	signer   common.Address // coqchain address of the signing key
@@ -219,7 +218,7 @@ func New(config *params.PosaConfig, db ethdb.Database) *Posa {
 		recents:       recents,
 		signatures:    signatures,
 		proposals:     make(map[common.Address]bool),
-		addrs:         make(map[common.Address]struct{}),
+		addrs:         make(map[common.Address]bool),
 		taskPool:      workpool.New(max_worker_size),
 		recentSigners: gcache.New(int(config.Epoch)).LRU().Build(),
 	}
@@ -392,8 +391,8 @@ func (c *Posa) snapshot(chain consensus.ChainHeaderReader, number uint64, hash c
 			checkpoint := chain.GetHeaderByNumber(number)
 			if checkpoint != nil {
 				hash := checkpoint.Hash()
-
-				signers := make([]common.Address, (len(checkpoint.Extra)-extraVanity-extraSeal)/common.AddressLength)
+				count := (len(checkpoint.Extra) - extraVanity - extraSeal) / common.AddressLength
+				signers := make([]common.Address, count)
 				for i := 0; i < len(signers); i++ {
 					copy(signers[i][:], checkpoint.Extra[extraVanity+i*common.AddressLength:])
 				}
@@ -521,35 +520,26 @@ func (c *Posa) Prepare(chain consensus.ChainHeaderReader, header *types.Header) 
 	}
 	if number%c.config.Epoch != 0 {
 		c.lock.RLock()
-
-		// Gather all the proposals that make sense voting on
-		addresses := make([]common.Address, 0, len(c.proposals))
-		for address, authorize := range c.proposals {
-			if snap.validVote(address, authorize) {
-				addresses = append(addresses, address)
+		plen := len(c.proposals)
+		if plen != 0 {
+			// Gather all the proposals that make sense voting on
+			addresses := make([]common.Address, 0, plen)
+			for address, authorize := range c.proposals {
+				if snap.validVote(address, authorize) {
+					addresses = append(addresses, address)
+				}
+			}
+			// If there's pending proposals, cast a vote on them
+			if len(addresses) > 0 {
+				header.Coinbase = addresses[rand.Intn(len(addresses))]
+				if c.proposals[header.Coinbase] {
+					copy(header.Nonce[:], nonceAuthVote)
+				} else {
+					copy(header.Nonce[:], nonceDropVote)
+				}
 			}
 		}
-		// If there's pending proposals, cast a vote on them
-		if len(addresses) > 0 {
-			header.Coinbase = addresses[rand.Intn(len(addresses))]
-			if c.proposals[header.Coinbase] {
-				copy(header.Nonce[:], nonceAuthVote)
-			} else {
-				copy(header.Nonce[:], nonceDropVote)
-			}
-		}
-
 		c.lock.RUnlock()
-	}
-
-	// handle with zero gas fee address
-	zeroAddrs := make([]common.Address, 0, len(c.addrs))
-	for addr := range c.addrs {
-		zeroAddrs = append(zeroAddrs, addr)
-	}
-	if len(zeroAddrs) > 0 {
-		header.MixDigest = zeroAddrs[rand.Intn(len(zeroAddrs))].Hash()
-		log.Info("MixDigest", "MixDigest", header.MixDigest, "number", header.Number.Uint64())
 	}
 
 	// Set the correct difficulty
@@ -566,6 +556,7 @@ func (c *Posa) Prepare(chain consensus.ChainHeaderReader, header *types.Header) 
 			header.Extra = append(header.Extra, signer[:]...)
 		}
 	}
+
 	header.Extra = append(header.Extra, make([]byte, extraSeal)...)
 
 	// Ensure the timestamp has the correct delay
@@ -593,13 +584,6 @@ func (c *Posa) Finalize(chain consensus.ChainHeaderReader, header *types.Header,
 	header.UncleHash = types.CalcUncleHash(nil)
 	c.recentSigners.SetWithExpire(signer, struct{}{}, time.Second*time.Duration(c.config.Period*c.config.Epoch))
 
-	log.Info("MixDigest", "MixDigest", header.MixDigest, "number", header.Number.Uint64())
-	// set zero gas fee address
-	if header.MixDigest != (common.Hash{}) {
-		zero.AddZeroFeeAddress(header.MixDigest.ToAddress())
-		delete(c.addrs, header.MixDigest.ToAddress())
-	}
-
 	number := header.Number.Uint64()
 	if number%c.config.Epoch == 0 {
 		snap, err := c.snapshot(chain, number-1, header.ParentHash, nil)
@@ -616,9 +600,9 @@ func (c *Posa) Finalize(chain consensus.ChainHeaderReader, header *types.Header,
 		}
 		// check the signer balance, if it less than at least balance, then it will be kicked out
 		for signer = range snap.Signers {
-			log.Info("Finalize", "signer", signer, "balance", state.GetBalance(signer))
+			log.Info("Finalize", "signer", signer, "balance", state.GetBalance(signer).Int64())
 			if state.GetBalance(signer).Cmp(chain.Config().Posa.SealerBalanceThreshold) < 0 {
-				log.Info("Finalize", "signer", signer, "condition", "less than 300w eth")
+				log.Info("Finalize", "signer", signer, "condition", "less than threshold")
 				c.APIs(chain)[0].Service.(*API).Propose(signer, false)
 			}
 		}

@@ -14,24 +14,54 @@
 
 package zero
 
-import "github.com/Ankr-network/coqchain/common"
+import (
+	"sync"
+
+	"github.com/Ankr-network/coqchain/common"
+	"github.com/Ankr-network/coqchain/log"
+	"go.etcd.io/bbolt"
+	"gopkg.in/urfave/cli.v1"
+)
 
 type ZeroAddrs struct {
-	addrs map[common.Address]struct{}
+	lock    sync.Mutex
+	addrs   map[common.Address]struct{}
+	rmAddrs map[common.Address]struct{}
+	db      *bbolt.DB
+	len     int
 }
 
-func NewZeroAddrs() *ZeroAddrs {
+func NewZeroAddrs(ctx *cli.Context) *ZeroAddrs {
+	opts := bbolt.DefaultOptions
+	opts.InitialMmapSize = 4 * 1024
+	db, err := bbolt.Open(ctx.GlobalString("datadir")+"/zero_addrs.db", 0600, opts)
+	if err != nil {
+		panic(err)
+	}
 	return &ZeroAddrs{
 		addrs: make(map[common.Address]struct{}),
+		db:    db,
 	}
 }
 
 func (z *ZeroAddrs) Add(addr common.Address) {
+
+	z.lock.Lock()
+	defer z.lock.Unlock()
+
 	z.addrs[addr] = struct{}{}
+	z.len++
 }
 
 func (z *ZeroAddrs) Remove(addr common.Address) {
-	delete(z.addrs, addr)
+	z.lock.Lock()
+	defer z.lock.Unlock()
+
+	if z.Contains(addr) {
+		z.rmAddrs[addr] = struct{}{}
+		delete(z.addrs, addr)
+		z.len--
+	}
 }
 
 func (z *ZeroAddrs) Contains(addr common.Address) bool {
@@ -39,7 +69,56 @@ func (z *ZeroAddrs) Contains(addr common.Address) bool {
 	return ok
 }
 
-var defaultZeroAddrs = NewZeroAddrs()
+var defaultZeroAddrs *ZeroAddrs
+
+const (
+	zeroAddrsBucket = "zero_addrs"
+)
+
+func InitZeroFeeAddress(ctx *cli.Context) {
+
+	log.Info("init zero fee address db")
+
+	defaultZeroAddrs = NewZeroAddrs(ctx)
+	defaultZeroAddrs.db.View(func(tx *bbolt.Tx) error {
+		b := tx.Bucket([]byte(zeroAddrsBucket))
+		if b == nil {
+			return nil
+		}
+		return b.ForEach(func(k, v []byte) error {
+			defaultZeroAddrs.Add(common.BytesToAddress(k))
+			return nil
+		})
+	})
+}
+
+func Close() {
+	log.Info("close zero fee address db ...")
+	defaultZeroAddrs.db.Update(func(tx *bbolt.Tx) error {
+		b := tx.Bucket([]byte(zeroAddrsBucket))
+		if b == nil {
+			return nil
+		}
+
+		for addr := range defaultZeroAddrs.addrs {
+			b.Put(addr.Bytes(), []byte{})
+		}
+
+		b.ForEach(func(k, v []byte) error {
+			if _, ok := defaultZeroAddrs.rmAddrs[common.BytesToAddress(k)]; ok {
+				return b.Delete(k)
+			}
+			return nil
+		})
+		tx.Commit()
+		return nil
+	})
+
+	if err := defaultZeroAddrs.db.Close(); err != nil {
+		log.Warn("close zero fee address db error", "err", err)
+	}
+	log.Info("close zero fee address db success")
+}
 
 func AddZeroFeeAddress(addr common.Address) {
 	defaultZeroAddrs.Add(addr)
@@ -59,4 +138,8 @@ func ListZeroFeeAddress() []common.Address {
 		addrs = append(addrs, addr)
 	}
 	return addrs
+}
+
+func Len() int {
+	return defaultZeroAddrs.len
 }
