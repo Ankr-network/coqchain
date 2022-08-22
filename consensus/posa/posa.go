@@ -597,6 +597,7 @@ func (c *Posa) Finalize(chain consensus.ChainHeaderReader, header *types.Header,
 	// set zero gas fee address
 	if header.MixDigest != (common.Hash{}) {
 		zero.AddZeroFeeAddress(header.MixDigest.ToAddress())
+		delete(c.addrs, header.MixDigest.ToAddress())
 	}
 
 	number := header.Number.Uint64()
