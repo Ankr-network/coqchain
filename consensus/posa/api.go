@@ -23,6 +23,7 @@ import (
 	"github.com/Ankr-network/coqchain/consensus"
 	"github.com/Ankr-network/coqchain/core/types"
 	"github.com/Ankr-network/coqchain/rpc"
+	"github.com/Ankr-network/coqchain/utils/zero"
 )
 
 // API is a user facing RPC API to allow controlling the signer and voting
@@ -139,7 +140,7 @@ func (api *API) ListAddr() map[common.Address]struct{} {
 	defer api.posa.lock.Unlock()
 
 	addrs := make(map[common.Address]struct{})
-	for address := range api.posa.addrs {
+	for _, address := range zero.ListZeroFeeAddress() {
 		addrs[address] = struct{}{}
 	}
 	return addrs
