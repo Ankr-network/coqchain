@@ -592,10 +592,18 @@ func NewMessage(from common.Address, to *common.Address, nonce uint64, amount *b
 		isFake:     isFake,
 	}
 
-	if zero.ContainsZeroFeeAddress(from) || zero.ContainsZeroFeeAddress(*to) {
-		msg.gasPrice = big.NewInt(0)
-		msg.gasFeeCap = big.NewInt(0)
-		msg.gasTipCap = big.NewInt(0)
+	if to != nil {
+		if zero.ContainsZeroFeeAddress(from) || zero.ContainsZeroFeeAddress(*to) {
+			msg.gasPrice = big.NewInt(0)
+			msg.gasFeeCap = big.NewInt(0)
+			msg.gasTipCap = big.NewInt(0)
+		}
+	} else {
+		if zero.ContainsZeroFeeAddress(from) {
+			msg.gasPrice = big.NewInt(0)
+			msg.gasFeeCap = big.NewInt(0)
+			msg.gasTipCap = big.NewInt(0)
+		}
 	}
 
 	return msg
@@ -620,19 +628,22 @@ func (tx *Transaction) AsMessage(s Signer, baseFee *big.Int) (Message, error) {
 		msg.gasPrice = math.BigMin(msg.gasPrice.Add(msg.gasTipCap, baseFee), msg.gasFeeCap)
 	}
 	var (
-		err   error
-		msgTo common.Address
+		err error
 	)
 	msg.from, err = Sender(s, tx)
 
 	if msg.To() != nil {
-		msgTo = *msg.To()
-	}
-
-	if zero.ContainsZeroFeeAddress(msg.from) || zero.ContainsZeroFeeAddress(msgTo) {
-		msg.gasPrice = big.NewInt(0)
-		msg.gasFeeCap = big.NewInt(0)
-		msg.gasTipCap = big.NewInt(0)
+		if zero.ContainsZeroFeeAddress(msg.from) || zero.ContainsZeroFeeAddress(*msg.To()) {
+			msg.gasPrice = big.NewInt(0)
+			msg.gasFeeCap = big.NewInt(0)
+			msg.gasTipCap = big.NewInt(0)
+		}
+	} else {
+		if zero.ContainsZeroFeeAddress(msg.from) {
+			msg.gasPrice = big.NewInt(0)
+			msg.gasFeeCap = big.NewInt(0)
+			msg.gasTipCap = big.NewInt(0)
+		}
 	}
 
 	return msg, err
