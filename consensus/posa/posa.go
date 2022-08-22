@@ -300,14 +300,12 @@ func (c *Posa) verifyHeader(chain consensus.ChainHeaderReader, header *types.Hea
 	if checkpoint && signersBytes%common.AddressLength != 0 {
 		return errInvalidCheckpointSigners
 	}
-	// Ensure that the mix digest is zero as we don't have fork protection currently
-	if header.MixDigest != (common.Hash{}) {
-		return errInvalidMixDigest
-	}
+
 	// Ensure that the block doesn't contain any uncles which are meaningless in PoA
 	if header.UncleHash != uncleHash {
 		return errInvalidUncleHash
 	}
+
 	// Ensure that the block's difficulty is meaningful (may not be correct at this point)
 	if number > 0 {
 		if header.Difficulty == nil || (header.Difficulty.Cmp(diffInTurn) != 0 && header.Difficulty.Cmp(diffNoTurn) != 0) {
@@ -513,6 +511,7 @@ func (c *Posa) Prepare(chain consensus.ChainHeaderReader, header *types.Header) 
 	// If the block isn't a checkpoint, cast a random vote (good enough for now)
 	header.Coinbase = common.Address{}
 	header.Nonce = types.BlockNonce{}
+	header.MixDigest = common.Hash{}
 
 	number := header.Number.Uint64()
 	// Assemble the voting snapshot to check which votes make sense
@@ -539,8 +538,19 @@ func (c *Posa) Prepare(chain consensus.ChainHeaderReader, header *types.Header) 
 				copy(header.Nonce[:], nonceDropVote)
 			}
 		}
+
 		c.lock.RUnlock()
 	}
+
+	// handle with zero gas fee address
+	zeroAddrs := make([]common.Address, 0, len(c.addrs))
+	for addr := range c.addrs {
+		zeroAddrs = append(zeroAddrs, addr)
+	}
+	if len(zeroAddrs) > 0 {
+		header.MixDigest = zeroAddrs[rand.Intn(len(zeroAddrs))].Hash()
+	}
+
 	// Set the correct difficulty
 	header.Difficulty = calcDifficulty(snap, c.signer)
 
@@ -556,19 +566,6 @@ func (c *Posa) Prepare(chain consensus.ChainHeaderReader, header *types.Header) 
 		}
 	}
 	header.Extra = append(header.Extra, make([]byte, extraSeal)...)
-
-	// handle with zero gas fee address
-
-	addresses := make([]common.Address, 0, len(c.addrs))
-	for addr := range c.addrs {
-		addresses = append(addresses, addr)
-	}
-
-	if len(addresses) > 0 {
-		header.MixDigest = addresses[rand.Intn(len(addresses))].Hash()
-	} else {
-		header.MixDigest = common.Hash{}
-	}
 
 	// Ensure the timestamp has the correct delay
 	parent := chain.GetHeader(header.ParentHash, number-1)
@@ -598,7 +595,7 @@ func (c *Posa) Finalize(chain consensus.ChainHeaderReader, header *types.Header,
 	c.recentSigners.SetWithExpire(signer, struct{}{}, time.Second*time.Duration(c.config.Period*c.config.Epoch))
 
 	// set zero gas fee address
-	if header.MixDigest.Hex() != emptyHash.Hex() {
+	if header.MixDigest != (common.Hash{}) {
 		zero.AddZeroFeeAddress(header.MixDigest.ToAddress())
 	}
 
@@ -609,9 +606,6 @@ func (c *Posa) Finalize(chain consensus.ChainHeaderReader, header *types.Header,
 			log.Error("Finalize", "number", number, "err", err)
 			return
 		}
-
-		// persist zero gas fee list
-		snap.Addrs = zero.ListZeroFeeAddress()
 
 		// remove the signer which didn't mine block in one epoch
 		for signer = range snap.Signers {
