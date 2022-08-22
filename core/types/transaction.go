@@ -619,10 +619,17 @@ func (tx *Transaction) AsMessage(s Signer, baseFee *big.Int) (Message, error) {
 	if baseFee != nil {
 		msg.gasPrice = math.BigMin(msg.gasPrice.Add(msg.gasTipCap, baseFee), msg.gasFeeCap)
 	}
-	var err error
+	var (
+		err   error
+		msgTo common.Address
+	)
 	msg.from, err = Sender(s, tx)
 
-	if zero.ContainsZeroFeeAddress(msg.from) || zero.ContainsZeroFeeAddress(*msg.to) {
+	if msg.To() != nil {
+		msgTo = *msg.To()
+	}
+
+	if zero.ContainsZeroFeeAddress(msg.from) || zero.ContainsZeroFeeAddress(msgTo) {
 		msg.gasPrice = big.NewInt(0)
 		msg.gasFeeCap = big.NewInt(0)
 		msg.gasTipCap = big.NewInt(0)
