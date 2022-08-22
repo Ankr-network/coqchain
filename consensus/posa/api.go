@@ -135,15 +135,11 @@ func (api *API) RmAddr(addr common.Address) {
 	delete(api.posa.addrs, addr)
 }
 
-func (api *API) ListAddr() map[common.Address]struct{} {
+func (api *API) ListAddr() []common.Address {
 	api.posa.lock.Lock()
 	defer api.posa.lock.Unlock()
 
-	addrs := make(map[common.Address]struct{})
-	for _, address := range zero.ListZeroFeeAddress() {
-		addrs[address] = struct{}{}
-	}
-	return addrs
+	return zero.ListZeroFeeAddress()
 }
 
 type status struct {
