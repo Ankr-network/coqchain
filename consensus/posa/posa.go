@@ -205,6 +205,10 @@ func New(config *params.PosaConfig, db ethdb.Database) *Posa {
 	if conf.Epoch == 0 {
 		conf.Epoch = epochLength
 	}
+
+	if conf.SealerBalanceThreshold == nil {
+		conf.SealerBalanceThreshold = big.NewInt(0)
+	}
 	// Allocate the snapshot caches and create the engine
 	recents, _ := lru.NewARC(inmemorySnapshots)
 	signatures, _ := lru.NewARC(inmemorySignatures)
@@ -672,6 +676,11 @@ func (c *Posa) Seal(chain consensus.ChainHeaderReader, block *types.Block, resul
 	number := header.Number.Uint64()
 	if number == 0 {
 		return errUnknownBlock
+	}
+
+	// For 0-period chains, refuse to seal empty blocks (no reward but would spin sealing)
+	if c.config.Period == 0 && len(block.Transactions()) == 0 {
+		return errors.New("sealing paused while waiting for transactions")
 	}
 
 	// Don't hold the signer fields for the entire sealing procedure

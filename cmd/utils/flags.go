@@ -763,6 +763,11 @@ var (
 // if none (or the empty string) is specified. If the node is starting a testnet,
 // then a subdirectory of the specified datadir will be used.
 func MakeDataDir(ctx *cli.Context) string {
+
+	if path := ctx.GlobalString(DataDirFlag.Name); path != "" {
+		return path
+	}
+
 	Fatalf("Cannot determine default data directory, please set manually (--datadir)")
 	return ""
 }

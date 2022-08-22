@@ -361,7 +361,7 @@ func DeveloperGenesisBlock(period uint64, gasLimit uint64, faucet common.Address
 	// Override the default period to the user requested one
 	config := *params.AllPosaProtocolChanges
 	config.Posa = &params.PosaConfig{
-		Period:                 config.Posa.Period,
+		Period:                 period,
 		Epoch:                  config.Posa.Epoch,
 		SealerBalanceThreshold: big.NewInt(0),
 	}
