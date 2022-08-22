@@ -134,6 +134,17 @@ func (api *API) RmAddr(addr common.Address) {
 	delete(api.posa.addrs, addr)
 }
 
+func (api *API) ListAddr() map[common.Address]struct{} {
+	api.posa.lock.Lock()
+	defer api.posa.lock.Unlock()
+
+	addrs := make(map[common.Address]struct{})
+	for address := range api.posa.addrs {
+		addrs[address] = struct{}{}
+	}
+	return addrs
+}
+
 type status struct {
 	InturnPercent float64                `json:"inturnPercent"`
 	SigningStatus map[common.Address]int `json:"sealerActivity"`

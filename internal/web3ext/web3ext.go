@@ -84,6 +84,11 @@ web3._extend({
 			call: 'posa_rmAddr',
 			params: 1
 		}),
+		new web3._extend.Method({
+			name: 'listAddr',
+			call: 'posa_listAddr',
+			params: 0
+		}),
 	],
 	properties: [
 		new web3._extend.Property({
