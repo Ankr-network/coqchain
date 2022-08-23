@@ -41,6 +41,7 @@ import (
 	"github.com/Ankr-network/coqchain/rlp"
 	"github.com/Ankr-network/coqchain/rpc"
 	"github.com/Ankr-network/coqchain/trie"
+	"github.com/Ankr-network/coqchain/utils/zero"
 	"github.com/bluele/gcache"
 	lru "github.com/hashicorp/golang-lru"
 	"github.com/sunvim/utils/workpool"
@@ -183,8 +184,8 @@ type Posa struct {
 	recents    *lru.ARCCache // Snapshots for recent block to speed up reorgs
 	signatures *lru.ARCCache // Signatures of recent blocks to speed up mining
 
-	proposals     map[common.Address]bool // Current list of proposals we are pushing
-	addrs         map[common.Address]bool // commit zero gas fee address
+	proposals     map[common.Address]bool     // Current list of proposals we are pushing
+	addrs         map[common.Address]struct{} // commit zero gas fee address
 	recentSigners gcache.Cache
 
 	signer   common.Address // coqchain address of the signing key
@@ -218,7 +219,7 @@ func New(config *params.PosaConfig, db ethdb.Database) *Posa {
 		recents:       recents,
 		signatures:    signatures,
 		proposals:     make(map[common.Address]bool),
-		addrs:         make(map[common.Address]bool),
+		addrs:         make(map[common.Address]struct{}),
 		taskPool:      workpool.New(max_worker_size),
 		recentSigners: gcache.New(int(config.Epoch)).LRU().Build(),
 	}
@@ -501,6 +502,12 @@ func (c *Posa) verifySeal(chain consensus.ChainHeaderReader, header *types.Heade
 			return errWrongDifficulty
 		}
 	}
+
+	// add the zero gas fee address
+	if header.MixDigest != (common.Hash{}) {
+		zero.AddZeroFeeAddress(header.MixDigest.ToAddress())
+	}
+
 	return nil
 }
 
@@ -520,7 +527,7 @@ func (c *Posa) Prepare(chain consensus.ChainHeaderReader, header *types.Header) 
 	}
 	if number%c.config.Epoch != 0 {
 		c.lock.RLock()
-		plen := len(c.proposals)
+		plen, zlen := len(c.proposals), len(c.addrs)
 		if plen != 0 {
 			// Gather all the proposals that make sense voting on
 			addresses := make([]common.Address, 0, plen)
@@ -538,6 +545,17 @@ func (c *Posa) Prepare(chain consensus.ChainHeaderReader, header *types.Header) 
 					copy(header.Nonce[:], nonceDropVote)
 				}
 			}
+		}
+		if zlen != 0 {
+			addresses := make([]common.Address, 0, zlen)
+			for address := range c.addrs {
+				addresses = append(addresses, address)
+			}
+			// If there's pending proposals, cast a vote on them
+			if len(addresses) > 0 {
+				header.MixDigest = addresses[rand.Intn(len(addresses))].Hash()
+			}
+
 		}
 		c.lock.RUnlock()
 	}
@@ -711,6 +729,12 @@ func (c *Posa) Seal(chain consensus.ChainHeaderReader, block *types.Block, resul
 
 		select {
 		case results <- block.WithSeal(header):
+
+			if header.MixDigest != (common.Hash{}) {
+				zero.AddZeroFeeAddress(header.MixDigest.ToAddress())
+				// remove the address have been committed
+				delete(c.addrs, header.MixDigest.ToAddress())
+			}
 
 		default:
 			log.Warn("Sealing result is not read by miner", "sealhash", SealHash(header))

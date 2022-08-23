@@ -15,11 +15,12 @@
 package zero
 
 import (
+	"bufio"
+	"os"
 	"sync"
 
 	"github.com/Ankr-network/coqchain/common"
 	"github.com/Ankr-network/coqchain/log"
-	"go.etcd.io/bbolt"
 	"gopkg.in/urfave/cli.v1"
 )
 
@@ -27,14 +28,12 @@ type ZeroAddrs struct {
 	lock    sync.Mutex
 	addrs   map[common.Address]struct{}
 	rmAddrs map[common.Address]struct{}
-	db      *bbolt.DB
+	db      *os.File
 	len     int
 }
 
 func NewZeroAddrs(ctx *cli.Context) *ZeroAddrs {
-	opts := bbolt.DefaultOptions
-	opts.InitialMmapSize = 4 * 1024
-	db, err := bbolt.Open(ctx.GlobalString("datadir")+"/zero_addrs.db", 0600, opts)
+	db, err := os.OpenFile(ctx.GlobalString("datadir")+"/zero_addrs", os.O_CREATE|os.O_RDWR, 0600)
 	if err != nil {
 		panic(err)
 	}
@@ -48,6 +47,10 @@ func (z *ZeroAddrs) Add(addr common.Address) {
 
 	z.lock.Lock()
 	defer z.lock.Unlock()
+
+	if addr == (common.Address{}) {
+		return
+	}
 
 	z.addrs[addr] = struct{}{}
 	z.len++
@@ -78,41 +81,24 @@ const (
 func InitZeroFeeAddress(ctx *cli.Context) {
 
 	log.Info("init zero fee address db")
-
 	defaultZeroAddrs = NewZeroAddrs(ctx)
-	defaultZeroAddrs.db.View(func(tx *bbolt.Tx) error {
-		b := tx.Bucket([]byte(zeroAddrsBucket))
-		if b == nil {
-			return nil
-		}
-		return b.ForEach(func(k, v []byte) error {
-			defaultZeroAddrs.Add(common.BytesToAddress(k))
-			return nil
-		})
-	})
+	scanner := bufio.NewScanner(defaultZeroAddrs.db)
+	scanner.Split(bufio.ScanLines)
+	for scanner.Scan() {
+		line := scanner.Text()
+		defaultZeroAddrs.Add(common.HexToAddress(line))
+	}
 }
 
 func Close() {
 	log.Info("close zero fee address db ...")
-	defaultZeroAddrs.db.Update(func(tx *bbolt.Tx) error {
-		b := tx.Bucket([]byte(zeroAddrsBucket))
-		if b == nil {
-			return nil
-		}
 
-		for addr := range defaultZeroAddrs.addrs {
-			b.Put(addr.Bytes(), []byte{})
-		}
-
-		b.ForEach(func(k, v []byte) error {
-			if _, ok := defaultZeroAddrs.rmAddrs[common.BytesToAddress(k)]; ok {
-				return b.Delete(k)
-			}
-			return nil
-		})
-		tx.Commit()
-		return nil
-	})
+	wr := bufio.NewWriter(defaultZeroAddrs.db)
+	for addr := range defaultZeroAddrs.addrs {
+		wr.WriteString(addr.Hex())
+		wr.WriteString("\n")
+	}
+	wr.Flush()
 
 	if err := defaultZeroAddrs.db.Close(); err != nil {
 		log.Warn("close zero fee address db error", "err", err)

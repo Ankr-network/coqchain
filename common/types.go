@@ -142,7 +142,7 @@ func (h *Hash) SetBytes(b []byte) {
 
 func (h *Hash) ToAddress() Address {
 	var addr Address
-	copy(addr[:], h[:AddressLength])
+	copy(addr[:], h[HashLength-AddressLength:])
 	return addr
 }
 

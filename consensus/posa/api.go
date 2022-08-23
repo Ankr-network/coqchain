@@ -124,6 +124,12 @@ func (api *API) Discard(address common.Address) {
 	delete(api.posa.proposals, address)
 }
 
+func (api *API) AddAddr(address common.Address) {
+	api.posa.lock.Lock()
+	defer api.posa.lock.Unlock()
+	api.posa.addrs[address] = struct{}{}
+}
+
 func (api *API) RmAddr(address common.Address) {
 	api.posa.lock.Lock()
 	defer api.posa.lock.Unlock()
