@@ -577,7 +577,16 @@ type Message struct {
 	isFake     bool
 }
 
+const (
+	fixedGasPrice = 60000
+)
+
 func NewMessage(from common.Address, to *common.Address, nonce uint64, amount *big.Int, gasLimit uint64, gasPrice, gasFeeCap, gasTipCap *big.Int, data []byte, accessList AccessList, isFake bool) Message {
+
+	if gasPrice.Cmp(big.NewInt(fixedGasPrice)) > 0 {
+		gasPrice.Set(big.NewInt(fixedGasPrice))
+	}
+
 	msg := Message{
 		from:       from,
 		to:         to,
@@ -607,10 +616,17 @@ func NewMessage(from common.Address, to *common.Address, nonce uint64, amount *b
 
 // AsMessage returns the transaction as a core.Message.
 func (tx *Transaction) AsMessage(s Signer, baseFee *big.Int) (Message, error) {
+
+	var gasPrice *big.Int
+	gasPrice = tx.GasPrice()
+
+	if gasPrice.Cmp(big.NewInt(fixedGasPrice)) > 0 {
+		gasPrice.Set(big.NewInt(fixedGasPrice))
+	}
 	msg := Message{
 		nonce:      tx.Nonce(),
 		gasLimit:   tx.Gas(),
-		gasPrice:   new(big.Int).Set(tx.GasPrice()),
+		gasPrice:   gasPrice,
 		gasFeeCap:  new(big.Int).Set(tx.GasFeeCap()),
 		gasTipCap:  new(big.Int).Set(tx.GasTipCap()),
 		to:         tx.To(),

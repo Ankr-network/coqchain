@@ -5,6 +5,7 @@ this chain fork from `go-ethereum` and support some advanced features.
 ## Features:
 
 - [x] supply 0 gas fee contract, it is convenient for enterprise applications
+- [x] lower and fixed gas fee
 - [ ] every sync node should have some reward
 - [ ] support original bridge, which can interact with `BSC` and `Ethereum` chain
 - [x] speed up transactions
