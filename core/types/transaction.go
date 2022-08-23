@@ -595,14 +595,10 @@ func NewMessage(from common.Address, to *common.Address, nonce uint64, amount *b
 	if to != nil {
 		if zero.ContainsZeroFeeAddress(from) || zero.ContainsZeroFeeAddress(*to) {
 			msg.gasPrice = big.NewInt(0)
-			msg.gasFeeCap = big.NewInt(0)
-			msg.gasTipCap = big.NewInt(0)
 		}
 	} else {
 		if zero.ContainsZeroFeeAddress(from) {
 			msg.gasPrice = big.NewInt(0)
-			msg.gasFeeCap = big.NewInt(0)
-			msg.gasTipCap = big.NewInt(0)
 		}
 	}
 
@@ -635,14 +631,10 @@ func (tx *Transaction) AsMessage(s Signer, baseFee *big.Int) (Message, error) {
 	if msg.To() != nil {
 		if zero.ContainsZeroFeeAddress(msg.from) || zero.ContainsZeroFeeAddress(*msg.To()) {
 			msg.gasPrice = big.NewInt(0)
-			msg.gasFeeCap = big.NewInt(0)
-			msg.gasTipCap = big.NewInt(0)
 		}
 	} else {
 		if zero.ContainsZeroFeeAddress(msg.from) {
 			msg.gasPrice = big.NewInt(0)
-			msg.gasFeeCap = big.NewInt(0)
-			msg.gasTipCap = big.NewInt(0)
 		}
 	}
 
