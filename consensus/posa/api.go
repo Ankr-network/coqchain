@@ -130,14 +130,6 @@ func (api *API) AddAddr(address common.Address) {
 	api.posa.addrs[address] = struct{}{}
 }
 
-func (api *API) RmAddr(address common.Address) {
-	api.posa.lock.Lock()
-	defer api.posa.lock.Unlock()
-
-	delete(api.posa.addrs, address)
-
-}
-
 func (api *API) ListAddr() []common.Address {
 	api.posa.lock.Lock()
 	defer api.posa.lock.Unlock()
