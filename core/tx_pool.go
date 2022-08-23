@@ -34,7 +34,6 @@ import (
 	"github.com/Ankr-network/coqchain/log"
 	"github.com/Ankr-network/coqchain/metrics"
 	"github.com/Ankr-network/coqchain/params"
-	"github.com/Ankr-network/coqchain/utils/zero"
 )
 
 const (
@@ -603,53 +602,35 @@ func (pool *TxPool) validateTx(tx *types.Transaction, local bool) error {
 		return ErrNegativeValue
 	}
 
+	// Ensure the transaction doesn't exceed the current block limit gas.
+	if pool.currentMaxGas < tx.Gas() {
+		return ErrGasLimit
+	}
+	// Sanity check for extremely large numbers
+	if tx.GasFeeCap().BitLen() > 256 {
+		return ErrFeeCapVeryHigh
+	}
+	if tx.GasTipCap().BitLen() > 256 {
+		return ErrTipVeryHigh
+	}
+	// Ensure gasFeeCap is greater than or equal to gasTipCap.
+	if tx.GasFeeCapIntCmp(tx.GasTipCap()) < 0 {
+		return ErrTipAboveFeeCap
+	}
+
+	// Ensure the transaction has more gas than the basic tx fee.
+	intrGas, err := IntrinsicGas(tx.Data(), tx.AccessList(), tx.To() == nil, true, pool.istanbul)
+	if err != nil {
+		return err
+	}
+	if tx.Gas() < intrGas {
+		return ErrIntrinsicGas
+	}
+
 	// Make sure the transaction is signed properly.
 	from, err := types.Sender(pool.signer, tx)
 	if err != nil {
 		return ErrInvalidSender
-	}
-
-	var (
-		zeroFee bool
-		to      common.Address
-	)
-
-	if tx.To() != nil {
-		to = *tx.To()
-	}
-	if zero.ContainsZeroFeeAddress(from) || zero.ContainsZeroFeeAddress(to) {
-		zeroFee = true
-	}
-
-	if !zeroFee {
-		// Ensure the transaction doesn't exceed the current block limit gas.
-		if pool.currentMaxGas < tx.Gas() {
-			return ErrGasLimit
-		}
-		// Sanity check for extremely large numbers
-		if tx.GasFeeCap().BitLen() > 256 {
-			return ErrFeeCapVeryHigh
-		}
-		if tx.GasTipCap().BitLen() > 256 {
-			return ErrTipVeryHigh
-		}
-		// Ensure gasFeeCap is greater than or equal to gasTipCap.
-		if tx.GasFeeCapIntCmp(tx.GasTipCap()) < 0 {
-			return ErrTipAboveFeeCap
-		}
-		// Drop non-local transactions under our own minimal accepted gas price or tip.
-		pendingBaseFee := pool.priced.urgent.baseFee
-		if !local && tx.EffectiveGasTipIntCmp(pool.gasPrice, pendingBaseFee) < 0 {
-			return ErrUnderpriced
-		}
-		// Ensure the transaction has more gas than the basic tx fee.
-		intrGas, err := IntrinsicGas(tx.Data(), tx.AccessList(), tx.To() == nil, true, pool.istanbul)
-		if err != nil {
-			return err
-		}
-		if tx.Gas() < intrGas {
-			return ErrIntrinsicGas
-		}
 	}
 	// Ensure the transaction adheres to nonce ordering
 	if pool.currentState.GetNonce(from) > tx.Nonce() {
