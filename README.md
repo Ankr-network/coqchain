@@ -2,6 +2,10 @@
 
 this chain fork from `go-ethereum` and support some advanced features.
 
+## Status
+
+it still work in progress, coming soon.
+
 ## Features:
 
 - [x] supply 0 gas fee contract, it is convenient for enterprise applications
@@ -9,6 +13,7 @@ this chain fork from `go-ethereum` and support some advanced features.
 - [ ] every sync node should have some reward
 - [ ] support original bridge, which can interact with `BSC` and `Ethereum` chain
 - [x] speed up transactions
+- [ ] implement special storage layer for store chain data better and more efficient
 - [ ] replace `Merkle Tree` with `Verkle tree`
 - [ ] etc...
 
