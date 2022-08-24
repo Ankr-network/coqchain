@@ -29,17 +29,17 @@ func TestCheckCompatible(t *testing.T) {
 		wantErr     *ConfigCompatError
 	}
 	tests := []test{
-		{stored: AllEthashProtocolChanges, new: AllEthashProtocolChanges, head: 0, wantErr: nil},
-		{stored: AllEthashProtocolChanges, new: AllEthashProtocolChanges, head: 100, wantErr: nil},
+		{stored: AllPosaProtocolChanges, new: AllPosaProtocolChanges, head: 0, wantErr: nil},
+		{stored: AllPosaProtocolChanges, new: AllPosaProtocolChanges, head: 100, wantErr: nil},
 		{
-			stored:  &ChainConfig{EIP150Block: big.NewInt(10)},
-			new:     &ChainConfig{EIP150Block: big.NewInt(20)},
+			stored:  &ChainConfig{},
+			new:     &ChainConfig{},
 			head:    9,
 			wantErr: nil,
 		},
 		{
-			stored: AllEthashProtocolChanges,
-			new:    &ChainConfig{HomesteadBlock: nil},
+			stored: AllPosaProtocolChanges,
+			new:    &ChainConfig{},
 			head:   3,
 			wantErr: &ConfigCompatError{
 				What:         "Homestead fork block",
@@ -49,8 +49,8 @@ func TestCheckCompatible(t *testing.T) {
 			},
 		},
 		{
-			stored: AllEthashProtocolChanges,
-			new:    &ChainConfig{HomesteadBlock: big.NewInt(1)},
+			stored: AllPosaProtocolChanges,
+			new:    &ChainConfig{},
 			head:   3,
 			wantErr: &ConfigCompatError{
 				What:         "Homestead fork block",
@@ -60,8 +60,8 @@ func TestCheckCompatible(t *testing.T) {
 			},
 		},
 		{
-			stored: &ChainConfig{HomesteadBlock: big.NewInt(30), EIP150Block: big.NewInt(10)},
-			new:    &ChainConfig{HomesteadBlock: big.NewInt(25), EIP150Block: big.NewInt(20)},
+			stored: &ChainConfig{},
+			new:    &ChainConfig{},
 			head:   25,
 			wantErr: &ConfigCompatError{
 				What:         "EIP150 fork block",
@@ -71,14 +71,14 @@ func TestCheckCompatible(t *testing.T) {
 			},
 		},
 		{
-			stored:  &ChainConfig{ConstantinopleBlock: big.NewInt(30)},
-			new:     &ChainConfig{ConstantinopleBlock: big.NewInt(30), PetersburgBlock: big.NewInt(30)},
+			stored:  &ChainConfig{},
+			new:     &ChainConfig{},
 			head:    40,
 			wantErr: nil,
 		},
 		{
-			stored: &ChainConfig{ConstantinopleBlock: big.NewInt(30)},
-			new:    &ChainConfig{ConstantinopleBlock: big.NewInt(30), PetersburgBlock: big.NewInt(31)},
+			stored: &ChainConfig{},
+			new:    &ChainConfig{},
 			head:   40,
 			wantErr: &ConfigCompatError{
 				What:         "Petersburg fork block",

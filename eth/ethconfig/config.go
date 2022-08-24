@@ -18,6 +18,7 @@
 package ethconfig
 
 import (
+	"log"
 	"math/big"
 	"os"
 	"os/user"
@@ -27,14 +28,12 @@ import (
 
 	"github.com/Ankr-network/coqchain/common"
 	"github.com/Ankr-network/coqchain/consensus"
-	"github.com/Ankr-network/coqchain/consensus/clique"
 	"github.com/Ankr-network/coqchain/consensus/ethash"
 	"github.com/Ankr-network/coqchain/consensus/posa"
 	"github.com/Ankr-network/coqchain/core"
 	"github.com/Ankr-network/coqchain/eth/downloader"
 	"github.com/Ankr-network/coqchain/eth/gasprice"
 	"github.com/Ankr-network/coqchain/ethdb"
-	"github.com/Ankr-network/coqchain/log"
 	"github.com/Ankr-network/coqchain/miner"
 	"github.com/Ankr-network/coqchain/node"
 	"github.com/Ankr-network/coqchain/params"
@@ -210,35 +209,9 @@ type Config struct {
 // CreateConsensusEngine creates a consensus engine for the given chain configuration.
 func CreateConsensusEngine(stack *node.Node, chainConfig *params.ChainConfig, config *ethash.Config, notify []string, noverify bool, db ethdb.Database) consensus.Engine {
 
-	if chainConfig.Posa != nil {
-		return posa.New(chainConfig.Posa, db)
+	if chainConfig.Posa == nil {
+		log.Fatal("engine should not be nil")
 	}
+	return posa.New(chainConfig.Posa, db)
 
-	// If proof-of-authority is requested, set it up
-	if chainConfig.Clique != nil {
-		return clique.New(chainConfig.Clique, db)
-	}
-	// Otherwise assume proof-of-work
-	switch config.PowMode {
-	case ethash.ModeFake:
-		log.Warn("Ethash used in fake mode")
-	case ethash.ModeTest:
-		log.Warn("Ethash used in test mode")
-	case ethash.ModeShared:
-		log.Warn("Ethash used in shared mode")
-	}
-	engine := ethash.New(ethash.Config{
-		PowMode:          config.PowMode,
-		CacheDir:         stack.ResolvePath(config.CacheDir),
-		CachesInMem:      config.CachesInMem,
-		CachesOnDisk:     config.CachesOnDisk,
-		CachesLockMmap:   config.CachesLockMmap,
-		DatasetDir:       config.DatasetDir,
-		DatasetsInMem:    config.DatasetsInMem,
-		DatasetsOnDisk:   config.DatasetsOnDisk,
-		DatasetsLockMmap: config.DatasetsLockMmap,
-		NotifyFull:       config.NotifyFull,
-	}, notify, noverify)
-	engine.SetThreads(-1) // Disable CPU mining
-	return engine
 }

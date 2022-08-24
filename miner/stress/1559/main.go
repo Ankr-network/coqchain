@@ -196,15 +196,13 @@ func makeTransaction(nonce uint64, privKey *ecdsa.PrivateKey, signer types.Signe
 func makeGenesis(faucets []*ecdsa.PrivateKey) *core.Genesis {
 	genesis := core.DefaultGenesisBlock()
 
-	genesis.Config = params.AllEthashProtocolChanges
-	genesis.Config.LondonBlock = londonBlock
+	genesis.Config = params.AllPosaProtocolChanges
 	genesis.Difficulty = params.MinimumDifficulty
 
 	// Small gaslimit for easier basefee moving testing.
 	genesis.GasLimit = 8_000_000
 
 	genesis.Config.ChainID = big.NewInt(18)
-	genesis.Config.EIP150Hash = common.Hash{}
 
 	genesis.Alloc = core.GenesisAlloc{}
 	for _, faucet := range faucets {

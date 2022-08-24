@@ -26,8 +26,8 @@ import (
 	"github.com/Ankr-network/coqchain/accounts"
 	"github.com/Ankr-network/coqchain/common"
 	"github.com/Ankr-network/coqchain/consensus"
-	"github.com/Ankr-network/coqchain/consensus/clique"
 	"github.com/Ankr-network/coqchain/consensus/ethash"
+	"github.com/Ankr-network/coqchain/consensus/posa"
 	"github.com/Ankr-network/coqchain/core"
 	"github.com/Ankr-network/coqchain/core/rawdb"
 	"github.com/Ankr-network/coqchain/core/types"
@@ -78,9 +78,10 @@ func init() {
 	*ethashChainConfig = *params.TestChainConfig
 	cliqueChainConfig = new(params.ChainConfig)
 	*cliqueChainConfig = *params.TestChainConfig
-	cliqueChainConfig.Clique = &params.CliqueConfig{
-		Period: 10,
-		Epoch:  30000,
+	cliqueChainConfig.Posa = &params.PosaConfig{
+		Period:                 3,
+		Epoch:                  30000,
+		SealerBalanceThreshold: big.NewInt(0),
 	}
 
 	signer := types.LatestSigner(params.TestChainConfig)
@@ -123,7 +124,7 @@ func newTestWorkerBackend(t *testing.T, chainConfig *params.ChainConfig, engine 
 	}
 
 	switch e := engine.(type) {
-	case *clique.Clique:
+	case *posa.Posa:
 		gspec.ExtraData = make([]byte, 32+common.AddressLength+crypto.SignatureLength)
 		copy(gspec.ExtraData[32:32+common.AddressLength], testBankAddress.Bytes())
 		e.Authorize(testBankAddress, func(account accounts.Account, s string, data []byte) ([]byte, error) {
@@ -216,16 +217,10 @@ func testGenerateBlockAndImport(t *testing.T, isClique bool) {
 		chainConfig *params.ChainConfig
 		db          = rawdb.NewMemoryDatabase()
 	)
-	if isClique {
-		chainConfig = params.AllCliqueProtocolChanges
-		chainConfig.Clique = &params.CliqueConfig{Period: 1, Epoch: 30000}
-		engine = clique.New(chainConfig.Clique, db)
-	} else {
-		chainConfig = params.AllEthashProtocolChanges
-		engine = ethash.NewFaker()
-	}
+	chainConfig = params.AllPosaProtocolChanges
+	chainConfig.Posa = &params.PosaConfig{Period: 1, Epoch: 30000}
+	engine = posa.New(chainConfig.Posa, db)
 
-	chainConfig.LondonBlock = big.NewInt(0)
 	w, b := newTestWorker(t, chainConfig, engine, db, 0)
 	defer w.close()
 
@@ -269,7 +264,7 @@ func TestEmptyWorkEthash(t *testing.T) {
 	testEmptyWork(t, ethashChainConfig, ethash.NewFaker())
 }
 func TestEmptyWorkClique(t *testing.T) {
-	testEmptyWork(t, cliqueChainConfig, clique.New(cliqueChainConfig.Clique, rawdb.NewMemoryDatabase()))
+	testEmptyWork(t, cliqueChainConfig, posa.New(cliqueChainConfig.Posa, rawdb.NewMemoryDatabase()))
 }
 
 func testEmptyWork(t *testing.T, chainConfig *params.ChainConfig, engine consensus.Engine) {
@@ -373,7 +368,7 @@ func TestRegenerateMiningBlockEthash(t *testing.T) {
 }
 
 func TestRegenerateMiningBlockClique(t *testing.T) {
-	testRegenerateMiningBlock(t, cliqueChainConfig, clique.New(cliqueChainConfig.Clique, rawdb.NewMemoryDatabase()))
+	testRegenerateMiningBlock(t, cliqueChainConfig, posa.New(cliqueChainConfig.Posa, rawdb.NewMemoryDatabase()))
 }
 
 func testRegenerateMiningBlock(t *testing.T, chainConfig *params.ChainConfig, engine consensus.Engine) {
@@ -433,7 +428,7 @@ func TestAdjustIntervalEthash(t *testing.T) {
 }
 
 func TestAdjustIntervalClique(t *testing.T) {
-	testAdjustInterval(t, cliqueChainConfig, clique.New(cliqueChainConfig.Clique, rawdb.NewMemoryDatabase()))
+	testAdjustInterval(t, cliqueChainConfig, posa.New(cliqueChainConfig.Posa, rawdb.NewMemoryDatabase()))
 }
 
 func testAdjustInterval(t *testing.T, chainConfig *params.ChainConfig, engine consensus.Engine) {

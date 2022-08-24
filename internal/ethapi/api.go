@@ -30,9 +30,9 @@ import (
 	"github.com/Ankr-network/coqchain/common"
 	"github.com/Ankr-network/coqchain/common/hexutil"
 	"github.com/Ankr-network/coqchain/common/math"
-	"github.com/Ankr-network/coqchain/consensus/clique"
 	"github.com/Ankr-network/coqchain/consensus/ethash"
 	"github.com/Ankr-network/coqchain/consensus/misc"
+	"github.com/Ankr-network/coqchain/consensus/posa"
 	"github.com/Ankr-network/coqchain/core"
 	"github.com/Ankr-network/coqchain/core/state"
 	"github.com/Ankr-network/coqchain/core/types"
@@ -575,10 +575,8 @@ func NewPublicBlockChainAPI(b Backend) *PublicBlockChainAPI {
 // ChainId is the EIP-155 replay-protection chain id for the current coqchain chain config.
 func (api *PublicBlockChainAPI) ChainId() (*hexutil.Big, error) {
 	// if current block is at or past the EIP-155 replay-protection fork block, return chainID from config
-	if config := api.b.ChainConfig(); config.IsEIP155(api.b.CurrentBlock().Number()) {
-		return (*hexutil.Big)(config.ChainID), nil
-	}
-	return nil, fmt.Errorf("chain not synced beyond EIP-155 replay-protection fork block")
+	config := api.b.ChainConfig()
+	return (*hexutil.Big)(config.ChainID), nil
 }
 
 // BlockNumber returns the block number of the chain head.
@@ -1595,16 +1593,12 @@ func (s *PublicTransactionPoolAPI) GetTransactionReceipt(ctx context.Context, ha
 		"type":              hexutil.Uint(tx.Type()),
 	}
 	// Assign the effective gas price paid
-	if !s.b.ChainConfig().IsLondon(bigblock) {
-		fields["effectiveGasPrice"] = hexutil.Uint64(tx.GasPrice().Uint64())
-	} else {
-		header, err := s.b.HeaderByHash(ctx, blockHash)
-		if err != nil {
-			return nil, err
-		}
-		gasPrice := new(big.Int).Add(header.BaseFee, tx.EffectiveGasTipValue(header.BaseFee))
-		fields["effectiveGasPrice"] = hexutil.Uint64(gasPrice.Uint64())
+	header, err := s.b.HeaderByHash(ctx, blockHash)
+	if err != nil {
+		return nil, err
 	}
+	gasPrice := new(big.Int).Add(header.BaseFee, tx.EffectiveGasTipValue(header.BaseFee))
+	fields["effectiveGasPrice"] = hexutil.Uint64(gasPrice.Uint64())
 	// Assign receipt status or post state.
 	if len(receipt.PostState) > 0 {
 		fields["root"] = hexutil.Bytes(receipt.PostState)
@@ -1892,19 +1886,19 @@ func (api *PublicDebugAPI) GetBlockRlp(ctx context.Context, number uint64) (hexu
 	return rlp.EncodeToBytes(block)
 }
 
-// TestSignCliqueBlock fetches the given block number, and attempts to sign it as a clique header with the
+// TestSignCliqueBlock fetches the given block number, and attempts to sign it as a posa header with the
 // given address, returning the address of the recovered signature
 //
 // This is a temporary method to debug the externalsigner integration,
 // TODO: Remove this method when the integration is mature
-func (api *PublicDebugAPI) TestSignCliqueBlock(ctx context.Context, address common.Address, number uint64) (common.Address, error) {
+func (api *PublicDebugAPI) TestSignPosaBlock(ctx context.Context, address common.Address, number uint64) (common.Address, error) {
 	block, _ := api.b.BlockByNumber(ctx, rpc.BlockNumber(number))
 	if block == nil {
 		return common.Address{}, fmt.Errorf("block #%d not found", number)
 	}
 	header := block.Header()
 	header.Extra = make([]byte, 32+65)
-	encoded := clique.CliqueRLP(header)
+	encoded := posa.RLP(header)
 
 	// Look up the wallet containing the requested signer
 	account := accounts.Account{Address: address}
@@ -1917,7 +1911,7 @@ func (api *PublicDebugAPI) TestSignCliqueBlock(ctx context.Context, address comm
 	if err != nil {
 		return common.Address{}, err
 	}
-	sealHash := clique.SealHash(header).Bytes()
+	sealHash := posa.SealHash(header).Bytes()
 	log.Info("test signing of clique block",
 		"Sealhash", fmt.Sprintf("%x", sealHash),
 		"signature", fmt.Sprintf("%x", signature))

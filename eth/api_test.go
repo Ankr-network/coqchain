@@ -24,11 +24,11 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/Ankr-network/coqchain/common"
 	"github.com/Ankr-network/coqchain/core/rawdb"
 	"github.com/Ankr-network/coqchain/core/state"
 	"github.com/Ankr-network/coqchain/crypto"
+	"github.com/davecgh/go-spew/spew"
 )
 
 var dumper = spew.ConfigState{Indent: "    "}
@@ -83,8 +83,8 @@ func TestAccountRange(t *testing.T) {
 			m[addr] = true
 		}
 	}
-	state.Commit(true)
-	root := state.IntermediateRoot(true)
+	state.Commit()
+	root := state.IntermediateRoot()
 
 	trie, err := statedb.OpenTrie(root)
 	if err != nil {
@@ -140,8 +140,8 @@ func TestEmptyAccountRange(t *testing.T) {
 		statedb = state.NewDatabase(rawdb.NewMemoryDatabase())
 		st, _   = state.New(common.Hash{}, statedb, nil)
 	)
-	st.Commit(true)
-	st.IntermediateRoot(true)
+	st.Commit()
+	st.IntermediateRoot()
 	results := st.IteratorDump(&state.DumpConfig{
 		SkipCode:          true,
 		SkipStorage:       true,

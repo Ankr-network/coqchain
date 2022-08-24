@@ -54,7 +54,7 @@ func TestUpdateLeaks(t *testing.T) {
 		}
 	}
 
-	root := state.IntermediateRoot(false)
+	root := state.IntermediateRoot()
 	if err := state.Database().TrieDB().Commit(root, false, nil); err != nil {
 		t.Errorf("can not commit trie %v to persistent database", root.Hex())
 	}
@@ -93,7 +93,7 @@ func TestIntermediateLeaks(t *testing.T) {
 		modify(transState, common.Address{i}, i, 0)
 	}
 	// Write modifications to trie.
-	transState.IntermediateRoot(false)
+	transState.IntermediateRoot()
 
 	// Overwrite all the data with new values in the transient database.
 	for i := byte(0); i < 255; i++ {
@@ -102,7 +102,7 @@ func TestIntermediateLeaks(t *testing.T) {
 	}
 
 	// Commit and cross check the databases.
-	transRoot, err := transState.Commit(false)
+	transRoot, err := transState.Commit()
 	if err != nil {
 		t.Fatalf("failed to commit transition state: %v", err)
 	}
@@ -110,7 +110,7 @@ func TestIntermediateLeaks(t *testing.T) {
 		t.Errorf("can not commit trie %v to persistent database", transRoot.Hex())
 	}
 
-	finalRoot, err := finalState.Commit(false)
+	finalRoot, err := finalState.Commit()
 	if err != nil {
 		t.Fatalf("failed to commit final state: %v", err)
 	}
@@ -156,7 +156,7 @@ func TestCopy(t *testing.T) {
 		obj.AddBalance(big.NewInt(int64(i)))
 		orig.updateStateObject(obj)
 	}
-	orig.Finalise(false)
+	orig.Finalise()
 
 	// Copy the state
 	copy := orig.Copy()
@@ -182,7 +182,7 @@ func TestCopy(t *testing.T) {
 	// Finalise the changes on all concurrently
 	finalise := func(wg *sync.WaitGroup, db *StateDB) {
 		defer wg.Done()
-		db.Finalise(true)
+		db.Finalise()
 	}
 
 	var wg sync.WaitGroup
@@ -473,7 +473,7 @@ func (test *snapshotTest) checkEqual(state, checkstate *StateDB) error {
 func TestTouchDelete(t *testing.T) {
 	s := newStateTest()
 	s.state.GetOrNewStateObject(common.Address{})
-	root, _ := s.state.Commit(false)
+	root, _ := s.state.Commit()
 	s.state, _ = New(root, s.state.db, s.state.snaps)
 
 	snapshot := s.state.Snapshot()
@@ -546,7 +546,7 @@ func TestCopyCommitCopy(t *testing.T) {
 		t.Fatalf("first copy pre-commit committed storage slot mismatch: have %x, want %x", val, common.Hash{})
 	}
 
-	copyOne.Commit(false)
+	copyOne.Commit()
 	if balance := copyOne.GetBalance(addr); balance.Cmp(big.NewInt(42)) != 0 {
 		t.Fatalf("first copy post-commit balance mismatch: have %v, want %v", balance, 42)
 	}
@@ -631,7 +631,7 @@ func TestCopyCopyCommitCopy(t *testing.T) {
 	if val := copyTwo.GetCommittedState(addr, skey); val != (common.Hash{}) {
 		t.Fatalf("second copy pre-commit committed storage slot mismatch: have %x, want %x", val, common.Hash{})
 	}
-	copyTwo.Commit(false)
+	copyTwo.Commit()
 	if balance := copyTwo.GetBalance(addr); balance.Cmp(big.NewInt(42)) != 0 {
 		t.Fatalf("second copy post-commit balance mismatch: have %v, want %v", balance, 42)
 	}
@@ -675,19 +675,19 @@ func TestDeleteCreateRevert(t *testing.T) {
 	addr := common.BytesToAddress([]byte("so"))
 	state.SetBalance(addr, big.NewInt(1))
 
-	root, _ := state.Commit(false)
+	root, _ := state.Commit()
 	state, _ = New(root, state.db, state.snaps)
 
 	// Simulate self-destructing in one transaction, then create-reverting in another
 	state.Suicide(addr)
-	state.Finalise(true)
+	state.Finalise()
 
 	id := state.Snapshot()
 	state.SetBalance(addr, big.NewInt(2))
 	state.RevertToSnapshot(id)
 
 	// Commit the entire state and make sure we don't crash and have the correct state
-	root, _ = state.Commit(true)
+	root, _ = state.Commit()
 	state, _ = New(root, state.db, state.snaps)
 
 	if state.getStateObject(addr) != nil {
@@ -712,7 +712,7 @@ func TestMissingTrieNodes(t *testing.T) {
 		a2 := common.BytesToAddress([]byte("another"))
 		state.SetBalance(a2, big.NewInt(100))
 		state.SetCode(a2, []byte{1, 2, 4})
-		root, _ = state.Commit(false)
+		root, _ = state.Commit()
 		t.Logf("root: %x", root)
 		// force-flush
 		state.Database().TrieDB().Cap(0)
@@ -736,7 +736,7 @@ func TestMissingTrieNodes(t *testing.T) {
 	}
 	// Modify the state
 	state.SetBalance(addr, big.NewInt(2))
-	root, err := state.Commit(false)
+	root, err := state.Commit()
 	if err == nil {
 		t.Fatalf("expected error, got root :%x", root)
 	}

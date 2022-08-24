@@ -30,7 +30,6 @@ import (
 	"github.com/Ankr-network/coqchain/common"
 	"github.com/Ankr-network/coqchain/common/hexutil"
 	"github.com/Ankr-network/coqchain/consensus"
-	"github.com/Ankr-network/coqchain/consensus/clique"
 	"github.com/Ankr-network/coqchain/consensus/posa"
 	"github.com/Ankr-network/coqchain/core"
 	"github.com/Ankr-network/coqchain/core/bloombits"
@@ -132,7 +131,7 @@ func New(stack *node.Node, config *ethconfig.Config) (*Coqchain, error) {
 	if err != nil {
 		return nil, err
 	}
-	chainConfig, genesisHash, genesisErr := core.SetupGenesisBlockWithOverride(chainDb, config.Genesis, config.OverrideArrowGlacier)
+	chainConfig, genesisHash, genesisErr := core.SetupGenesisBlockWithOverride(chainDb, config.Genesis)
 	if _, ok := genesisErr.(*params.ConfigCompatError); genesisErr != nil && !ok {
 		return nil, genesisErr
 	}
@@ -422,9 +421,6 @@ func (s *Coqchain) shouldPreserve(block *types.Block) bool {
 	// is A, F and G sign the block of round5 and reject the block of opponents
 	// and in the round6, the last available signer B is offline, the whole
 	// network is stuck.
-	if _, ok := s.engine.(*clique.Clique); ok {
-		return false
-	}
 
 	if _, ok := s.engine.(*posa.Posa); ok {
 		return false
@@ -470,14 +466,6 @@ func (s *Coqchain) StartMining(threads int) error {
 		if err != nil {
 			log.Error("Cannot start mining without etherbase", "err", err)
 			return fmt.Errorf("etherbase missing: %v", err)
-		}
-		if clique, ok := s.engine.(*clique.Clique); ok {
-			wallet, err := s.accountManager.Find(accounts.Account{Address: eb})
-			if wallet == nil || err != nil {
-				log.Error("Etherbase account unavailable locally", "err", err)
-				return fmt.Errorf("signer missing: %v", err)
-			}
-			clique.Authorize(eb, wallet.SignData)
 		}
 		if posa, ok := s.engine.(*posa.Posa); ok {
 			wallet, err := s.accountManager.Find(accounts.Account{Address: eb})

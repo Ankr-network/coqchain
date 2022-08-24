@@ -19,8 +19,8 @@ package tests
 import (
 	"bufio"
 	"bytes"
+	"errors"
 	"fmt"
-	"reflect"
 	"testing"
 
 	"github.com/Ankr-network/coqchain/core/vm"
@@ -80,7 +80,7 @@ func TestState(t *testing.T) {
 					withTrace(t, test.gasLimit(subtest), func(vmconfig vm.Config) error {
 						snaps, statedb, err := test.Run(subtest, vmconfig, true)
 						if snaps != nil && statedb != nil {
-							if _, err := snaps.Journal(statedb.IntermediateRoot(false)); err != nil {
+							if _, err := snaps.Journal(statedb.IntermediateRoot()); err != nil {
 								return err
 							}
 						}
@@ -118,7 +118,7 @@ func withTrace(t *testing.T, gasLimit uint64, test func(vm.Config) error) {
 	tracer := vm.NewJSONLogger(&vm.LogConfig{}, w)
 	config.Debug, config.Tracer = true, tracer
 	err2 := test(config)
-	if !reflect.DeepEqual(err, err2) {
+	if errors.Is(err, err2) {
 		t.Errorf("different error for second run: %v", err2)
 	}
 	w.Flush()

@@ -22,7 +22,7 @@ import (
 	"time"
 
 	"github.com/Ankr-network/coqchain/common"
-	"github.com/Ankr-network/coqchain/consensus/clique"
+	"github.com/Ankr-network/coqchain/consensus/posa"
 	"github.com/Ankr-network/coqchain/core"
 	"github.com/Ankr-network/coqchain/core/rawdb"
 	"github.com/Ankr-network/coqchain/core/state"
@@ -243,7 +243,7 @@ func createMiner(t *testing.T) (*Miner, *event.TypeMux) {
 		t.Fatalf("can't create new chain config: %v", err)
 	}
 	// Create consensus engine
-	engine := clique.New(chainConfig.Clique, chainDB)
+	engine := posa.New(chainConfig.Posa, chainDB)
 	// Create coqchain backend
 	bc, err := core.NewBlockChain(chainDB, nil, chainConfig, engine, vm.Config{}, nil, nil)
 	if err != nil {

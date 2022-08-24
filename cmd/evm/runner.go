@@ -232,7 +232,7 @@ func runCmd(ctx *cli.Context) error {
 	if chainConfig != nil {
 		runtimeConfig.ChainConfig = chainConfig
 	} else {
-		runtimeConfig.ChainConfig = params.AllEthashProtocolChanges
+		runtimeConfig.ChainConfig = params.AllPosaProtocolChanges
 	}
 
 	var hexInput []byte
@@ -267,8 +267,8 @@ func runCmd(ctx *cli.Context) error {
 	output, leftOverGas, stats, err := timedExec(bench, execFunc)
 
 	if ctx.GlobalBool(DumpFlag.Name) {
-		statedb.Commit(true)
-		statedb.IntermediateRoot(true)
+		statedb.Commit()
+		statedb.IntermediateRoot()
 		fmt.Println(string(statedb.Dump(nil)))
 	}
 

@@ -76,7 +76,7 @@ type SimulatedBackend struct {
 // and uses a simulated blockchain for testing purposes.
 // A simulated backend always uses chainID 1337.
 func NewSimulatedBackendWithDatabase(database ethdb.Database, alloc core.GenesisAlloc, gasLimit uint64) *SimulatedBackend {
-	genesis := core.Genesis{Config: params.AllEthashProtocolChanges, GasLimit: gasLimit, Alloc: alloc}
+	genesis := core.Genesis{Config: params.AllPosaProtocolChanges, GasLimit: gasLimit, Alloc: alloc}
 	genesis.MustCommit(database)
 	blockchain, _ := core.NewBlockChain(database, nil, genesis.Config, ethash.NewFaker(), vm.Config{}, nil, nil)
 
@@ -589,30 +589,22 @@ func (b *SimulatedBackend) callContract(ctx context.Context, call coqchain.CallM
 		return nil, errors.New("both gasPrice and (maxFeePerGas or maxPriorityFeePerGas) specified")
 	}
 	head := b.blockchain.CurrentHeader()
-	if !b.blockchain.Config().IsLondon(head.Number) {
-		// If there's no basefee, then it must be a non-1559 execution
-		if call.GasPrice == nil {
-			call.GasPrice = new(big.Int)
-		}
+	// A basefee is provided, necessitating 1559-type execution
+	if call.GasPrice != nil {
+		// User specified the legacy gas field, convert to 1559 gas typing
 		call.GasFeeCap, call.GasTipCap = call.GasPrice, call.GasPrice
 	} else {
-		// A basefee is provided, necessitating 1559-type execution
-		if call.GasPrice != nil {
-			// User specified the legacy gas field, convert to 1559 gas typing
-			call.GasFeeCap, call.GasTipCap = call.GasPrice, call.GasPrice
-		} else {
-			// User specified 1559 gas feilds (or none), use those
-			if call.GasFeeCap == nil {
-				call.GasFeeCap = new(big.Int)
-			}
-			if call.GasTipCap == nil {
-				call.GasTipCap = new(big.Int)
-			}
-			// Backfill the legacy gasPrice for EVM execution, unless we're all zeroes
-			call.GasPrice = new(big.Int)
-			if call.GasFeeCap.BitLen() > 0 || call.GasTipCap.BitLen() > 0 {
-				call.GasPrice = math.BigMin(new(big.Int).Add(call.GasTipCap, head.BaseFee), call.GasFeeCap)
-			}
+		// User specified 1559 gas feilds (or none), use those
+		if call.GasFeeCap == nil {
+			call.GasFeeCap = new(big.Int)
+		}
+		if call.GasTipCap == nil {
+			call.GasTipCap = new(big.Int)
+		}
+		// Backfill the legacy gasPrice for EVM execution, unless we're all zeroes
+		call.GasPrice = new(big.Int)
+		if call.GasFeeCap.BitLen() > 0 || call.GasTipCap.BitLen() > 0 {
+			call.GasPrice = math.BigMin(new(big.Int).Add(call.GasTipCap, head.BaseFee), call.GasFeeCap)
 		}
 	}
 	// Ensure message is initialized properly.

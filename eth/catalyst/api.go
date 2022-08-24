@@ -18,7 +18,6 @@
 package catalyst
 
 import (
-	"errors"
 	"fmt"
 	"math/big"
 	"time"
@@ -38,10 +37,6 @@ import (
 
 // Register adds catalyst APIs to the node.
 func Register(stack *node.Node, backend *eth.Coqchain) error {
-	chainconfig := backend.BlockChain().Config()
-	if chainconfig.TerminalTotalDifficulty == nil {
-		return errors.New("catalyst started without valid total difficulty")
-	}
 
 	log.Warn("Catalyst mode enabled")
 	stack.RegisterAPIs([]rpc.API{
@@ -141,9 +136,7 @@ func (api *consensusAPI) AssembleBlock(params assembleBlockParams) (*executableD
 		Extra:      []byte{},
 		Time:       params.Timestamp,
 	}
-	if config := api.eth.BlockChain().Config(); config.IsLondon(header.Number) {
-		header.BaseFee = misc.CalcBaseFee(config, parent.Header())
-	}
+	header.BaseFee = misc.CalcBaseFee(api.eth.BlockChain().Config(), parent.Header())
 	err = api.eth.Engine().Prepare(bc, header)
 	if err != nil {
 		return nil, err
@@ -267,9 +260,7 @@ func insertBlockParamsToBlock(config *chainParams.ChainConfig, parent *types.Hea
 		GasUsed:     params.GasUsed,
 		Time:        params.Timestamp,
 	}
-	if config.IsLondon(number) {
-		header.BaseFee = misc.CalcBaseFee(config, parent)
-	}
+	header.BaseFee = misc.CalcBaseFee(config, parent)
 	block := types.NewBlockWithHeader(header).WithBody(txs, nil /* uncles */)
 	return block, nil
 }

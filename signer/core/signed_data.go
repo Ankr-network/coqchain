@@ -35,7 +35,6 @@ import (
 	"github.com/Ankr-network/coqchain/common"
 	"github.com/Ankr-network/coqchain/common/hexutil"
 	"github.com/Ankr-network/coqchain/common/math"
-	"github.com/Ankr-network/coqchain/consensus/clique"
 	"github.com/Ankr-network/coqchain/consensus/posa"
 	"github.com/Ankr-network/coqchain/core/types"
 	"github.com/Ankr-network/coqchain/crypto"
@@ -247,12 +246,12 @@ func (api *SignerAPI) determineSignatureFormat(ctx context.Context, contentType 
 		if !ok {
 			return nil, usecoqchainV, fmt.Errorf("input for %v must be an hex-encoded string", ApplicationPosa.Mime)
 		}
-		cliqueData, err := hexutil.Decode(stringData)
+		posaData, err := hexutil.Decode(stringData)
 		if err != nil {
 			return nil, usecoqchainV, err
 		}
 		header := &types.Header{}
-		if err := rlp.DecodeBytes(cliqueData, header); err != nil {
+		if err := rlp.DecodeBytes(posaData, header); err != nil {
 			return nil, usecoqchainV, err
 		}
 		// The incoming clique header is already truncated, sent to us with a extradata already shortened
@@ -277,42 +276,6 @@ func (api *SignerAPI) determineSignatureFormat(ctx context.Context, contentType 
 		usecoqchainV = false
 		req = &SignDataRequest{ContentType: mediaType, Rawdata: posaRlp, Messages: messages, Hash: sighash}
 
-	case ApplicationClique.Mime:
-		// Clique is the coqchain PoA standard
-		stringData, ok := data.(string)
-		if !ok {
-			return nil, usecoqchainV, fmt.Errorf("input for %v must be an hex-encoded string", ApplicationClique.Mime)
-		}
-		cliqueData, err := hexutil.Decode(stringData)
-		if err != nil {
-			return nil, usecoqchainV, err
-		}
-		header := &types.Header{}
-		if err := rlp.DecodeBytes(cliqueData, header); err != nil {
-			return nil, usecoqchainV, err
-		}
-		// The incoming clique header is already truncated, sent to us with a extradata already shortened
-		if len(header.Extra) < 65 {
-			// Need to add it back, to get a suitable length for hashing
-			newExtra := make([]byte, len(header.Extra)+65)
-			copy(newExtra, header.Extra)
-			header.Extra = newExtra
-		}
-		// Get back the rlp data, encoded by us
-		sighash, cliqueRlp, err := cliqueHeaderHashAndRlp(header)
-		if err != nil {
-			return nil, usecoqchainV, err
-		}
-		messages := []*NameValueType{
-			{
-				Name:  "Clique header",
-				Typ:   "clique",
-				Value: fmt.Sprintf("clique header %d [0x%x]", header.Number, header.Hash()),
-			},
-		}
-		// Clique uses V on the form 0 or 1
-		usecoqchainV = false
-		req = &SignDataRequest{ContentType: mediaType, Rawdata: cliqueRlp, Messages: messages, Hash: sighash}
 	default: // also case TextPlain.Mime:
 		// Calculates an coqchain ECDSA signature for:
 		// hash = keccak256("\x19${byteVersion}coqchain Signed Message:\n${message length}${message}")
@@ -346,23 +309,6 @@ func (api *SignerAPI) determineSignatureFormat(ctx context.Context, contentType 
 func SignTextValidator(validatorData ValidatorData) (hexutil.Bytes, string) {
 	msg := fmt.Sprintf("\x19\x00%s%s", string(validatorData.Address.Bytes()), string(validatorData.Message))
 	return crypto.Keccak256([]byte(msg)), msg
-}
-
-// cliqueHeaderHashAndRlp returns the hash which is used as input for the proof-of-authority
-// signing. It is the hash of the entire header apart from the 65 byte signature
-// contained at the end of the extra data.
-//
-// The method requires the extra data to be at least 65 bytes -- the original implementation
-// in clique.go panics if this is the case, thus it's been reimplemented here to avoid the panic
-// and simply return an error instead
-func cliqueHeaderHashAndRlp(header *types.Header) (hash, rlp []byte, err error) {
-	if len(header.Extra) < 65 {
-		err = fmt.Errorf("clique header extradata too short, %d < 65", len(header.Extra))
-		return
-	}
-	rlp = clique.CliqueRLP(header)
-	hash = clique.SealHash(header).Bytes()
-	return hash, rlp, err
 }
 
 // SignTypedData signs EIP-712 conformant typed data

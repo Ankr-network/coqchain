@@ -57,7 +57,7 @@ func TestReimportMirroredState(t *testing.T) {
 	chain, _ := core.NewBlockChain(db, nil, params.AllPosaProtocolChanges, engine, vm.Config{}, nil, nil)
 	defer chain.Stop()
 
-	blocks, _ := core.GenerateChain(params.AllCliqueProtocolChanges, genesis, engine, db, 3, func(i int, block *core.BlockGen) {
+	blocks, _ := core.GenerateChain(params.AllPosaProtocolChanges, genesis, engine, db, 3, func(i int, block *core.BlockGen) {
 		// The chain maker doesn't have access to a chain, so the difficulty will be
 		// lets unset (nil). Set it here to the correct value.
 		block.SetDifficulty(diffInTurn)

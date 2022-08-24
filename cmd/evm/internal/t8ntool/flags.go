@@ -115,22 +115,9 @@ var (
 		Usage: "`stdin` or file name of where to find the transactions list in RLP form.",
 		Value: "txs.rlp",
 	}
-	SealCliqueFlag = cli.StringFlag{
-		Name:  "seal.clique",
-		Usage: "Seal block with Clique. `stdin` or file name of where to find the Clique sealing data.",
-	}
-	SealEthashFlag = cli.BoolFlag{
-		Name:  "seal.ethash",
-		Usage: "Seal block with ethash.",
-	}
-	SealEthashDirFlag = cli.StringFlag{
-		Name:  "seal.ethash.dir",
-		Usage: "Path to ethash DAG. If none exists, a new DAG will be generated.",
-	}
-	SealEthashModeFlag = cli.StringFlag{
-		Name:  "seal.ethash.mode",
-		Usage: "Defines the type and amount of PoW verification an ethash engine makes.",
-		Value: "normal",
+	SealPosaFlag = cli.StringFlag{
+		Name:  "seal.posa",
+		Usage: "Seal block with Posa. `stdin` or file name of where to find the Posa sealing data.",
 	}
 	RewardFlag = cli.Int64Flag{
 		Name:  "state.reward",

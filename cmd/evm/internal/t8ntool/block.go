@@ -27,8 +27,7 @@ import (
 	"github.com/Ankr-network/coqchain/common"
 	"github.com/Ankr-network/coqchain/common/hexutil"
 	"github.com/Ankr-network/coqchain/common/math"
-	"github.com/Ankr-network/coqchain/consensus/clique"
-	"github.com/Ankr-network/coqchain/consensus/ethash"
+	"github.com/Ankr-network/coqchain/consensus/posa"
 	"github.com/Ankr-network/coqchain/core/types"
 	"github.com/Ankr-network/coqchain/crypto"
 	"github.com/Ankr-network/coqchain/log"
@@ -67,19 +66,16 @@ type headerMarshaling struct {
 }
 
 type bbInput struct {
-	Header    *header      `json:"header,omitempty"`
-	OmmersRlp []string     `json:"ommers,omitempty"`
-	TxRlp     string       `json:"txs,omitempty"`
-	Clique    *cliqueInput `json:"clique,omitempty"`
+	Header    *header    `json:"header,omitempty"`
+	OmmersRlp []string   `json:"ommers,omitempty"`
+	TxRlp     string     `json:"txs,omitempty"`
+	Posa      *posaInput `json:"posa,omitempty"`
 
-	Ethash    bool                 `json:"-"`
-	EthashDir string               `json:"-"`
-	PowMode   ethash.Mode          `json:"-"`
-	Txs       []*types.Transaction `json:"-"`
-	Ommers    []*types.Header      `json:"-"`
+	Txs    []*types.Transaction `json:"-"`
+	Ommers []*types.Header      `json:"-"`
 }
 
-type cliqueInput struct {
+type posaInput struct {
 	Key       *ecdsa.PrivateKey
 	Voted     *common.Address
 	Authorize *bool
@@ -87,7 +83,7 @@ type cliqueInput struct {
 }
 
 // UnmarshalJSON implements json.Unmarshaler interface.
-func (c *cliqueInput) UnmarshalJSON(input []byte) error {
+func (c *posaInput) UnmarshalJSON(input []byte) error {
 	var x struct {
 		Key       *common.Hash    `json:"secretKey"`
 		Voted     *common.Address `json:"voted"`
@@ -159,61 +155,32 @@ func (i *bbInput) ToBlock() *types.Block {
 // SealBlock seals the given block using the configured engine.
 func (i *bbInput) SealBlock(block *types.Block) (*types.Block, error) {
 	switch {
-	case i.Ethash:
-		return i.sealEthash(block)
-	case i.Clique != nil:
-		return i.sealClique(block)
+	case i.Posa != nil:
+		return i.sealPosa(block)
 	default:
 		return block, nil
 	}
 }
 
-// sealEthash seals the given block using ethash.
-func (i *bbInput) sealEthash(block *types.Block) (*types.Block, error) {
-	if i.Header.Nonce != nil {
-		return nil, NewError(ErrorConfig, fmt.Errorf("sealing with ethash will overwrite provided nonce"))
-	}
-	ethashConfig := ethash.Config{
-		PowMode:        i.PowMode,
-		DatasetDir:     i.EthashDir,
-		CacheDir:       i.EthashDir,
-		DatasetsInMem:  1,
-		DatasetsOnDisk: 2,
-		CachesInMem:    2,
-		CachesOnDisk:   3,
-	}
-	engine := ethash.New(ethashConfig, nil, true)
-	defer engine.Close()
-	// Use a buffered chan for results.
-	// If the testmode is used, the sealer will return quickly, and complain
-	// "Sealing result is not read by miner" if it cannot write the result.
-	results := make(chan *types.Block, 1)
-	if err := engine.Seal(nil, block, results, nil); err != nil {
-		panic(fmt.Sprintf("failed to seal block: %v", err))
-	}
-	found := <-results
-	return block.WithSeal(found.Header()), nil
-}
-
 // sealClique seals the given block using clique.
-func (i *bbInput) sealClique(block *types.Block) (*types.Block, error) {
+func (i *bbInput) sealPosa(block *types.Block) (*types.Block, error) {
 	// If any clique value overwrites an explicit header value, fail
 	// to avoid silently building a block with unexpected values.
 	if i.Header.Extra != nil {
 		return nil, NewError(ErrorConfig, fmt.Errorf("sealing with clique will overwrite provided extra data"))
 	}
 	header := block.Header()
-	if i.Clique.Voted != nil {
+	if i.Posa.Voted != nil {
 		if i.Header.Coinbase != nil {
 			return nil, NewError(ErrorConfig, fmt.Errorf("sealing with clique and voting will overwrite provided coinbase"))
 		}
-		header.Coinbase = *i.Clique.Voted
+		header.Coinbase = *i.Posa.Voted
 	}
-	if i.Clique.Authorize != nil {
+	if i.Posa.Authorize != nil {
 		if i.Header.Nonce != nil {
 			return nil, NewError(ErrorConfig, fmt.Errorf("sealing with clique and voting will overwrite provided nonce"))
 		}
-		if *i.Clique.Authorize {
+		if *i.Posa.Authorize {
 			header.Nonce = [8]byte{}
 		} else {
 			header.Nonce = [8]byte{0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff}
@@ -221,11 +188,11 @@ func (i *bbInput) sealClique(block *types.Block) (*types.Block, error) {
 	}
 	// Extra is fixed 32 byte vanity and 65 byte signature
 	header.Extra = make([]byte, 32+65)
-	copy(header.Extra[0:32], i.Clique.Vanity.Bytes()[:])
+	copy(header.Extra[0:32], i.Posa.Vanity.Bytes()[:])
 
 	// Sign the seal hash and fill in the rest of the extra data
-	h := clique.SealHash(header)
-	sighash, err := crypto.Sign(h[:], i.Clique.Key)
+	h := posa.SealHash(header)
+	sighash, err := crypto.Sign(h[:], i.Posa.Key)
 	if err != nil {
 		return nil, err
 	}
@@ -259,44 +226,24 @@ func BuildBlock(ctx *cli.Context) error {
 
 func readInput(ctx *cli.Context) (*bbInput, error) {
 	var (
-		headerStr  = ctx.String(InputHeaderFlag.Name)
-		ommersStr  = ctx.String(InputOmmersFlag.Name)
-		txsStr     = ctx.String(InputTxsRlpFlag.Name)
-		cliqueStr  = ctx.String(SealCliqueFlag.Name)
-		ethashOn   = ctx.Bool(SealEthashFlag.Name)
-		ethashDir  = ctx.String(SealEthashDirFlag.Name)
-		ethashMode = ctx.String(SealEthashModeFlag.Name)
-		inputData  = &bbInput{}
+		headerStr = ctx.String(InputHeaderFlag.Name)
+		ommersStr = ctx.String(InputOmmersFlag.Name)
+		txsStr    = ctx.String(InputTxsRlpFlag.Name)
+		posaStr   = ctx.String(SealPosaFlag.Name)
+		inputData = &bbInput{}
 	)
-	if ethashOn && cliqueStr != "" {
-		return nil, NewError(ErrorConfig, fmt.Errorf("both ethash and clique sealing specified, only one may be chosen"))
-	}
-	if ethashOn {
-		inputData.Ethash = ethashOn
-		inputData.EthashDir = ethashDir
-		switch ethashMode {
-		case "normal":
-			inputData.PowMode = ethash.ModeNormal
-		case "test":
-			inputData.PowMode = ethash.ModeTest
-		case "fake":
-			inputData.PowMode = ethash.ModeFake
-		default:
-			return nil, NewError(ErrorConfig, fmt.Errorf("unknown pow mode: %s, supported modes: test, fake, normal", ethashMode))
-		}
-	}
-	if headerStr == stdinSelector || ommersStr == stdinSelector || txsStr == stdinSelector || cliqueStr == stdinSelector {
+	if headerStr == stdinSelector || ommersStr == stdinSelector || txsStr == stdinSelector || posaStr == stdinSelector {
 		decoder := json.NewDecoder(os.Stdin)
 		if err := decoder.Decode(inputData); err != nil {
 			return nil, NewError(ErrorJson, fmt.Errorf("failed unmarshaling stdin: %v", err))
 		}
 	}
-	if cliqueStr != stdinSelector && cliqueStr != "" {
-		var clique cliqueInput
-		if err := readFile(cliqueStr, "clique", &clique); err != nil {
+	if posaStr != stdinSelector && posaStr != "" {
+		var e posaInput
+		if err := readFile(posaStr, "posa", &e); err != nil {
 			return nil, err
 		}
-		inputData.Clique = &clique
+		inputData.Posa = &e
 	}
 	if headerStr != stdinSelector {
 		var env header
