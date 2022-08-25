@@ -75,13 +75,33 @@ web3._extend({
 			params: 0
 		}),
 		new web3._extend.Method({
-			name: 'addrAddr',
-			call: 'posa_addAddr',
+			name: 'addZero',
+			call: 'posa_addZero',
 			params: 1
 		}),
 		new web3._extend.Method({
-			name: 'listAddr',
-			call: 'posa_listAddr',
+			name: 'rmZero',
+			call: 'posa_rmZero',
+			params: 1
+		}),
+		new web3._extend.Method({
+			name: 'listZero',
+			call: 'posa_listZero',
+			params: 0
+		}),
+		new web3._extend.Method({
+			name: 'addMon',
+			call: 'posa_addMon',
+			params: 1
+		}),
+		new web3._extend.Method({
+			name: 'rmMon',
+			call: 'posa_rmMon',
+			params: 1
+		}),
+		new web3._extend.Method({
+			name: 'listMon',
+			call: 'posa_listMon',
 			params: 0
 		}),
 	],

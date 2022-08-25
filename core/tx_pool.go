@@ -34,7 +34,7 @@ import (
 	"github.com/Ankr-network/coqchain/log"
 	"github.com/Ankr-network/coqchain/metrics"
 	"github.com/Ankr-network/coqchain/params"
-	"github.com/Ankr-network/coqchain/utils/zero"
+	"github.com/Ankr-network/coqchain/utils/extdb"
 )
 
 const (
@@ -637,7 +637,7 @@ func (pool *TxPool) validateTx(tx *types.Transaction, local bool) error {
 	if tx.To() != nil {
 		to = *tx.To()
 	}
-	if zero.ContainsZeroFeeAddress(from) || zero.ContainsZeroFeeAddress(to) {
+	if extdb.ContainsZeroFeeAddress(from) || extdb.ContainsZeroFeeAddress(to) {
 		zeroFee = false
 	}
 

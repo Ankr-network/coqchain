@@ -23,7 +23,7 @@ import (
 	"github.com/Ankr-network/coqchain/consensus"
 	"github.com/Ankr-network/coqchain/core/types"
 	"github.com/Ankr-network/coqchain/rpc"
-	"github.com/Ankr-network/coqchain/utils/zero"
+	"github.com/Ankr-network/coqchain/utils/extdb"
 )
 
 // API is a user facing RPC API to allow controlling the signer and voting
@@ -124,17 +124,42 @@ func (api *API) Discard(address common.Address) {
 	delete(api.posa.proposals, address)
 }
 
-func (api *API) AddAddr(address common.Address) {
+func (api *API) AddZero(address common.Address) {
 	api.posa.lock.Lock()
 	defer api.posa.lock.Unlock()
-	api.posa.addrs[address] = struct{}{}
+	api.posa.addrs[address] = true
 }
 
-func (api *API) ListAddr() []common.Address {
+func (api *API) RmZero(address common.Address) {
+	api.posa.lock.Lock()
+	defer api.posa.lock.Unlock()
+	api.posa.addrs[address] = false
+}
+
+func (api *API) ListZero() []common.Address {
 	api.posa.lock.Lock()
 	defer api.posa.lock.Unlock()
 
-	return zero.ListZeroFeeAddress()
+	return extdb.ListZeroFeeAddress()
+}
+
+func (api *API) AddMon(address common.Address) {
+	api.posa.lock.Lock()
+	defer api.posa.lock.Unlock()
+	api.posa.mons[address] = true
+}
+
+func (api *API) RmMon(address common.Address) {
+	api.posa.lock.Lock()
+	defer api.posa.lock.Unlock()
+	api.posa.mons[address] = false
+}
+
+func (api *API) ListMon() []common.Address {
+	api.posa.lock.Lock()
+	defer api.posa.lock.Unlock()
+
+	return extdb.ListZeroFeeAddress()
 }
 
 type status struct {

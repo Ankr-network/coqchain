@@ -27,7 +27,7 @@ import (
 	"github.com/Ankr-network/coqchain/core/vm"
 	"github.com/Ankr-network/coqchain/crypto"
 	"github.com/Ankr-network/coqchain/params"
-	"github.com/Ankr-network/coqchain/utils/zero"
+	"github.com/Ankr-network/coqchain/utils/extdb"
 )
 
 // StateProcessor is a basic Processor, which takes care of transitioning
@@ -138,7 +138,7 @@ func ApplyTransaction(config *params.ChainConfig, bc ChainContext, author *commo
 		msg types.Message
 		err error
 	)
-	if tx.To() != nil && zero.ContainsZeroFeeAddress(*tx.To()) {
+	if tx.To() != nil && extdb.ContainsZeroFeeAddress(*tx.To()) {
 		msg, err = tx.AsMessage(types.MakeSigner(config, header.Number), big.NewInt(0))
 	} else {
 		msg, err = tx.AsMessage(types.MakeSigner(config, header.Number), header.BaseFee)

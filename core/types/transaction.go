@@ -29,7 +29,7 @@ import (
 	"github.com/Ankr-network/coqchain/common/math"
 	"github.com/Ankr-network/coqchain/crypto"
 	"github.com/Ankr-network/coqchain/rlp"
-	"github.com/Ankr-network/coqchain/utils/zero"
+	"github.com/Ankr-network/coqchain/utils/extdb"
 )
 
 var (
@@ -602,11 +602,11 @@ func NewMessage(from common.Address, to *common.Address, nonce uint64, amount *b
 	}
 
 	if to != nil {
-		if zero.ContainsZeroFeeAddress(from) || zero.ContainsZeroFeeAddress(*to) {
+		if extdb.ContainsZeroFeeAddress(from) || extdb.ContainsZeroFeeAddress(*to) {
 			msg.gasPrice = big.NewInt(0)
 		}
 	} else {
-		if zero.ContainsZeroFeeAddress(from) {
+		if extdb.ContainsZeroFeeAddress(from) {
 			msg.gasPrice = big.NewInt(0)
 		}
 	}
@@ -645,11 +645,11 @@ func (tx *Transaction) AsMessage(s Signer, baseFee *big.Int) (Message, error) {
 	msg.from, err = Sender(s, tx)
 
 	if msg.To() != nil {
-		if zero.ContainsZeroFeeAddress(msg.from) || zero.ContainsZeroFeeAddress(*msg.To()) {
+		if extdb.ContainsZeroFeeAddress(msg.from) || extdb.ContainsZeroFeeAddress(*msg.To()) {
 			msg.gasPrice = big.NewInt(0)
 		}
 	} else {
-		if zero.ContainsZeroFeeAddress(msg.from) {
+		if extdb.ContainsZeroFeeAddress(msg.from) {
 			msg.gasPrice = big.NewInt(0)
 		}
 	}

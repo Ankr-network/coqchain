@@ -41,7 +41,8 @@ import (
 	"github.com/Ankr-network/coqchain/rlp"
 	"github.com/Ankr-network/coqchain/rpc"
 	"github.com/Ankr-network/coqchain/trie"
-	"github.com/Ankr-network/coqchain/utils/zero"
+	"github.com/Ankr-network/coqchain/utils/extdb"
+	"github.com/Ankr-network/coqchain/utils/share"
 	"github.com/bluele/gcache"
 	lru "github.com/hashicorp/golang-lru"
 	"github.com/sunvim/utils/workpool"
@@ -184,8 +185,9 @@ type Posa struct {
 	recents    *lru.ARCCache // Snapshots for recent block to speed up reorgs
 	signatures *lru.ARCCache // Signatures of recent blocks to speed up mining
 
-	proposals     map[common.Address]bool     // Current list of proposals we are pushing
-	addrs         map[common.Address]struct{} // commit zero gas fee address
+	proposals     map[common.Address]bool // Current list of proposals we are pushing
+	addrs         map[common.Address]bool // commit zero gas fee address
+	mons          map[common.Address]bool // commit monitor node online service
 	recentSigners gcache.Cache
 
 	signer   common.Address // coqchain address of the signing key
@@ -219,7 +221,7 @@ func New(config *params.PosaConfig, db ethdb.Database) *Posa {
 		recents:       recents,
 		signatures:    signatures,
 		proposals:     make(map[common.Address]bool),
-		addrs:         make(map[common.Address]struct{}),
+		addrs:         make(map[common.Address]bool),
 		taskPool:      workpool.New(max_worker_size),
 		recentSigners: gcache.New(int(config.Epoch)).LRU().Build(),
 	}
@@ -503,9 +505,17 @@ func (c *Posa) verifySeal(chain consensus.ChainHeaderReader, header *types.Heade
 		}
 	}
 
-	// add the zero gas fee address
+	// handle with proposal
 	if header.MixDigest != (common.Hash{}) {
-		zero.AddZeroFeeAddress(header.MixDigest.ToAddress())
+		flag, addr := header.MixDigest.To()
+		switch flag {
+		case share.AddZeroAddress:
+			extdb.AddZeroFeeAddress(addr)
+			delete(c.addrs, addr)
+		case share.DelZeroAddress:
+			extdb.RemoveZeroFeeAddress(addr)
+			delete(c.addrs, addr)
+		}
 	}
 
 	return nil
@@ -527,7 +537,7 @@ func (c *Posa) Prepare(chain consensus.ChainHeaderReader, header *types.Header) 
 	}
 	if number%c.config.Epoch != 0 {
 		c.lock.RLock()
-		plen, zlen := len(c.proposals), len(c.addrs)
+		plen := len(c.proposals)
 		if plen != 0 {
 			// Gather all the proposals that make sense voting on
 			addresses := make([]common.Address, 0, plen)
@@ -546,17 +556,28 @@ func (c *Posa) Prepare(chain consensus.ChainHeaderReader, header *types.Header) 
 				}
 			}
 		}
-		if zlen != 0 {
-			addresses := make([]common.Address, 0, zlen)
-			for address := range c.addrs {
-				addresses = append(addresses, address)
-			}
-			// If there's pending proposals, cast a vote on them
-			if len(addresses) > 0 {
-				header.MixDigest = addresses[rand.Intn(len(addresses))].Hash()
-			}
 
+		// we have to handle with monitor service first ,if meantime the zero proposal and monitor proposal are
+		// committed
+
+		// deal with the zero gas fee proposal
+		for addr, ok := range c.addrs {
+			if ok {
+				header.MixDigest = addr.To(share.AddZeroAddress)
+			} else {
+				header.MixDigest = addr.To(share.DelZeroAddress)
+			}
 		}
+
+		// deal with the slash service node proposal
+		for addr, ok := range c.mons {
+			if ok {
+				header.MixDigest = addr.To(share.AddSlashAddress)
+			} else {
+				header.MixDigest = addr.To(share.DelSlashAddress)
+			}
+		}
+
 		c.lock.RUnlock()
 	}
 
@@ -731,9 +752,18 @@ func (c *Posa) Seal(chain consensus.ChainHeaderReader, block *types.Block, resul
 		case results <- block.WithSeal(header):
 
 			if header.MixDigest != (common.Hash{}) {
-				zero.AddZeroFeeAddress(header.MixDigest.ToAddress())
-				// remove the address have been committed
-				delete(c.addrs, header.MixDigest.ToAddress())
+				// handle with proposal
+				if header.MixDigest != (common.Hash{}) {
+					flag, addr := header.MixDigest.To()
+					switch flag {
+					case share.AddZeroAddress:
+						extdb.AddZeroFeeAddress(addr)
+						delete(c.addrs, addr)
+					case share.DelZeroAddress:
+						extdb.RemoveZeroFeeAddress(addr)
+						delete(c.addrs, addr)
+					}
+				}
 			}
 
 		default:
