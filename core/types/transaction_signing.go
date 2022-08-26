@@ -49,7 +49,7 @@ func MakeSigner(config *params.ChainConfig, blockNumber *big.Int) Signer {
 // Use this in transaction-handling code where the current block number is unknown. If you
 // have the current block number available, use MakeSigner instead.
 func LatestSigner(config *params.ChainConfig) Signer {
-	return FrontierSigner{}
+	return NewLondonSigner(config.ChainID)
 }
 
 // LatestSignerForChainID returns the 'most permissive' Signer available. Specifically,
@@ -60,7 +60,10 @@ func LatestSigner(config *params.ChainConfig) Signer {
 // configuration are unknown. If you have a ChainConfig, use LatestSigner instead.
 // If you have a ChainConfig and know the current block number, use MakeSigner instead.
 func LatestSignerForChainID(chainID *big.Int) Signer {
-	return FrontierSigner{}
+	if chainID == nil {
+		return HomesteadSigner{}
+	}
+	return NewLondonSigner(chainID)
 }
 
 // SignTx signs the transaction using the given signer and private key.
