@@ -101,10 +101,6 @@ var (
 			Description: "coqchain CLI client.",
 		},
 		{
-			BinaryName:  "puppeth",
-			Description: "coqchain private network manager.",
-		},
-		{
 			BinaryName:  "rlpdump",
 			Description: "Developer utility tool that prints RLP structures.",
 		},

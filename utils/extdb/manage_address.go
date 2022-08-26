@@ -79,6 +79,9 @@ func InitAddrMgr(ctx *cli.Context) {
 	// load zero gas fee address
 	if err := defaultZeroAddrs.store.View(func(tx *bbolt.Tx) error {
 		b := tx.Bucket([]byte(extenddb))
+		if b == nil {
+			return nil
+		}
 		b.ForEach(func(k, v []byte) error {
 			log.Info("adding", "address", common.BytesToAddress(k))
 			defaultZeroAddrs.zeroAddrs[common.BytesToAddress(k)] = struct{}{}
