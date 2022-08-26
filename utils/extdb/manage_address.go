@@ -16,7 +16,6 @@ package extdb
 
 import (
 	"fmt"
-	"os"
 	"sync"
 
 	"github.com/Ankr-network/coqchain/common"
@@ -28,13 +27,19 @@ import (
 type AddrMgr struct {
 	lock      sync.Mutex
 	zeroAddrs map[common.Address]struct{}
-	name      string
+	store     *bbolt.DB
 }
 
 func NewAddrMgr(ctx *cli.Context) *AddrMgr {
+	name := fmt.Sprintf("%s/%s", ctx.GlobalString("datadir"), extenddb)
+	db, err := bbolt.Open(name, 0644, nil)
+	if err != nil {
+		panic(err)
+	}
+
 	return &AddrMgr{
 		zeroAddrs: make(map[common.Address]struct{}),
-		name:      fmt.Sprintf("%s/%s", ctx.GlobalString("datadir"), extenddb),
+		store:     db,
 	}
 }
 
@@ -71,50 +76,33 @@ const (
 func InitAddrMgr(ctx *cli.Context) {
 	log.Info("init zero fee address db")
 	defaultZeroAddrs = NewAddrMgr(ctx)
-
 	// load zero gas fee address
-	if _, err := os.Stat(defaultZeroAddrs.name); err == nil {
-
-		db, err := bbolt.Open(defaultZeroAddrs.name, 0600, nil)
-		if err != nil {
-			panic(err)
-		}
-		defer db.Close()
-
-		if err = db.View(func(tx *bbolt.Tx) error {
-			b := tx.Bucket([]byte(extenddb))
-			b.ForEach(func(k, v []byte) error {
-				log.Info("adding", "address", common.BytesToAddress(k))
-				defaultZeroAddrs.zeroAddrs[common.BytesToAddress(k)] = struct{}{}
-				return nil
-			})
+	if err := defaultZeroAddrs.store.View(func(tx *bbolt.Tx) error {
+		b := tx.Bucket([]byte(extenddb))
+		b.ForEach(func(k, v []byte) error {
+			log.Info("adding", "address", common.BytesToAddress(k))
+			defaultZeroAddrs.zeroAddrs[common.BytesToAddress(k)] = struct{}{}
 			return nil
-		}); err != nil {
-			log.Error("init zero fee address db", "error", err)
-			return
-		}
-	} else {
-		log.Error("init", "error", err)
+		})
+		return nil
+	}); err != nil {
+		log.Error("init zero fee address db", "error", err)
+		return
 	}
 
 }
 
 func Close() {
+
+	defer defaultZeroAddrs.store.Close()
+
 	log.Info("close zero fee address db ...")
 	if len(defaultZeroAddrs.zeroAddrs) > 0 {
-		db, err := bbolt.Open(defaultZeroAddrs.name, 0600, nil)
-		if err != nil {
-			panic(err)
-		}
-		defer db.Close()
-		if err = db.Update(func(tx *bbolt.Tx) error {
-
+		if err := defaultZeroAddrs.store.Update(func(tx *bbolt.Tx) error {
 			b, err := tx.CreateBucketIfNotExists([]byte(extenddb))
 			if err != nil {
 				return err
 			}
-			log.Info("create bucket", "error", err)
-
 			for addr := range defaultZeroAddrs.zeroAddrs {
 				b.Put(addr.Bytes(), []byte{})
 			}
