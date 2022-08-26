@@ -241,10 +241,6 @@ type TxPool struct {
 	signer      types.Signer
 	mu          sync.RWMutex
 
-	istanbul bool // Fork indicator whether we are in the istanbul stage.
-	eip2718  bool // Fork indicator whether we are using EIP-2718 type transactions.
-	eip1559  bool // Fork indicator whether we are using EIP-1559 type transactions.
-
 	currentState  *state.StateDB // Current state in the blockchain head
 	pendingNonces *txNoncer      // Pending state tracking virtual nonces
 	currentMaxGas uint64         // Current gas limit for transaction caps
@@ -586,13 +582,10 @@ func (pool *TxPool) local() map[common.Address]types.Transactions {
 // rules and adheres to some heuristic limits of the local node (price and size).
 func (pool *TxPool) validateTx(tx *types.Transaction, local bool) error {
 	// Accept only legacy transactions until EIP-2718/2930 activates.
-	if !pool.eip2718 && tx.Type() != types.LegacyTxType {
+	if tx.Type() != types.LegacyTxType && tx.Type() != types.DynamicFeeTxType {
 		return ErrTxTypeNotSupported
 	}
-	// Reject dynamic fee transactions until EIP-1559 activates.
-	if !pool.eip1559 && tx.Type() == types.DynamicFeeTxType {
-		return ErrTxTypeNotSupported
-	}
+
 	// Reject transactions over defined size to prevent DOS attacks
 	if uint64(tx.Size()) > txMaxSize {
 		return ErrOversizedData
@@ -936,7 +929,6 @@ func (pool *TxPool) addTxs(txs []*types.Transaction, local, sync bool) []error {
 	if len(news) == 0 {
 		return errs
 	}
-
 	// Process all the new transaction and merge any errors into the original slice
 	pool.mu.Lock()
 	newErrs, dirtyAddrs := pool.addTxsLocked(news, local)

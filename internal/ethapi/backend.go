@@ -101,7 +101,7 @@ func GetAPIs(apiBackend Backend) []rpc.API {
 		{
 			Namespace: "eth",
 			Version:   "1.0",
-			Service:   NewPubliccoqchainAPI(apiBackend),
+			Service:   NewPublicEthereumAPI(apiBackend),
 			Public:    true,
 		}, {
 			Namespace: "eth",

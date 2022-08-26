@@ -46,19 +46,19 @@ import (
 	"github.com/davecgh/go-spew/spew"
 )
 
-// PubliccoqchainAPI provides an API to access coqchain related information.
+// PublicEthereumAPI provides an API to access coqchain related information.
 // It offers only methods that operate on public data that is freely available to anyone.
-type PubliccoqchainAPI struct {
+type PublicEthereumAPI struct {
 	b Backend
 }
 
-// NewPubliccoqchainAPI creates a new coqchain protocol API.
-func NewPubliccoqchainAPI(b Backend) *PubliccoqchainAPI {
-	return &PubliccoqchainAPI{b}
+// NewPublicEthereumAPI creates a new coqchain protocol API.
+func NewPublicEthereumAPI(b Backend) *PublicEthereumAPI {
+	return &PublicEthereumAPI{b}
 }
 
 // GasPrice returns a suggestion for a gas price for legacy transactions.
-func (s *PubliccoqchainAPI) GasPrice(ctx context.Context) (*hexutil.Big, error) {
+func (s *PublicEthereumAPI) GasPrice(ctx context.Context) (*hexutil.Big, error) {
 	tipcap, err := s.b.SuggestGasTipCap(ctx)
 	if err != nil {
 		return nil, err
@@ -70,7 +70,7 @@ func (s *PubliccoqchainAPI) GasPrice(ctx context.Context) (*hexutil.Big, error) 
 }
 
 // MaxPriorityFeePerGas returns a suggestion for a gas tip cap for dynamic fee transactions.
-func (s *PubliccoqchainAPI) MaxPriorityFeePerGas(ctx context.Context) (*hexutil.Big, error) {
+func (s *PublicEthereumAPI) MaxPriorityFeePerGas(ctx context.Context) (*hexutil.Big, error) {
 	tipcap, err := s.b.SuggestGasTipCap(ctx)
 	if err != nil {
 		return nil, err
@@ -85,7 +85,7 @@ type feeHistoryResult struct {
 	GasUsedRatio []float64        `json:"gasUsedRatio"`
 }
 
-func (s *PubliccoqchainAPI) FeeHistory(ctx context.Context, blockCount rpc.DecimalOrHex, lastBlock rpc.BlockNumber, rewardPercentiles []float64) (*feeHistoryResult, error) {
+func (s *PublicEthereumAPI) FeeHistory(ctx context.Context, blockCount rpc.DecimalOrHex, lastBlock rpc.BlockNumber, rewardPercentiles []float64) (*feeHistoryResult, error) {
 	oldest, reward, baseFee, gasUsed, err := s.b.FeeHistory(ctx, int(blockCount), lastBlock, rewardPercentiles)
 	if err != nil {
 		return nil, err
@@ -119,7 +119,7 @@ func (s *PubliccoqchainAPI) FeeHistory(ctx context.Context, blockCount rpc.Decim
 // - highestBlock:  block number of the highest block header this node has received from peers
 // - pulledStates:  number of state entries processed until now
 // - knownStates:   number of known state entries that still need to be pulled
-func (s *PubliccoqchainAPI) Syncing() (interface{}, error) {
+func (s *PublicEthereumAPI) Syncing() (interface{}, error) {
 	progress := s.b.SyncProgress()
 
 	// Return not syncing if the synchronisation already completed
@@ -1642,6 +1642,7 @@ func SubmitTransaction(ctx context.Context, b Backend, tx *types.Transaction) (c
 	if err := b.SendTx(ctx, tx); err != nil {
 		return common.Hash{}, err
 	}
+	log.Warn("send tx pass")
 	// Print a log with full tx details for manual investigations and interventions
 	signer := types.MakeSigner(b.ChainConfig(), b.CurrentBlock().Number())
 	from, err := types.Sender(signer, tx)
@@ -1710,6 +1711,7 @@ func (s *PublicTransactionPoolAPI) FillTransaction(ctx context.Context, args Tra
 // SendRawTransaction will add the signed transaction to the transaction pool.
 // The sender is responsible for signing the transaction and using the correct nonce.
 func (s *PublicTransactionPoolAPI) SendRawTransaction(ctx context.Context, input hexutil.Bytes) (common.Hash, error) {
+	log.Warn("public tx api", "data", input)
 	tx := new(types.Transaction)
 	if err := tx.UnmarshalBinary(input); err != nil {
 		return common.Hash{}, err
