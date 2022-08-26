@@ -38,7 +38,10 @@ type sigCache struct {
 
 // MakeSigner returns a Signer based on the given chain config and block number.
 func MakeSigner(config *params.ChainConfig, blockNumber *big.Int) Signer {
-	return FrontierSigner{}
+	if config.ChainID == nil {
+		return HomesteadSigner{}
+	}
+	return NewLondonSigner(config.ChainID)
 }
 
 // LatestSigner returns the 'most permissive' Signer available for the given chain
