@@ -10,6 +10,8 @@ it still work in progress, coming soon.
 
 - [x] supply 0 gas fee contract, it is convenient for enterprise applications
 - [x] lower and fixed gas fee
+- [x] Fixed governance token supply
+- [x] Recycle governance tokens
 - [ ] every sync node should have some reward
 - [ ] support original bridge, which can interact with `BSC` and `Ethereum` chain
 - [x] speed up transactions

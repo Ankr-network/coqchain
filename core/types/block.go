@@ -85,6 +85,9 @@ type Header struct {
 
 	// BaseFee was added by EIP-1559 and is ignored in legacy headers.
 	BaseFee *big.Int `json:"baseFeePerGas" rlp:"optional"`
+
+	// Accumulated gas cost
+	cost *big.Int
 }
 
 // field type overrides for gencodec
@@ -103,6 +106,15 @@ type headerMarshaling struct {
 // RLP encoding.
 func (h *Header) Hash() common.Hash {
 	return rlpHash(h)
+}
+
+// return all txes gas cost
+func (h *Header) Cost() *big.Int {
+	return h.cost
+}
+
+func (h *Header) SetCost(cost *big.Int) {
+	h.cost = cost
 }
 
 var headerSize = common.StorageSize(reflect.TypeOf(Header{}).Size())
