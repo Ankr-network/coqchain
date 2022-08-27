@@ -1642,7 +1642,6 @@ func SubmitTransaction(ctx context.Context, b Backend, tx *types.Transaction) (c
 	if err := b.SendTx(ctx, tx); err != nil {
 		return common.Hash{}, err
 	}
-	log.Warn("send tx pass")
 	// Print a log with full tx details for manual investigations and interventions
 	signer := types.MakeSigner(b.ChainConfig(), b.CurrentBlock().Number())
 	from, err := types.Sender(signer, tx)
@@ -1711,7 +1710,6 @@ func (s *PublicTransactionPoolAPI) FillTransaction(ctx context.Context, args Tra
 // SendRawTransaction will add the signed transaction to the transaction pool.
 // The sender is responsible for signing the transaction and using the correct nonce.
 func (s *PublicTransactionPoolAPI) SendRawTransaction(ctx context.Context, input hexutil.Bytes) (common.Hash, error) {
-	log.Warn("public tx api", "data", input)
 	tx := new(types.Transaction)
 	if err := tx.UnmarshalBinary(input); err != nil {
 		return common.Hash{}, err
