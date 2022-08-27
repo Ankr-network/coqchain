@@ -1,4 +1,4 @@
-AC_PREREQ([2.60])
+AC_PREREQ([2.71])
 AC_INIT([libsecp256k1],[0.1])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_MACRO_DIR([build-aux/m4])
@@ -25,7 +25,10 @@ fi
 
 AM_PROG_CC_C_O
 
-AC_PROG_CC_C89
+m4_warn([obsolete],
+[AC_PROG_CC_C89 is obsolete; use AC_PROG_CC
+])dnl
+AC_REQUIRE(AC_PROG_CC)
 if test x"$ac_cv_prog_cc_c89" = x"no"; then
   AC_MSG_ERROR([c89 compiler support required])
 fi

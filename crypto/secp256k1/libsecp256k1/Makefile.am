@@ -114,35 +114,6 @@ exhaustive_tests_LDFLAGS = -static
 TESTS += exhaustive_tests
 endif
 
-JAVAROOT=src/java
-JAVAORG=org/bitcoin
-JAVA_GUAVA=$(srcdir)/$(JAVAROOT)/guava/guava-18.0.jar
-CLASSPATH_ENV=CLASSPATH=$(JAVA_GUAVA)
-JAVA_FILES= \
-  $(JAVAROOT)/$(JAVAORG)/NativeSecp256k1.java \
-  $(JAVAROOT)/$(JAVAORG)/NativeSecp256k1Test.java \
-  $(JAVAROOT)/$(JAVAORG)/NativeSecp256k1Util.java \
-  $(JAVAROOT)/$(JAVAORG)/Secp256k1Context.java
-
-if USE_JNI
-
-$(JAVA_GUAVA):
-	@echo Guava is missing. Fetch it via: \
-	wget https://search.maven.org/remotecontent?filepath=com/google/guava/guava/18.0/guava-18.0.jar -O $(@)
-	@false
-
-.stamp-java: $(JAVA_FILES)
-	@echo   Compiling $^
-	$(AM_V_at)$(CLASSPATH_ENV) javac $^
-	@touch $@
-
-if USE_TESTS
-
-check-java: libsecp256k1.la $(JAVA_GUAVA) .stamp-java
-	$(AM_V_at)java -Djava.library.path="./:./src:./src/.libs:.libs/" -cp "$(JAVA_GUAVA):$(JAVAROOT)" $(JAVAORG)/NativeSecp256k1Test
-
-endif
-endif
 
 if USE_ECMULT_STATIC_PRECOMPUTATION
 CPPFLAGS_FOR_BUILD +=-I$(top_srcdir)
