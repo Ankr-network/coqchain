@@ -100,7 +100,6 @@ func (msg *jsonrpcMessage) errorResponse(err error) *jsonrpcMessage {
 func (msg *jsonrpcMessage) response(result interface{}) *jsonrpcMessage {
 	enc, err := json.Marshal(result)
 	if err != nil {
-		// TODO: wrap with 'internal server error'
 		return msg.errorResponse(err)
 	}
 	return &jsonrpcMessage{Version: vsn, ID: msg.ID, Result: enc}
