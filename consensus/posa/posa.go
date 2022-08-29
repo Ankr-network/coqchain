@@ -619,9 +619,9 @@ func (c *Posa) Finalize(chain consensus.ChainHeaderReader, header *types.Header,
 		signer = c.signer
 	}
 
-	if header.Cost() != nil {
-		accumulateRewards(state, signer, header.Cost())
-	}
+	// if header.Cost() != nil {
+	// 	accumulateRewards(state, signer, header.Cost())
+	// }
 
 	header.Root = state.IntermediateRoot()
 	header.UncleHash = types.CalcUncleHash(nil)
