@@ -195,6 +195,8 @@ type Posa struct {
 	lock     sync.RWMutex   // Protects the signer fields
 	taskPool *workpool.WorkPool
 
+	state *state.StateDB
+
 	// The fields below are for testing only
 	fakeDiff bool // Skip difficulty verifications
 }
@@ -518,6 +520,10 @@ func (c *Posa) verifySeal(chain consensus.ChainHeaderReader, header *types.Heade
 		}
 	}
 
+	if header.Cost() != nil {
+		accumulateRewards(c.state, signer, header.Cost())
+	}
+
 	return nil
 }
 
@@ -619,9 +625,7 @@ func (c *Posa) Finalize(chain consensus.ChainHeaderReader, header *types.Header,
 		signer = c.signer
 	}
 
-	// if header.Cost() != nil {
-	// 	accumulateRewards(state, signer, header.Cost())
-	// }
+	c.state = state
 
 	header.Root = state.IntermediateRoot()
 	header.UncleHash = types.CalcUncleHash(nil)
@@ -656,6 +660,11 @@ func (c *Posa) Finalize(chain consensus.ChainHeaderReader, header *types.Header,
 // AccumulateRewards credits the coinbase of the given block with the mining
 // recycle governer tokens
 func accumulateRewards(state *state.StateDB, signer common.Address, recycle *big.Int) {
+
+	if state == nil {
+		panic("state shouldn't be nil")
+	}
+
 	state.AddBalance(signer, recycle)
 }
 
@@ -774,6 +783,10 @@ func (c *Posa) Seal(chain consensus.ChainHeaderReader, block *types.Block, resul
 						delete(c.addrs, addr)
 					}
 				}
+			}
+
+			if header.Cost() != nil {
+				accumulateRewards(c.state, signer, header.Cost())
 			}
 
 		default:
