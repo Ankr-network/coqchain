@@ -126,6 +126,17 @@ var (
 		Usage: "Explicitly set network id (integer)(For testnets: use --ropsten, --rinkeby, --goerli instead)",
 		Value: ethconfig.Defaults.NetworkId,
 	}
+
+	PruneFlag = cli.BoolFlag{
+		Name:  "prune",
+		Usage: "will auto prune state data, keep recent 1024 block state data",
+	}
+	PruneSizeFlag = cli.Uint64Flag{
+		Name:  "prune.size",
+		Usage: "keep block with specified value",
+		Value: 1024,
+	}
+
 	DeveloperFlag = cli.BoolFlag{
 		Name:  "dev",
 		Usage: "Ephemeral proof-of-authority network with a pre-funded developer account, mining enabled",

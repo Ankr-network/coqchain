@@ -5,6 +5,8 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"testing"
+
+	"github.com/Ankr-network/coqchain/rlp"
 )
 
 type Student struct {
@@ -57,4 +59,12 @@ func TestStdJson(t *testing.T) {
 	so := &Student{}
 	so.UnmarshalJSON(bs)
 	t.Logf("std name: %s age: %d", so.Name, so.Age)
+
+	buf := bytes.NewBuffer([]byte{})
+	err := rlp.Encode(buf, s)
+	if err != nil {
+		t.Logf("rlp error: %v \n", err)
+		return
+	}
+	t.Logf("rlp size: %d \n", len(buf.Bytes()))
 }

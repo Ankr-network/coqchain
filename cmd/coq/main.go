@@ -40,6 +40,7 @@ import (
 	"github.com/Ankr-network/coqchain/metrics"
 	"github.com/Ankr-network/coqchain/node"
 	"github.com/Ankr-network/coqchain/utils/extdb"
+	"github.com/Ankr-network/coqchain/utils/prune"
 
 	// Force-load the tracer engines to trigger registration
 	_ "github.com/Ankr-network/coqchain/eth/tracers/js"
@@ -60,6 +61,7 @@ var (
 	app = flags.NewApp(gitCommit, gitDate, "the coqchain command line interface")
 	// flags that configure the node
 	nodeFlags = []cli.Flag{
+		utils.PruneFlag,
 		utils.IdentityFlag,
 		utils.UnlockedAccountFlag,
 		utils.PasswordFileFlag,
@@ -264,7 +266,7 @@ func prepare(ctx *cli.Context) {
 	// If we're running a known preset, log it for convenience.
 	switch {
 	case ctx.GlobalIsSet(utils.DeveloperFlag.Name):
-		log.Info("Starting coq in ephemeral dev mode...")
+		log.Info("Starting coq in dev mode...")
 
 	case !ctx.GlobalIsSet(utils.NetworkIdFlag.Name):
 		log.Info("Starting coq on coqchain mainnet...")
@@ -301,6 +303,11 @@ func geth(ctx *cli.Context) error {
 
 	extdb.InitAddrMgr(ctx)
 	defer extdb.Close()
+
+	if ctx.GlobalIsSet(utils.PruneFlag.Name) {
+		prune.InitPruneWorker(ctx)
+		prune.Run()
+	}
 
 	prepare(ctx)
 	stack, backend := makeFullNode(ctx)
