@@ -30,6 +30,7 @@ import (
 	"github.com/Ankr-network/coqchain/cmd/utils"
 	"github.com/Ankr-network/coqchain/common"
 	"github.com/Ankr-network/coqchain/console/prompt"
+	"github.com/Ankr-network/coqchain/core"
 	"github.com/Ankr-network/coqchain/eth"
 	"github.com/Ankr-network/coqchain/eth/downloader"
 	"github.com/Ankr-network/coqchain/ethclient"
@@ -40,7 +41,6 @@ import (
 	"github.com/Ankr-network/coqchain/metrics"
 	"github.com/Ankr-network/coqchain/node"
 	"github.com/Ankr-network/coqchain/utils/extdb"
-	"github.com/Ankr-network/coqchain/utils/prune"
 
 	// Force-load the tracer engines to trigger registration
 	_ "github.com/Ankr-network/coqchain/eth/tracers/js"
@@ -305,8 +305,8 @@ func geth(ctx *cli.Context) error {
 	defer extdb.Close()
 
 	if ctx.GlobalIsSet(utils.PruneFlag.Name) {
-		prune.InitPruneWorker(ctx)
-		prune.Run()
+		core.InitPruneWorker(ctx)
+		core.Run()
 	}
 
 	prepare(ctx)

@@ -63,6 +63,7 @@ import (
 	"github.com/Ankr-network/coqchain/p2p/nat"
 	"github.com/Ankr-network/coqchain/p2p/netutil"
 	"github.com/Ankr-network/coqchain/params"
+	"github.com/Ankr-network/coqchain/utils/share"
 	gopsutil "github.com/shirou/gopsutil/mem"
 	"gopkg.in/urfave/cli.v1"
 )
@@ -132,9 +133,9 @@ var (
 		Usage: "will auto prune state data, keep recent 1024 block state data",
 	}
 	PruneSizeFlag = cli.Uint64Flag{
-		Name:  "prune.size",
+		Name:  share.PruneSize,
 		Usage: "keep block with specified value",
-		Value: 1024,
+		Value: 1,
 	}
 
 	DeveloperFlag = cli.BoolFlag{

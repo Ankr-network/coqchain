@@ -1196,7 +1196,14 @@ func (bc *BlockChain) writeBlockWithState(block *types.Block, receipts []*types.
 	if bc.insertStopped() {
 		return NonStatTy, errInsertionInterrupted
 	}
-
+	// emit block
+	if IsRunning() {
+		SetLatestBlock(block.NumberU64(), block.Root(), func(key []byte) ([]byte, error) {
+			return bc.db.Get(key)
+		}, func(key []byte) error {
+			return bc.db.Delete(key)
+		})
+	}
 	// Calculate the total difficulty of the block
 	ptd := bc.GetTd(block.ParentHash(), block.NumberU64()-1)
 	if ptd == nil {
