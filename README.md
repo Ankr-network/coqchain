@@ -12,6 +12,7 @@ it still work in progress, coming soon.
 - [x] lower and fixed gas fee
 - [x] Fixed governance token supply
 - [x] Recycle governance tokens
+- [x] support to prune state data automatically
 - [ ] every sync node should have some reward
 - [ ] support original bridge, which can interact with `BSC` and `Ethereum` chain
 - [x] speed up transactions
