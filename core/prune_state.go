@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/Ankr-network/coqchain/common"
+	"github.com/Ankr-network/coqchain/core/types"
 	"github.com/Ankr-network/coqchain/log"
 	"github.com/Ankr-network/coqchain/rlp"
 	"github.com/Ankr-network/coqchain/trie"
@@ -28,13 +29,11 @@ type DelFunc func(key []byte) error
 type BlockState struct {
 	Height uint64
 	Root   common.Hash
-	Get    ReadFunc
-	Del    DelFunc
+	db     *trie.Database
 }
 
 type PruneState struct {
 	lock       sync.Mutex
-	running    bool
 	size       uint64
 	blkCh      chan *BlockState
 	pruneBlock uint64
@@ -66,12 +65,12 @@ func InitPruneWorker(ctx *cli.Context) {
 	log.Info("pruner init over.")
 }
 
-func SetLatestBlock(num uint64, hash common.Hash, get ReadFunc, del DelFunc) {
-	dp.blkCh <- &BlockState{Height: num, Root: hash, Get: get, Del: del}
+func SetLatestBlock(num uint64, hash common.Hash, db *trie.Database) {
+	dp.blkCh <- &BlockState{Height: num, Root: hash, db: db}
 }
 
 func IsRunning() bool {
-	return dp.running
+	return pruneState
 }
 
 func Run() {
@@ -80,7 +79,10 @@ func Run() {
 			dp.Close()
 		}()
 
-		dp.running = true
+		pruneState = true
+		var (
+			acc *types.StateAccount
+		)
 
 		for v := range dp.blkCh {
 			dp.lock.Lock()
@@ -89,18 +91,20 @@ func Run() {
 
 				dp.worker.Do(func() error {
 					log.Info("prune", "height", v.Height)
-					bs, err := v.Get(v.Root[:])
+					tr, err := trie.New(v.Root, v.db)
 					if err != nil {
-						log.Error("prune state", "error", err, "root", v.Root.Hex())
+						log.Error("init trie", "err", err)
 						return nil
 					}
-					tr := trpool.Get().(*trie.Trie)
-					rlp.Decode(bytes.NewReader(bs), &tr)
-					defer trpool.Put(tr)
+
 					it := trie.NewIterator(tr.NodeIterator(nil))
 					for it.Next() {
+						rlp.Decode(bytes.NewReader(it.Value), &acc)
 						log.Info("interator", "height", v.Height,
-							"key", tools.BytesToStringFast(it.Key), "val", tools.BytesToStringFast(it.Value))
+							"key", common.Bytes2Hex(it.Key), "val.none", acc.Nonce,
+							"val.balance", acc.Balance,
+							"val.root", acc.Root,
+							"val.codeHash", common.Bytes2Hex(acc.CodeHash))
 					}
 
 					return nil
@@ -112,8 +116,9 @@ func Run() {
 }
 
 var (
-	dp     *PruneState
-	trpool = &sync.Pool{
+	dp         *PruneState
+	pruneState bool
+	trpool     = &sync.Pool{
 		New: func() interface{} {
 			return &trie.Trie{}
 		},

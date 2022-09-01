@@ -1198,11 +1198,7 @@ func (bc *BlockChain) writeBlockWithState(block *types.Block, receipts []*types.
 	}
 	// emit block
 	if IsRunning() {
-		SetLatestBlock(block.NumberU64(), block.Root(), func(key []byte) ([]byte, error) {
-			return bc.db.Get(key)
-		}, func(key []byte) error {
-			return bc.db.Delete(key)
-		})
+		SetLatestBlock(block.NumberU64(), block.Root(), bc.StateCache().TrieDB())
 	}
 	// Calculate the total difficulty of the block
 	ptd := bc.GetTd(block.ParentHash(), block.NumberU64()-1)
