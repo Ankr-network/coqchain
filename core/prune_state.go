@@ -2,6 +2,7 @@ package core
 
 import (
 	"bytes"
+	"encoding/binary"
 	"fmt"
 	"sync"
 
@@ -10,6 +11,7 @@ import (
 	"github.com/Ankr-network/coqchain/log"
 	"github.com/Ankr-network/coqchain/rlp"
 	"github.com/Ankr-network/coqchain/trie"
+	"github.com/Ankr-network/coqchain/utils"
 	"github.com/sunvim/utils/tools"
 	"github.com/sunvim/utils/workpool"
 	"go.etcd.io/bbolt"
@@ -20,7 +22,8 @@ const (
 	stateName             = "prune_state"
 	stateBucketName       = "state"
 	stateRecentPruneBlock = "recent_prune_block"
-	defaultWorkSize       = 4
+	defaultWorkSize       = 2
+	pruneSize             = 1024
 )
 
 type ReadFunc func(key []byte) ([]byte, error)
@@ -42,20 +45,27 @@ type PruneState struct {
 }
 
 func NewPruneState(ctx *cli.Context) *PruneState {
-	name := fmt.Sprintf("%s/%s", ctx.GlobalString("datadir"), stateName)
-	db, err := bbolt.Open(name, 0644, nil)
-	if err != nil {
-		panic(err)
-	}
-	db.Update(func(tx *bbolt.Tx) error {
-		tx.CreateBucketIfNotExists(tools.StringToBytes(stateBucketName))
-		return nil
-	})
-	return &PruneState{
-		db:     db,
-		blkCh:  make(chan *BlockState, 128),
-		size:   ctx.GlobalUint64("prune.size"),
-		worker: workpool.New(defaultWorkSize),
+
+	size := ctx.GlobalUint64("prune.size")
+	if size >= pruneSize && size%pruneSize == 0 {
+		name := fmt.Sprintf("%s/%s", ctx.GlobalString("datadir"), stateName)
+		db, err := bbolt.Open(name, 0644, nil)
+		if err != nil {
+			panic(err)
+		}
+		db.Update(func(tx *bbolt.Tx) error {
+			tx.CreateBucketIfNotExists(tools.StringToBytes(stateBucketName))
+			return nil
+		})
+		return &PruneState{
+			db:         db,
+			pruneBlock: 1,
+			blkCh:      make(chan *BlockState, 64),
+			size:       size,
+			worker:     workpool.New(defaultWorkSize),
+		}
+	} else {
+		panic("prune.size should be muliple of 1024")
 	}
 }
 
@@ -82,12 +92,16 @@ func Run() {
 		pruneState = true
 		var (
 			acc *types.StateAccount
+			hs  = make([]byte, 8)
 		)
 
 		for v := range dp.blkCh {
-			dp.lock.Lock()
+
+			binary.BigEndian.PutUint64(hs, v.Height)
+			dp.Put(hs, v.Root[:])
+
 			if v.Height-dp.pruneBlock > dp.size {
-				dp.pruneBlock++
+				dp.pruneBlock = v.Height
 
 				dp.worker.Do(func() error {
 					log.Info("prune", "height", v.Height)
@@ -110,7 +124,6 @@ func Run() {
 					return nil
 				})
 			}
-			dp.lock.Unlock()
 		}
 	}()
 }
@@ -127,4 +140,50 @@ var (
 
 func (p *PruneState) Close() error {
 	return p.db.Close()
+}
+
+func (p *PruneState) Put(key, val []byte) error {
+	return p.db.Update(func(tx *bbolt.Tx) error {
+		b, _ := tx.CreateBucketIfNotExists(utils.S2B(stateBucketName))
+		return b.Put(key, val)
+	})
+}
+
+func (p *PruneState) Remove(stx, end []byte) error {
+	nstx := binary.BigEndian.Uint64(stx)
+	nend := binary.BigEndian.Uint64(end)
+	p.db.Update(func(tx *bbolt.Tx) error {
+		b := tx.Bucket(utils.S2B(stateBucketName))
+		b.ForEach(func(k, v []byte) error {
+			nk := binary.BigEndian.Uint64(k)
+			if nk >= nstx && nk < nend {
+				b.Delete(k)
+			}
+			return nil
+		})
+
+		return nil
+	})
+	return nil
+}
+
+func (p *PruneState) Range(stx, end []byte) ([][]byte, error) {
+	var rs [][]byte
+	nstx := binary.BigEndian.Uint64(stx)
+	nend := binary.BigEndian.Uint64(end)
+	rs = make([][]byte, 0, nend-nstx)
+
+	p.db.View(func(tx *bbolt.Tx) error {
+		b := tx.Bucket(utils.S2B(stateBucketName))
+		b.ForEach(func(k, v []byte) error {
+			nk := binary.BigEndian.Uint64(k)
+			if nk >= nstx && nk < nend {
+				rs = append(rs, v)
+			}
+			return nil
+		})
+
+		return nil
+	})
+	return rs, nil
 }

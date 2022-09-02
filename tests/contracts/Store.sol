@@ -3,17 +3,21 @@
 pragma solidity ^0.8.16;
 
 contract Store {
-  event ItemSet(bytes32 key, bytes32 value);
+  event ItemSet(string key, string value);
 
   string public version;
-  mapping (bytes32 => bytes32) public items;
+  mapping (string => string) public items;
 
   constructor (string memory _version) {
     version = _version;
   }
 
-  function setItem(bytes32 key, bytes32 value) external {
+  function setItem(string memory key, string memory value) external {
     items[key] = value;
     emit ItemSet(key, value);
+  }
+  
+  function getItem(string memory key) external view returns(string memory) {
+	return items[key];
   }
 }
