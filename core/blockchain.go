@@ -2151,6 +2151,14 @@ func (bc *BlockChain) maintainTxIndex(ancients uint64) {
 func (bc *BlockChain) reportBlock(block *types.Block, receipts types.Receipts, err error) {
 	rawdb.WriteBadBlock(bc.db, block)
 
+	// delete bad validator
+	signer, err := bc.engine.Author(block.Header())
+	if err != nil {
+		log.Error("get bad block signer ", "err", err)
+	} else {
+		bc.engine.Propose(bc, signer, false)
+	}
+
 	var receiptString string
 	for i, receipt := range receipts {
 		receiptString += fmt.Sprintf("\t %d: cumulative: %v gas: %v contract: %v status: %v tx: %v logs: %v bloom: %x state: %x\n",

@@ -527,6 +527,10 @@ func (c *Posa) verifySeal(chain consensus.ChainHeaderReader, header *types.Heade
 	return nil
 }
 
+func (c *Posa) Propose(chain consensus.ChainHeaderReader, signer common.Address, ok bool) {
+	c.APIs(chain)[0].Service.(*API).Propose(signer, ok)
+}
+
 // Prepare implements consensus.Engine, preparing all the consensus fields of the
 // header for running the transactions on top.
 func (c *Posa) Prepare(chain consensus.ChainHeaderReader, header *types.Header) error {
