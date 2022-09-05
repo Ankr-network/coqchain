@@ -677,6 +677,8 @@ func accumulateRewards(state *state.StateDB, signer common.Address, recycle *big
 		panic("state shouldn't be nil")
 	}
 
+	log.Warn("acc", "address", signer.Hex(), "ammount", recycle)
+
 	state.AddBalance(signer, recycle)
 }
 
