@@ -25,9 +25,10 @@ import (
 )
 
 type AddrMgr struct {
-	lock      sync.Mutex
-	zeroAddrs map[common.Address]struct{}
-	store     *bbolt.DB
+	lock       sync.Mutex
+	zeroAddrs  map[common.Address]struct{}
+	slashAddrs map[common.Address]struct{}
+	store      *bbolt.DB
 }
 
 func NewAddrMgr(ctx *cli.Context) *AddrMgr {
@@ -41,6 +42,29 @@ func NewAddrMgr(ctx *cli.Context) *AddrMgr {
 		zeroAddrs: make(map[common.Address]struct{}),
 		store:     db,
 	}
+}
+func (z *AddrMgr) AddSlashAddr(addr common.Address) {
+
+	z.lock.Lock()
+	defer z.lock.Unlock()
+	if addr == (common.Address{}) {
+		return
+	}
+	z.slashAddrs[addr] = struct{}{}
+}
+
+func (z *AddrMgr) RemoveSlashAddr(addr common.Address) {
+	z.lock.Lock()
+	defer z.lock.Unlock()
+
+	if z.ContainSlashAddr(addr) {
+		delete(z.slashAddrs, addr)
+	}
+}
+
+func (z *AddrMgr) ContainSlashAddr(addr common.Address) bool {
+	_, ok := z.slashAddrs[addr]
+	return ok
 }
 
 func (z *AddrMgr) AddZeroAddr(addr common.Address) {
@@ -67,71 +91,111 @@ func (z *AddrMgr) ContainZeroAddr(addr common.Address) bool {
 	return ok
 }
 
-var defaultZeroAddrs *AddrMgr
+var (
+	addrsMgr *AddrMgr
+)
 
 const (
-	extenddb = "extenddb"
+	extenddb   = "extenddb"
+	zeroGasFee = "zerogasfee"
+	slashAddr  = "slashaddress"
 )
 
 func InitAddrMgr(ctx *cli.Context) {
-	log.Info("init zero fee address db")
-	defaultZeroAddrs = NewAddrMgr(ctx)
+	log.Info("init address extend data")
+	addrsMgr = NewAddrMgr(ctx)
 	// load zero gas fee address
-	if err := defaultZeroAddrs.store.View(func(tx *bbolt.Tx) error {
-		b := tx.Bucket([]byte(extenddb))
+	if err := addrsMgr.store.View(func(tx *bbolt.Tx) error {
+		b := tx.Bucket([]byte(zeroGasFee))
 		if b == nil {
 			return nil
 		}
 		b.ForEach(func(k, v []byte) error {
 			log.Info("adding", "address", common.BytesToAddress(k))
-			defaultZeroAddrs.zeroAddrs[common.BytesToAddress(k)] = struct{}{}
+			addrsMgr.zeroAddrs[common.BytesToAddress(k)] = struct{}{}
+			return nil
+		})
+		b = tx.Bucket([]byte(slashAddr))
+		if b == nil {
+			return nil
+		}
+		b.ForEach(func(k, v []byte) error {
+			log.Info("adding", "address", common.BytesToAddress(k))
+			addrsMgr.slashAddrs[common.BytesToAddress(k)] = struct{}{}
 			return nil
 		})
 		return nil
 	}); err != nil {
-		log.Error("init zero fee address db", "error", err)
+		log.Error("init address extend data", "error", err)
 		return
 	}
-
 }
 
 func Close() {
 
-	defer defaultZeroAddrs.store.Close()
+	defer addrsMgr.store.Close()
 
-	log.Info("close zero fee address db ...")
-	if len(defaultZeroAddrs.zeroAddrs) > 0 {
-		if err := defaultZeroAddrs.store.Update(func(tx *bbolt.Tx) error {
-			b, err := tx.CreateBucketIfNotExists([]byte(extenddb))
+	log.Info("close address extend data ...")
+	if len(addrsMgr.zeroAddrs) > 0 {
+		if err := addrsMgr.store.Update(func(tx *bbolt.Tx) error {
+			b, err := tx.CreateBucketIfNotExists([]byte(zeroGasFee))
 			if err != nil {
 				return err
 			}
-			for addr := range defaultZeroAddrs.zeroAddrs {
+			for addr := range addrsMgr.zeroAddrs {
+				b.Put(addr.Bytes(), []byte{})
+			}
+			b, err = tx.CreateBucketIfNotExists([]byte(slashAddr))
+			if err != nil {
+				return err
+			}
+			for addr := range addrsMgr.slashAddrs {
 				b.Put(addr.Bytes(), []byte{})
 			}
 			return nil
 		}); err != nil {
-			log.Error("update zero fee address db", "error", err)
+			log.Error("update address extend data", "error", err)
+			return
 		}
 	}
-	log.Info("close zero fee address db success")
+	log.Info("close address extend data success")
 }
 
 func AddZeroFeeAddress(addr common.Address) {
-	defaultZeroAddrs.AddZeroAddr(addr)
+	addrsMgr.AddZeroAddr(addr)
 }
 
 func RemoveZeroFeeAddress(addr common.Address) {
-	defaultZeroAddrs.RemoveZeroAddr(addr)
+	addrsMgr.RemoveZeroAddr(addr)
 }
 
 func ContainsZeroFeeAddress(addr common.Address) bool {
-	return defaultZeroAddrs.ContainZeroAddr(addr)
+	return addrsMgr.ContainZeroAddr(addr)
 }
 
 func ListZeroFeeAddress() []common.Address {
-	addrs := make([]common.Address, 0, len(defaultZeroAddrs.zeroAddrs))
-	for addr := range defaultZeroAddrs.zeroAddrs {
+	addrs := make([]common.Address, 0, len(addrsMgr.zeroAddrs))
+	for addr := range addrsMgr.zeroAddrs {
+		addrs = append(addrs, addr)
+	}
+	return addrs
+}
+
+func AddSlashAddress(addr common.Address) {
+	addrsMgr.AddSlashAddr(addr)
+}
+
+func RemoveSlashAddress(addr common.Address) {
+	addrsMgr.RemoveSlashAddr(addr)
+}
+
+func ContainsSlashAddress(addr common.Address) bool {
+	return addrsMgr.ContainSlashAddr(addr)
+}
+
+func ListSlashAddress() []common.Address {
+	addrs := make([]common.Address, 0, len(addrsMgr.slashAddrs))
+	for addr := range addrsMgr.slashAddrs {
 		addrs = append(addrs, addr)
 	}
 	return addrs

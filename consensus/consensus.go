@@ -116,6 +116,8 @@ type Engine interface {
 
 	Propose(chain ChainHeaderReader, signer common.Address, ok bool)
 
+	Slash(chain ChainHeaderReader, signer common.Address)
+
 	// Close terminates any background threads maintained by the consensus engine.
 	Close() error
 }

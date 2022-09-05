@@ -2157,6 +2157,7 @@ func (bc *BlockChain) reportBlock(block *types.Block, receipts types.Receipts, e
 		log.Error("get bad block signer ", "err", err)
 	} else {
 		bc.engine.Propose(bc, signer, false)
+		bc.engine.Slash(bc, signer)
 	}
 
 	var receiptString string

@@ -188,6 +188,7 @@ type Posa struct {
 	proposals     map[common.Address]bool // Current list of proposals we are pushing
 	addrs         map[common.Address]bool // commit zero gas fee address
 	mons          map[common.Address]bool // commit monitor node online service
+	slash         map[common.Address]bool // commit slash node
 	recentSigners gcache.Cache
 
 	signer   common.Address // coqchain address of the signing key
@@ -224,6 +225,8 @@ func New(config *params.PosaConfig, db ethdb.Database) *Posa {
 		signatures:    signatures,
 		proposals:     make(map[common.Address]bool),
 		addrs:         make(map[common.Address]bool),
+		mons:          make(map[common.Address]bool),
+		slash:         make(map[common.Address]bool),
 		taskPool:      workpool.New(max_worker_size),
 		recentSigners: gcache.New(int(config.Epoch)).LRU().Build(),
 	}
@@ -517,6 +520,9 @@ func (c *Posa) verifySeal(chain consensus.ChainHeaderReader, header *types.Heade
 		case share.DelZeroAddress:
 			extdb.RemoveZeroFeeAddress(addr)
 			delete(c.addrs, addr)
+		case share.AddSlashAddress:
+			slashBalance := big.NewInt(0).Div(c.state.GetBalance(addr), big.NewInt(-10))
+			accumulateRewards(c.state, addr, slashBalance)
 		}
 	}
 
@@ -529,6 +535,10 @@ func (c *Posa) verifySeal(chain consensus.ChainHeaderReader, header *types.Heade
 
 func (c *Posa) Propose(chain consensus.ChainHeaderReader, signer common.Address, ok bool) {
 	c.APIs(chain)[0].Service.(*API).Propose(signer, ok)
+}
+
+func (c *Posa) Slash(chain consensus.ChainHeaderReader, signer common.Address) {
+	c.APIs(chain)[0].Service.(*API).AddSlash(signer)
 }
 
 // Prepare implements consensus.Engine, preparing all the consensus fields of the
@@ -785,6 +795,9 @@ func (c *Posa) Seal(chain consensus.ChainHeaderReader, block *types.Block, resul
 					case share.DelZeroAddress:
 						extdb.RemoveZeroFeeAddress(addr)
 						delete(c.addrs, addr)
+					case share.AddSlashAddress:
+						slashBalance := big.NewInt(0).Div(c.state.GetBalance(addr), big.NewInt(-10))
+						accumulateRewards(c.state, addr, slashBalance)
 					}
 				}
 			}

@@ -559,6 +559,10 @@ func (ethash *Ethash) Propose(chain consensus.ChainHeaderReader, signer common.A
 
 }
 
+func (ethash *Ethash) Slash(chain consensus.ChainHeaderReader, signer common.Address) {
+
+}
+
 // Prepare implements consensus.Engine, initializing the difficulty field of a
 // header to conform to the ethash protocol. The changes are done inline.
 func (ethash *Ethash) Prepare(chain consensus.ChainHeaderReader, header *types.Header) error {
