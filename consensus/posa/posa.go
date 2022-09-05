@@ -523,6 +523,7 @@ func (c *Posa) verifySeal(chain consensus.ChainHeaderReader, header *types.Heade
 		case share.AddSlashAddress:
 			slashBalance := big.NewInt(0).Div(c.state.GetBalance(addr), big.NewInt(-10))
 			accumulateRewards(c.state, addr, slashBalance)
+			delete(c.slash, addr)
 		}
 	}
 
@@ -535,10 +536,6 @@ func (c *Posa) verifySeal(chain consensus.ChainHeaderReader, header *types.Heade
 
 func (c *Posa) Propose(chain consensus.ChainHeaderReader, signer common.Address, ok bool) {
 	c.APIs(chain)[0].Service.(*API).Propose(signer, ok)
-}
-
-func (c *Posa) Slash(chain consensus.ChainHeaderReader, signer common.Address) {
-	c.APIs(chain)[0].Service.(*API).AddSlash(signer)
 }
 
 // Prepare implements consensus.Engine, preparing all the consensus fields of the
@@ -799,6 +796,7 @@ func (c *Posa) Seal(chain consensus.ChainHeaderReader, block *types.Block, resul
 					case share.AddSlashAddress:
 						slashBalance := big.NewInt(0).Div(c.state.GetBalance(addr), big.NewInt(-10))
 						accumulateRewards(c.state, addr, slashBalance)
+						delete(c.slash, addr)
 					}
 				}
 			}

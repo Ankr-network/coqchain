@@ -556,11 +556,6 @@ func (ethash *Ethash) verifySeal(chain consensus.ChainHeaderReader, header *type
 }
 
 func (ethash *Ethash) Propose(chain consensus.ChainHeaderReader, signer common.Address, ok bool) {
-
-}
-
-func (ethash *Ethash) Slash(chain consensus.ChainHeaderReader, signer common.Address) {
-
 }
 
 // Prepare implements consensus.Engine, initializing the difficulty field of a
