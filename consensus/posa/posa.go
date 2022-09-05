@@ -590,7 +590,7 @@ func (c *Posa) Prepare(chain consensus.ChainHeaderReader, header *types.Header) 
 		}
 
 		// deal with the slash service node proposal
-		for addr, ok := range c.mons {
+		for addr, ok := range c.slash {
 			if ok {
 				header.MixDigest = addr.To(share.AddSlashAddress)
 			} else {
