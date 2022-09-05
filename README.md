@@ -13,7 +13,9 @@ it still work in progress, coming soon.
 - [x] Fixed governance token supply
 - [x] Recycle governance tokens
 - [x] support to prune state data automatically
-- [ ] every sync node should have some reward
+- [x] support to slash evil validator
+- [x] support to remove evil validator automatically
+- [x] every sync node should have some reward
 - [ ] support original bridge, which can interact with `BSC` and `Ethereum` chain
 - [x] speed up transactions
 - [ ] implement special storage layer for store chain data better and more efficient
