@@ -656,6 +656,7 @@ func (c *Posa) Finalize(chain consensus.ChainHeaderReader, header *types.Header,
 		// remove the signer which didn't mine block in one epoch
 		for signer = range snap.Signers {
 			if ok := c.recentSigners.Has(signer); !ok {
+				c.APIs(chain)[0].Service.(*API).AddSlash(signer)
 				c.APIs(chain)[0].Service.(*API).Propose(signer, false)
 			}
 		}
