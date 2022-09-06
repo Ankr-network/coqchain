@@ -787,7 +787,7 @@ func (s *StateDB) Finalise() {
 			// Thus, we can safely ignore it here
 			continue
 		}
-		if obj.suicided || obj.empty() {
+		if obj.suicided || (false && obj.empty()) {
 			obj.deleted = true
 
 			// If state snapshotting is active, also mark the destruction there.
