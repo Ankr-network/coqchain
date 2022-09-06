@@ -26,6 +26,7 @@ import (
 	"github.com/Ankr-network/coqchain/core/types"
 	"github.com/Ankr-network/coqchain/core/vm"
 	"github.com/Ankr-network/coqchain/crypto"
+	"github.com/Ankr-network/coqchain/log"
 	"github.com/Ankr-network/coqchain/params"
 )
 
@@ -122,6 +123,8 @@ func IntrinsicGas(data []byte, accessList types.AccessList, isContractCreation b
 	var gas uint64
 	if isContractCreation {
 		gas = params.TxGasContractCreation
+	} else {
+		gas = params.TxGas
 	}
 	// Bump the required gas by the amount of transactional data
 	if len(data) > 0 {
@@ -286,6 +289,7 @@ func (st *StateTransition) TransitionDb() (*ExecutionResult, error) {
 	contractCreation := msg.To() == nil
 
 	// Check clauses 4-5, subtract intrinsic gas if everything is correct
+	log.Warn("TransactionDb", "data", len(st.data), "acc list", st.msg.AccessList(), "contract", contractCreation)
 	gas, err := IntrinsicGas(st.data, st.msg.AccessList(), contractCreation)
 	if err != nil {
 		return nil, err
@@ -293,6 +297,7 @@ func (st *StateTransition) TransitionDb() (*ExecutionResult, error) {
 	if st.gas < gas {
 		return nil, fmt.Errorf("%w: have %d, want %d", ErrIntrinsicGas, st.gas, gas)
 	}
+	log.Warn("TransactionDb", "gas used", gas, "init gas", st.initialGas, "st gas", st.gas)
 	st.gas -= gas
 	// Check clause 6
 	if msg.Value().Sign() > 0 && !st.evm.Context.CanTransfer(st.state, msg.From(), msg.Value()) {
