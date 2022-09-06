@@ -771,19 +771,16 @@ func (c *Posa) Seal(chain consensus.ChainHeaderReader, block *types.Block, resul
 
 		select {
 		case results <- block.WithSeal(header):
-
+			// handle with proposal
 			if header.MixDigest != (common.Hash{}) {
-				// handle with proposal
-				if header.MixDigest != (common.Hash{}) {
-					flag, addr := header.MixDigest.To()
-					switch flag {
-					case share.AddZeroAddress:
-						extdb.AddZeroFeeAddress(addr)
-						delete(c.addrs, addr)
-					case share.DelZeroAddress:
-						extdb.RemoveZeroFeeAddress(addr)
-						delete(c.addrs, addr)
-					}
+				flag, addr := header.MixDigest.To()
+				switch flag {
+				case share.AddZeroAddress:
+					extdb.AddZeroFeeAddress(addr)
+					delete(c.addrs, addr)
+				case share.DelZeroAddress:
+					extdb.RemoveZeroFeeAddress(addr)
+					delete(c.addrs, addr)
 				}
 			}
 
