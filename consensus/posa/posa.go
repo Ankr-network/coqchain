@@ -520,10 +520,6 @@ func (c *Posa) verifySeal(chain consensus.ChainHeaderReader, header *types.Heade
 		case share.DelZeroAddress:
 			extdb.RemoveZeroFeeAddress(addr)
 			delete(c.addrs, addr)
-		case share.AddSlashAddress:
-			slashBalance := big.NewInt(0).Div(c.state.GetBalance(addr), big.NewInt(-10))
-			accumulateRewards(c.state, addr, slashBalance)
-			delete(c.slash, addr)
 		}
 	}
 
@@ -585,16 +581,6 @@ func (c *Posa) Prepare(chain consensus.ChainHeaderReader, header *types.Header) 
 				header.MixDigest = addr.To(share.DelZeroAddress)
 			}
 		}
-
-		// deal with the slash service node proposal
-		for addr, ok := range c.slash {
-			if ok {
-				header.MixDigest = addr.To(share.AddSlashAddress)
-			} else {
-				header.MixDigest = addr.To(share.DelSlashAddress)
-			}
-		}
-
 		c.lock.RUnlock()
 	}
 
@@ -637,7 +623,6 @@ func (c *Posa) Finalize(chain consensus.ChainHeaderReader, header *types.Header,
 	}
 
 	c.state = state
-
 	header.Root = state.IntermediateRoot()
 	header.UncleHash = types.CalcUncleHash(nil)
 	c.recentSigners.SetWithExpire(signer, struct{}{}, time.Second*time.Duration(c.config.Period*c.config.Epoch))
@@ -652,14 +637,19 @@ func (c *Posa) Finalize(chain consensus.ChainHeaderReader, header *types.Header,
 
 		// remove the signer which didn't mine block in one epoch
 		for signer = range snap.Signers {
+			if signer == c.signer {
+				continue
+			}
 			if ok := c.recentSigners.Has(signer); !ok {
-				c.APIs(chain)[0].Service.(*API).AddSlash(signer)
 				c.APIs(chain)[0].Service.(*API).Propose(signer, false)
 			}
 		}
 		// check the signer balance, if it less than at least balance, then it will be kicked out
 		for signer = range snap.Signers {
 			log.Info("Finalize", "signer", signer, "balance", state.GetBalance(signer).Int64())
+			if signer == c.signer {
+				continue
+			}
 			if state.GetBalance(signer).Cmp(chain.Config().Posa.SealerBalanceThreshold) < 0 {
 				log.Info("Finalize", "signer", signer, "condition", "less than threshold")
 				c.APIs(chain)[0].Service.(*API).Propose(signer, false)
@@ -702,7 +692,9 @@ func (c *Posa) FinalizeAndAssemble(chain consensus.ChainHeaderReader, header *ty
 		}
 	}
 
-	c.Finalize(chain, header, state, txs, uncles)
+	c.state = state
+	header.Root = state.IntermediateRoot()
+	header.UncleHash = types.CalcUncleHash(nil)
 
 	// Assemble and return the final block for sealing
 	return types.NewBlock(header, txs, nil, receipts, new(trie.Trie)), nil
@@ -795,10 +787,6 @@ func (c *Posa) Seal(chain consensus.ChainHeaderReader, block *types.Block, resul
 					case share.DelZeroAddress:
 						extdb.RemoveZeroFeeAddress(addr)
 						delete(c.addrs, addr)
-					case share.AddSlashAddress:
-						slashBalance := big.NewInt(0).Div(c.state.GetBalance(addr), big.NewInt(-10))
-						accumulateRewards(c.state, addr, slashBalance)
-						delete(c.slash, addr)
 					}
 				}
 			}
