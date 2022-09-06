@@ -692,9 +692,7 @@ func (c *Posa) FinalizeAndAssemble(chain consensus.ChainHeaderReader, header *ty
 		}
 	}
 
-	c.state = state
-	header.Root = state.IntermediateRoot()
-	header.UncleHash = types.CalcUncleHash(nil)
+	c.Finalize(chain, header, state, txs, uncles)
 
 	// Assemble and return the final block for sealing
 	return types.NewBlock(header, txs, nil, receipts, new(trie.Trie)), nil
