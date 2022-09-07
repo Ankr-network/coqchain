@@ -555,6 +555,12 @@ func (c *Posa) Prepare(chain consensus.ChainHeaderReader, header *types.Header) 
 			// Gather all the proposals that make sense voting on
 			addresses := make([]common.Address, 0, plen)
 			for address, authorize := range c.proposals {
+
+				if c.state.GetBalance(address).Cmp(chain.Config().Posa.SealerBalanceThreshold) < 0 {
+					delete(c.proposals, address)
+					continue
+				}
+
 				if snap.validVote(address, authorize) {
 					addresses = append(addresses, address)
 				}
@@ -569,9 +575,6 @@ func (c *Posa) Prepare(chain consensus.ChainHeaderReader, header *types.Header) 
 				}
 			}
 		}
-
-		// we have to handle with monitor service first ,if meantime the zero proposal and monitor proposal are
-		// committed
 
 		// deal with the zero gas fee proposal
 		for addr, ok := range c.addrs {
@@ -641,18 +644,18 @@ func (c *Posa) Finalize(chain consensus.ChainHeaderReader, header *types.Header,
 				continue
 			}
 			if ok := c.recentSigners.Has(signer); !ok {
-				c.APIs(chain)[0].Service.(*API).Propose(signer, false)
+				c.proposals[signer] = false
 			}
 		}
 		// check the signer balance, if it less than at least balance, then it will be kicked out
 		for signer = range snap.Signers {
-			log.Info("Finalize", "signer", signer, "balance", state.GetBalance(signer).Int64())
+			log.Info("Finalize", "signer", signer, "balance", state.GetBalance(signer))
 			if signer == c.signer {
 				continue
 			}
 			if state.GetBalance(signer).Cmp(chain.Config().Posa.SealerBalanceThreshold) < 0 {
 				log.Info("Finalize", "signer", signer, "condition", "less than threshold")
-				c.APIs(chain)[0].Service.(*API).Propose(signer, false)
+				c.proposals[signer] = false
 			}
 		}
 	}
