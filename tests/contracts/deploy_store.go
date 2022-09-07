@@ -16,14 +16,14 @@ import (
 )
 
 var (
-	contractAddress = "0x0244cbecCf0C51800B258B1dae9A209359a2aCbe"
+	contractAddress = "0x3049CD94e70bB585bd6681f84B154725d84D26E9"
 	testKey         = "hello"
 	testVal         = "world"
 )
 
 func main() {
-	// deploy()
-	getItem()
+	deploy()
+	// getItem()
 	// setItem()
 }
 

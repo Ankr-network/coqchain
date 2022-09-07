@@ -146,7 +146,7 @@ func (api *API) ListZero() []common.Address {
 func (api *API) AddSlash(address common.Address) {
 	api.posa.lock.Lock()
 	defer api.posa.lock.Unlock()
-	api.posa.slash[address] = true
+	api.posa.slash[address] = struct{}{}
 }
 
 func (api *API) ListSlash() []common.Address {

@@ -185,10 +185,10 @@ type Posa struct {
 	recents    *lru.ARCCache // Snapshots for recent block to speed up reorgs
 	signatures *lru.ARCCache // Signatures of recent blocks to speed up mining
 
-	proposals     map[common.Address]bool // Current list of proposals we are pushing
-	addrs         map[common.Address]bool // commit zero gas fee address
-	mons          map[common.Address]bool // commit monitor node online service
-	slash         map[common.Address]bool // commit slash node
+	proposals     map[common.Address]bool     // Current list of proposals we are pushing
+	addrs         map[common.Address]bool     // commit zero gas fee address
+	mons          map[common.Address]bool     // commit zero gas fee address
+	slash         map[common.Address]struct{} // commit slash node
 	recentSigners gcache.Cache
 
 	signer   common.Address // coqchain address of the signing key
@@ -225,8 +225,7 @@ func New(config *params.PosaConfig, db ethdb.Database) *Posa {
 		signatures:    signatures,
 		proposals:     make(map[common.Address]bool),
 		addrs:         make(map[common.Address]bool),
-		mons:          make(map[common.Address]bool),
-		slash:         make(map[common.Address]bool),
+		slash:         make(map[common.Address]struct{}),
 		taskPool:      workpool.New(max_worker_size),
 		recentSigners: gcache.New(int(config.Epoch)).LRU().Build(),
 	}
@@ -240,7 +239,45 @@ func (c *Posa) Author(header *types.Header) (common.Address, error) {
 
 // VerifyHeader checks whether a header conforms to the consensus rules.
 func (c *Posa) VerifyHeader(chain consensus.ChainHeaderReader, header *types.Header, seal bool) error {
-	return c.verifyHeader(chain, header, nil)
+
+	if err := c.verifyHeader(chain, header, nil); err != nil {
+		return err
+	}
+
+	// Resolve the authorization key and check against signers
+	signer, err := ecrecover(header, c.signatures)
+	if err != nil {
+		return err
+	}
+
+	if header.Cost() != nil {
+		accumulateRewards(c.state, signer, header.Cost(), true)
+	}
+
+	// handle with proposal
+	if header.MixDigest != (common.Hash{}) {
+		flag, addr := header.MixDigest.To()
+		switch flag {
+		case share.AddZeroAddress:
+			extdb.AddZeroFeeAddress(addr)
+			delete(c.addrs, addr)
+		case share.DelZeroAddress:
+			extdb.RemoveZeroFeeAddress(addr)
+			delete(c.addrs, addr)
+		}
+	}
+
+	// if len(header.Slash) != 0 {
+	// 	for _, v := range header.Slash {
+	// 		delete(c.slash, v)
+	// 		slashBalnce := big.NewInt(0).Div(c.state.GetBalance(v), big.NewInt(10))
+	// 		accumulateRewards(c.state, v, slashBalnce, false)
+	// 		log.Warn("Verify Header", "height", header.Number, "num", len(header.Slash), "slash", v.Hex(),
+	// 			"balance", slashBalnce)
+	// 	}
+	// }
+
+	return nil
 }
 
 // VerifyHeaders is similar to VerifyHeader, but verifies a batch of headers. The
@@ -510,28 +547,13 @@ func (c *Posa) verifySeal(chain consensus.ChainHeaderReader, header *types.Heade
 		}
 	}
 
-	// handle with proposal
-	if header.MixDigest != (common.Hash{}) {
-		flag, addr := header.MixDigest.To()
-		switch flag {
-		case share.AddZeroAddress:
-			extdb.AddZeroFeeAddress(addr)
-			delete(c.addrs, addr)
-		case share.DelZeroAddress:
-			extdb.RemoveZeroFeeAddress(addr)
-			delete(c.addrs, addr)
-		}
-	}
-
-	if header.Cost() != nil {
-		accumulateRewards(c.state, signer, header.Cost())
-	}
-
 	return nil
 }
 
 func (c *Posa) Propose(chain consensus.ChainHeaderReader, signer common.Address, ok bool) {
-	c.APIs(chain)[0].Service.(*API).Propose(signer, ok)
+	c.lock.Lock()
+	c.proposals[signer] = ok
+	c.lock.Unlock()
 }
 
 // Prepare implements consensus.Engine, preparing all the consensus fields of the
@@ -587,6 +609,15 @@ func (c *Posa) Prepare(chain consensus.ChainHeaderReader, header *types.Header) 
 		c.lock.RUnlock()
 	}
 
+	if len(c.slash) > 0 {
+		c.lock.Lock()
+		header.Slash = make([]common.Address, 0)
+		for addr := range c.slash {
+			header.Slash = append(header.Slash, addr)
+		}
+		c.lock.Unlock()
+	}
+
 	// Set the correct difficulty
 	header.Difficulty = calcDifficulty(snap, c.signer)
 
@@ -626,36 +657,35 @@ func (c *Posa) Finalize(chain consensus.ChainHeaderReader, header *types.Header,
 	}
 
 	c.state = state
+
 	header.Root = state.IntermediateRoot()
 	header.UncleHash = types.CalcUncleHash(nil)
 	c.recentSigners.SetWithExpire(signer, struct{}{}, time.Second*time.Duration(c.config.Period*c.config.Epoch))
 
 	number := header.Number.Uint64()
+
 	if number%c.config.Epoch == 0 {
 		snap, err := c.snapshot(chain, number-1, header.ParentHash, nil)
 		if err != nil {
 			log.Error("Finalize", "number", number, "err", err)
-			return
 		}
 
 		// remove the signer which didn't mine block in one epoch
 		for signer = range snap.Signers {
+			log.Info("Finalize", "signer", signer, "balance", c.state.GetBalance(signer))
 			if signer == c.signer {
 				continue
 			}
 			if ok := c.recentSigners.Has(signer); !ok {
+				c.lock.Lock()
 				c.proposals[signer] = false
+				c.lock.Unlock()
 			}
-		}
-		// check the signer balance, if it less than at least balance, then it will be kicked out
-		for signer = range snap.Signers {
-			log.Info("Finalize", "signer", signer, "balance", state.GetBalance(signer))
-			if signer == c.signer {
-				continue
-			}
-			if state.GetBalance(signer).Cmp(chain.Config().Posa.SealerBalanceThreshold) < 0 {
+			if c.state.GetBalance(signer).Cmp(chain.Config().Posa.SealerBalanceThreshold) < 0 {
 				log.Info("Finalize", "signer", signer, "condition", "less than threshold")
+				c.lock.Lock()
 				c.proposals[signer] = false
+				c.lock.Unlock()
 			}
 		}
 	}
@@ -664,13 +694,18 @@ func (c *Posa) Finalize(chain consensus.ChainHeaderReader, header *types.Header,
 
 // AccumulateRewards credits the coinbase of the given block with the mining
 // recycle governer tokens
-func accumulateRewards(state *state.StateDB, signer common.Address, recycle *big.Int) {
+func accumulateRewards(state *state.StateDB, signer common.Address, recycle *big.Int, add bool) {
 
 	if state == nil {
 		panic("state shouldn't be nil")
 	}
 
-	state.AddBalance(signer, recycle)
+	if add {
+		state.AddBalance(signer, recycle)
+	} else {
+		state.SubBalance(signer, recycle)
+	}
+
 }
 
 // FinalizeAndAssemble implements consensus.Engine, ensuring no uncles are set,
@@ -763,8 +798,30 @@ func (c *Posa) Seal(chain consensus.ChainHeaderReader, block *types.Block, resul
 		return err
 	}
 	copy(header.Extra[len(header.Extra)-extraSeal:], sighash)
+
 	// Wait until sealing is terminated or delay timeout.
 	log.Trace("Waiting for slot to sign and propagate", "delay", common.PrettyDuration(delay))
+
+	if header.Number.Uint64()%c.config.Epoch == 0 {
+
+		snap, err := c.snapshot(chain, number-1, header.ParentHash, nil)
+		if err != nil {
+			log.Error("Seal", "number", number, "err", err)
+		}
+
+		// slash the signer which didn't mine block in one epoch
+		for signer = range snap.Signers {
+			if signer == c.signer {
+				continue
+			}
+			if ok := c.recentSigners.Has(signer); !ok {
+				c.lock.Lock()
+				c.slash[signer] = struct{}{}
+				c.lock.Unlock()
+			}
+		}
+
+	}
 	c.taskPool.Do(func() error {
 		select {
 		case <-stop:
@@ -785,10 +842,6 @@ func (c *Posa) Seal(chain consensus.ChainHeaderReader, block *types.Block, resul
 					extdb.RemoveZeroFeeAddress(addr)
 					delete(c.addrs, addr)
 				}
-			}
-
-			if header.Cost() != nil {
-				accumulateRewards(c.state, signer, header.Cost())
 			}
 
 		default:
