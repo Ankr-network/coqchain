@@ -143,18 +143,6 @@ func (api *API) ListZero() []common.Address {
 	return extdb.ListZeroFeeAddress()
 }
 
-func (api *API) AddSlash(address common.Address) {
-	api.posa.lock.Lock()
-	defer api.posa.lock.Unlock()
-	api.posa.slash[address] = struct{}{}
-}
-
-func (api *API) ListSlash() []common.Address {
-	api.posa.lock.Lock()
-	defer api.posa.lock.Unlock()
-	return extdb.ListSlashAddress()
-}
-
 func (api *API) AddMon(address common.Address) {
 	api.posa.lock.Lock()
 	defer api.posa.lock.Unlock()

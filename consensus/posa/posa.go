@@ -185,10 +185,9 @@ type Posa struct {
 	recents    *lru.ARCCache // Snapshots for recent block to speed up reorgs
 	signatures *lru.ARCCache // Signatures of recent blocks to speed up mining
 
-	proposals     map[common.Address]bool     // Current list of proposals we are pushing
-	addrs         map[common.Address]bool     // commit zero gas fee address
-	mons          map[common.Address]bool     // commit zero gas fee address
-	slash         map[common.Address]struct{} // commit slash node
+	proposals     map[common.Address]bool // Current list of proposals we are pushing
+	addrs         map[common.Address]bool // commit zero gas fee address
+	mons          map[common.Address]bool // commit zero gas fee address
 	recentSigners gcache.Cache
 
 	signer   common.Address // coqchain address of the signing key
@@ -225,7 +224,6 @@ func New(config *params.PosaConfig, db ethdb.Database) *Posa {
 		signatures:    signatures,
 		proposals:     make(map[common.Address]bool),
 		addrs:         make(map[common.Address]bool),
-		slash:         make(map[common.Address]struct{}),
 		taskPool:      workpool.New(max_worker_size),
 		recentSigners: gcache.New(int(config.Epoch)).LRU().Build(),
 	}
@@ -266,16 +264,6 @@ func (c *Posa) VerifyHeader(chain consensus.ChainHeaderReader, header *types.Hea
 			delete(c.addrs, addr)
 		}
 	}
-
-	// if len(header.Slash) != 0 {
-	// 	for _, v := range header.Slash {
-	// 		delete(c.slash, v)
-	// 		slashBalnce := big.NewInt(0).Div(c.state.GetBalance(v), big.NewInt(10))
-	// 		accumulateRewards(c.state, v, slashBalnce, false)
-	// 		log.Warn("Verify Header", "height", header.Number, "num", len(header.Slash), "slash", v.Hex(),
-	// 			"balance", slashBalnce)
-	// 	}
-	// }
 
 	return nil
 }
@@ -609,15 +597,6 @@ func (c *Posa) Prepare(chain consensus.ChainHeaderReader, header *types.Header) 
 		c.lock.RUnlock()
 	}
 
-	if len(c.slash) > 0 {
-		c.lock.Lock()
-		header.Slash = make([]common.Address, 0)
-		for addr := range c.slash {
-			header.Slash = append(header.Slash, addr)
-		}
-		c.lock.Unlock()
-	}
-
 	// Set the correct difficulty
 	header.Difficulty = calcDifficulty(snap, c.signer)
 
@@ -802,26 +781,6 @@ func (c *Posa) Seal(chain consensus.ChainHeaderReader, block *types.Block, resul
 	// Wait until sealing is terminated or delay timeout.
 	log.Trace("Waiting for slot to sign and propagate", "delay", common.PrettyDuration(delay))
 
-	if header.Number.Uint64()%c.config.Epoch == 0 {
-
-		snap, err := c.snapshot(chain, number-1, header.ParentHash, nil)
-		if err != nil {
-			log.Error("Seal", "number", number, "err", err)
-		}
-
-		// slash the signer which didn't mine block in one epoch
-		for signer = range snap.Signers {
-			if signer == c.signer {
-				continue
-			}
-			if ok := c.recentSigners.Has(signer); !ok {
-				c.lock.Lock()
-				c.slash[signer] = struct{}{}
-				c.lock.Unlock()
-			}
-		}
-
-	}
 	c.taskPool.Do(func() error {
 		select {
 		case <-stop:
