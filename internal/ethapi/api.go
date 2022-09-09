@@ -17,13 +17,11 @@
 package ethapi
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
 	"math/big"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/Ankr-network/coqchain/accounts"
@@ -1140,14 +1138,6 @@ func FormatLogs(logs []vm.StructLog) []StructLogRes {
 	return formatted
 }
 
-var (
-	bufpool = sync.Pool{
-		New: func() interface{} {
-			return bytes.NewBuffer([]byte{})
-		},
-	}
-)
-
 // RPCMarshalHeader converts the given header to the RPC output .
 func RPCMarshalHeader(head *types.Header) map[string]interface{} {
 	result := map[string]interface{}{
@@ -1169,18 +1159,6 @@ func RPCMarshalHeader(head *types.Header) map[string]interface{} {
 		"transactionsRoot": head.TxHash,
 		"receiptsRoot":     head.ReceiptHash,
 	}
-
-	buf := bufpool.Get().(*bytes.Buffer)
-	defer bufpool.Put(buf)
-
-	buf.WriteRune('[')
-	for i := 0; i < len(head.Slash); i++ {
-		buf.WriteRune(' ')
-		buf.WriteString(head.Slash[i].Hex())
-	}
-	buf.WriteRune(']')
-
-	result["slash"] = buf.String()
 
 	if head.BaseFee != nil {
 		result["baseFeePerGas"] = (*hexutil.Big)(head.BaseFee)
