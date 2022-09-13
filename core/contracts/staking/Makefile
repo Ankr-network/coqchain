@@ -1,5 +1,5 @@
 .PHONY: build all
 
 build:
-	solc --overwrite --abi --bin Staker.sol -o staker
-	abigen  --bin=staker/staker.bin --abi=staker/staker.abi --pkg=staker --out=staker/staker.go
+	solc --overwrite --abi --bin staker.sol -o staker
+	abigen  --bin=staker/Staker.bin --abi=staker/Staker.abi --pkg=staker --out=staker/staker.go
