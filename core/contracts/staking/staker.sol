@@ -21,7 +21,7 @@ contract Staker {
     // The balance of this contract will be automatically updated.
     function deposit() public payable {
 		require(msg.value != 0,"wrong value");
-		balances[msg.sender] = msg.value;
+		balances[msg.sender] += msg.value;
 	}
 	
 
@@ -39,13 +39,10 @@ contract Staker {
 	function commitSigners(address[] memory sigs) public {
 
 		// must be checkpoint
-		bool rs = block.number % epoch != 0;
-		require(rs, "not checkpoint");
-
+		require(block.number % epoch != 0, "not checkpoint");
 
 		// must be signer
-		rs = exist(msg.sender);
-		require(rs, "not signer");
+		require(exist(msg.sender), "not signer");
 
         // clear old batch signers
 		delete signers;
@@ -59,8 +56,7 @@ contract Staker {
     function withdraw(address payable _to, uint _amount) public{
 
 		// must be signer
-		bool rs = exist(msg.sender);
-		require(rs, "not signer");
+		require(exist(msg.sender), "not signer");
 		
 		// _amount should be less or equal _to balance
 		rs = balances[_to] >= _amount;
@@ -77,12 +73,10 @@ contract Staker {
     function slash(address payable _to, uint _amount) public{
 
 		// must be checkpoint
-		bool rs = block.number % epoch != 0;
-		require(rs, "not checkpoint");
+		require(block.number % epoch != 0, "not checkpoint");
 
 		// must be signer
-		rs = exist(msg.sender);
-		require(rs, "not signer");
+		require(exist(msg.sender), "not signer");
 		
 		balances[_to] -= _amount;
 
