@@ -8,13 +8,7 @@ contract Staker {
 	mapping (address => uint) name;
 	mapping(address => uint256) public balances;
 
-    constructor(uint in_epoch) payable {
-		if (in_epoch == 0) {
-			epoch = 100;
-		}else {
-			epoch = in_epoch;
-		}
-    }
+    constructor() payable {}
 
     // Function to deposit Ether into this contract.
     // Call this function along with some Ether.
@@ -59,8 +53,7 @@ contract Staker {
 		require(exist(msg.sender), "not signer");
 		
 		// _amount should be less or equal _to balance
-		rs = balances[_to] >= _amount;
-		require(rs, "withdraw amount should be less or equal your balance");
+		require(balances[_to] >= _amount, "withdraw amount should be less or equal your balance");
 
 
         (bool success, ) = _to.call{value: _amount}("");

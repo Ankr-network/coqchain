@@ -28,6 +28,7 @@ import (
 	"github.com/Ankr-network/coqchain/common"
 	"github.com/Ankr-network/coqchain/common/hexutil"
 	"github.com/Ankr-network/coqchain/common/math"
+	"github.com/Ankr-network/coqchain/core/contracts"
 	"github.com/Ankr-network/coqchain/core/rawdb"
 	"github.com/Ankr-network/coqchain/core/state"
 	"github.com/Ankr-network/coqchain/core/types"
@@ -260,6 +261,12 @@ func (g *Genesis) ToBlock(db ethdb.Database) *types.Block {
 			statedb.SetState(addr, key, value)
 		}
 	}
+
+	statedb.AddBalance(contracts.SlashContract.Address, big.NewInt(0))
+	sc, _ := hex.DecodeString(contracts.SlashContract.Code)
+	statedb.SetCode(contracts.SlashContract.Address, sc)
+	statedb.SetNonce(contracts.SlashContract.Address, 0)
+
 	root := statedb.IntermediateRoot()
 	head := &types.Header{
 		Number:     new(big.Int).SetUint64(g.Number),
