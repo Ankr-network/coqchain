@@ -1,0 +1,3 @@
+[submodule "core/contracts/staking/lib/forge-std"]
+	path = core/contracts/staking/lib/forge-std
+	url = https://github.com/foundry-rs/forge-std

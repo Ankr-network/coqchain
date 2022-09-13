@@ -374,6 +374,7 @@ func DeveloperGenesisBlock(period uint64, gasLimit uint64, faucet common.Address
 		BaseFee:    big.NewInt(params.InitialBaseFee),
 		Difficulty: big.NewInt(1),
 		Alloc: map[common.Address]GenesisAccount{
+<<<<<<< HEAD
 			common.BytesToAddress([]byte{1}): {Balance: big.NewInt(1)}, // ECRecover
 			common.BytesToAddress([]byte{2}): {Balance: big.NewInt(1)}, // SHA256
 			common.BytesToAddress([]byte{3}): {Balance: big.NewInt(1)}, // RIPEMD
@@ -404,6 +405,18 @@ func DeveloperGenesisBlock(period uint64, gasLimit uint64, faucet common.Address
 			// 0x2a871d0798f97d79848a013d4936a73bf4cc922c825d33c1cf7073dff6d409
 			common.HexToAddress("0xa0ee7a142d267c1f36714e4a8f75612f20a79720"): {Balance: amt},
 			common.HexToAddress("0x4915f56a21F1f2e651f8130c5a9257Cd429c6136"): {Balance: big.NewInt(3e+18)},
+=======
+			common.BytesToAddress([]byte{1}):                                  {Balance: big.NewInt(1)}, // ECRecover
+			common.BytesToAddress([]byte{2}):                                  {Balance: big.NewInt(1)}, // SHA256
+			common.BytesToAddress([]byte{3}):                                  {Balance: big.NewInt(1)}, // RIPEMD
+			common.BytesToAddress([]byte{4}):                                  {Balance: big.NewInt(1)}, // Identity
+			common.BytesToAddress([]byte{5}):                                  {Balance: big.NewInt(1)}, // ModExp
+			common.BytesToAddress([]byte{6}):                                  {Balance: big.NewInt(1)}, // ECAdd
+			common.BytesToAddress([]byte{7}):                                  {Balance: big.NewInt(1)}, // ECScalarMul
+			common.BytesToAddress([]byte{8}):                                  {Balance: big.NewInt(1)}, // ECPairing
+			common.BytesToAddress([]byte{9}):                                  {Balance: big.NewInt(1)}, // BLAKE2b
+			common.HexToAddress("0x4915f56a21F1f2e651f8130c5a9257Cd429c6136"): {Balance: big.NewInt(9e+18)},
+>>>>>>> slash
 			faucet: {Balance: new(big.Int).Sub(new(big.Int).Lsh(big.NewInt(1), 256), big.NewInt(9))},
 		},
 	}
