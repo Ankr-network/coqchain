@@ -364,6 +364,8 @@ func DeveloperGenesisBlock(period uint64, gasLimit uint64, faucet common.Address
 	}
 	log.Warn("Using custom genesis block - developers mode enabled")
 
+	amt := big.NewInt(1e+18)
+	amt = amt.Mul(big.NewInt(1000), amt)
 	// Assemble and return the genesis with the precompiles and faucet pre-funded
 	return &Genesis{
 		Config:     &config,
@@ -372,15 +374,35 @@ func DeveloperGenesisBlock(period uint64, gasLimit uint64, faucet common.Address
 		BaseFee:    big.NewInt(params.InitialBaseFee),
 		Difficulty: big.NewInt(1),
 		Alloc: map[common.Address]GenesisAccount{
-			common.BytesToAddress([]byte{1}):                                  {Balance: big.NewInt(1)}, // ECRecover
-			common.BytesToAddress([]byte{2}):                                  {Balance: big.NewInt(1)}, // SHA256
-			common.BytesToAddress([]byte{3}):                                  {Balance: big.NewInt(1)}, // RIPEMD
-			common.BytesToAddress([]byte{4}):                                  {Balance: big.NewInt(1)}, // Identity
-			common.BytesToAddress([]byte{5}):                                  {Balance: big.NewInt(1)}, // ModExp
-			common.BytesToAddress([]byte{6}):                                  {Balance: big.NewInt(1)}, // ECAdd
-			common.BytesToAddress([]byte{7}):                                  {Balance: big.NewInt(1)}, // ECScalarMul
-			common.BytesToAddress([]byte{8}):                                  {Balance: big.NewInt(1)}, // ECPairing
-			common.BytesToAddress([]byte{9}):                                  {Balance: big.NewInt(1)}, // BLAKE2b
+			common.BytesToAddress([]byte{1}): {Balance: big.NewInt(1)}, // ECRecover
+			common.BytesToAddress([]byte{2}): {Balance: big.NewInt(1)}, // SHA256
+			common.BytesToAddress([]byte{3}): {Balance: big.NewInt(1)}, // RIPEMD
+			common.BytesToAddress([]byte{4}): {Balance: big.NewInt(1)}, // Identity
+			common.BytesToAddress([]byte{5}): {Balance: big.NewInt(1)}, // ModExp
+			common.BytesToAddress([]byte{6}): {Balance: big.NewInt(1)}, // ECAdd
+			common.BytesToAddress([]byte{7}): {Balance: big.NewInt(1)}, // ECScalarMul
+			common.BytesToAddress([]byte{8}): {Balance: big.NewInt(1)}, // ECPairing
+			common.BytesToAddress([]byte{9}): {Balance: big.NewInt(1)}, // BLAKE2b
+			// 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff
+			common.HexToAddress("0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"): {Balance: amt},
+			// 0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b7869
+			common.HexToAddress("0x70997970c51812dc3a010c7d01b50e0d17dc79c8"): {Balance: amt},
+			// 0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab36
+			common.HexToAddress("0x3c44cdddb6a900fa2b585dd299e03d12fa4293bc"): {Balance: amt},
+			// 0x7c852118294e51e653712a81e05800f419141751be58f605c371e15141b007
+			common.HexToAddress("0x90f79bf6eb2c4f870365e785982e1f101e93b906"): {Balance: amt},
+			// 0x47e179ec197488593b187f80a00eb0da91f1b9d0b13f8733639f19c30a3492
+			common.HexToAddress("0x15d34aaf54267db7d7c367839aaf71a00a2c6a65"): {Balance: amt},
+			// 0x8b3a350cf5c34c9194ca85829a2df0ec3153be0318b5e2d3348e872092edff
+			common.HexToAddress("0x9965507d1a55bcc2695c58ba16fb37d819b0a4dc"): {Balance: amt},
+			// 0x92db14e403b83dfe3df233f83dfa3a0d7096f21ca9b0d6d6b8d88b2b4ec156
+			common.HexToAddress("0x976ea74026e726554db657fa54763abd0c3a0aa9"): {Balance: amt},
+			// 0x4bbbf85ce3377467afe5d46f804f221813b2bb87f24d81f60f1fcdbf7cbf43
+			common.HexToAddress("0x14dc79964da2c08b23698b3d3cc7ca32193d9955"): {Balance: amt},
+			// 0xdbda1821b80551c9d65939329250298aa3472ba22feea921c0cf5d620ea67b
+			common.HexToAddress("0x23618e81e3f5cdf7f54c3d65f7fbc0abf5b21e8f"): {Balance: amt},
+			// 0x2a871d0798f97d79848a013d4936a73bf4cc922c825d33c1cf7073dff6d409
+			common.HexToAddress("0xa0ee7a142d267c1f36714e4a8f75612f20a79720"): {Balance: amt},
 			common.HexToAddress("0x4915f56a21F1f2e651f8130c5a9257Cd429c6136"): {Balance: big.NewInt(3e+18)},
 			faucet: {Balance: new(big.Int).Sub(new(big.Int).Lsh(big.NewInt(1), 256), big.NewInt(9))},
 		},
