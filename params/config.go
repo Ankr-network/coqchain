@@ -34,7 +34,7 @@ var TrustedCheckpoints = map[common.Hash]*TrustedCheckpoint{}
 var CheckpointOracles = map[common.Hash]*CheckpointOracleConfig{}
 var (
 	AllPosaProtocolChanges = &ChainConfig{big.NewInt(1337),
-		&PosaConfig{Period: 3, Epoch: 30000, SealerBalanceThreshold: big.NewInt(0)}}
+		&PosaConfig{Period: 3, Epoch: 3000, SealerBalanceThreshold: big.NewInt(0)}}
 
 	TestChainConfig = &ChainConfig{big.NewInt(1), &PosaConfig{Period: 3, Epoch: 30000, SealerBalanceThreshold: big.NewInt(0)}}
 

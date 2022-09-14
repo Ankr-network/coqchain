@@ -5,10 +5,11 @@ contract Staker {
 
 	uint epoch = 100;
 	address[] signers;
-	mapping (address => uint) name;
 	mapping(address => uint256) public balances;
 
-    constructor() payable {}
+    constructor() payable {
+		epoch = 100;
+	}
 
     // Function to deposit Ether into this contract.
     // Call this function along with some Ether.
@@ -61,6 +62,14 @@ contract Staker {
 
     }
 	
+	function getSigners() view public returns (address[] memory) {
+	    return signers;	
+	}
+	
+	function getEpoch() view public returns(uint) {
+		return epoch;
+	}
+	
 
     // Function to transfer Ether from this contract to address from input
     function slash(address payable _to, uint _amount) public{
@@ -75,7 +84,7 @@ contract Staker {
 
     }
 	
-	function balanceOf() view public returns (uint) {
-	     return balances[msg.sender];	
+	function balanceOf(address addr) view public returns (uint) {
+	     return balances[addr];	
 	}
 }

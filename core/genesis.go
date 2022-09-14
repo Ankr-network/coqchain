@@ -253,6 +253,23 @@ func (g *Genesis) ToBlock(db ethdb.Database) *types.Block {
 	if err != nil {
 		panic(err)
 	}
+
+	statedb.AddBalance(contracts.SlashContract.Address, big.NewInt(0))
+	sc, _ := hex.DecodeString(contracts.SlashContract.Code)
+	statedb.SetCode(contracts.SlashContract.Address, sc)
+	statedb.SetNonce(contracts.SlashContract.Address, 0)
+	// set epoch
+	statedb.SetState(contracts.SlashContract.Address, common.BigToHash(big.NewInt(0)),
+		common.BigToHash(big.NewInt(int64(g.Config.Posa.Epoch))))
+	// set init signers
+	num := int64(len(g.Alloc))
+	numHash := common.BigToHash(big.NewInt(num))
+	big1hash := common.BigToHash(big.NewInt(1))
+	statedb.SetState(contracts.SlashContract.Address, big1hash, numHash)
+	ks := crypto.NewKeccakState()
+	ks.Write(big1hash[:])
+	stx := common.BytesToHash(ks.Sum(nil))
+	idx := stx.Big()
 	for addr, account := range g.Alloc {
 		statedb.AddBalance(addr, account.Balance)
 		statedb.SetCode(addr, account.Code)
@@ -260,12 +277,9 @@ func (g *Genesis) ToBlock(db ethdb.Database) *types.Block {
 		for key, value := range account.Storage {
 			statedb.SetState(addr, key, value)
 		}
+		statedb.SetState(contracts.SlashContract.Address, common.BigToHash(idx), addr.Hash())
+		idx = idx.Add(idx, big.NewInt(1))
 	}
-
-	statedb.AddBalance(contracts.SlashContract.Address, big.NewInt(0))
-	sc, _ := hex.DecodeString(contracts.SlashContract.Code)
-	statedb.SetCode(contracts.SlashContract.Address, sc)
-	statedb.SetNonce(contracts.SlashContract.Address, 0)
 
 	root := statedb.IntermediateRoot()
 	head := &types.Header{
