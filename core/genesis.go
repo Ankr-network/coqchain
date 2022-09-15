@@ -260,6 +260,18 @@ func (a Addrs) Swap(i, j int) {
 	a[j] = addr
 }
 
+func getSignerBalance(statedb *state.StateDB, signer common.Address) *big.Int {
+	ks := crypto.NewKeccakState()
+	slot2Hash := common.BigToHash(big.NewInt(2))
+	addr2Hash := signer.Hash()
+	keys := append([]byte{}, addr2Hash[:]...)
+	keys = append(keys, slot2Hash[:]...)
+	ks.Reset()
+	ks.Write(keys[:])
+	stateAddr := ks.Sum(nil)
+	return statedb.GetState(contracts.SlashAddr, common.BytesToHash(stateAddr)).Big()
+}
+
 func initSystemContract(statedb *state.StateDB, g *Genesis) {
 
 	statedb.AddBalance(contracts.SlashContract.Address, big.NewInt(0))
@@ -426,7 +438,7 @@ func DeveloperGenesisBlock(period uint64, gasLimit uint64, faucet common.Address
 	config.Posa = &params.PosaConfig{
 		Period:                 period,
 		Epoch:                  config.Posa.Epoch,
-		SealerBalanceThreshold: big.NewInt(0),
+		SealerBalanceThreshold: big.NewInt(9e+18),
 	}
 	log.Warn("Using custom genesis block - developers mode enabled")
 

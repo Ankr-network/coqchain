@@ -117,7 +117,7 @@ type PosaConfig struct {
 
 // String implements the stringer interface, returning the consensus engine details.
 func (p *PosaConfig) String() string {
-	return "posa"
+	return fmt.Sprintf("name: posa, epoch: %d period: %d threshold: %d", p.Epoch, p.Period, p.SealerBalanceThreshold)
 }
 
 // String implements the fmt.Stringer interface.

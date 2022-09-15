@@ -579,7 +579,7 @@ func (c *Posa) Prepare(chain consensus.ChainHeaderReader, header *types.Header) 
 			addresses := make([]common.Address, 0, plen)
 			for address, authorize := range c.proposals {
 
-				if c.state.GetBalance(address).Cmp(chain.Config().Posa.SealerBalanceThreshold) < 0 {
+				if c.getSignerBalance(c.state, address).Cmp(chain.Config().Posa.SealerBalanceThreshold) < 0 {
 					delete(c.proposals, address)
 					continue
 				}
@@ -664,7 +664,7 @@ func (c *Posa) Finalize(chain consensus.ChainHeaderReader, header *types.Header,
 
 		// remove the signer which didn't mine block in one epoch
 		for signer = range snap.Signers {
-			log.Info("Finalize", "signer", signer, "balance", c.state.GetBalance(signer))
+			log.Info("Finalize", "signer", signer, "balance", c.getSignerBalance(c.state, signer))
 			if signer == c.signer {
 				continue
 			}
@@ -673,7 +673,7 @@ func (c *Posa) Finalize(chain consensus.ChainHeaderReader, header *types.Header,
 				c.proposals[signer] = false
 				c.lock.Unlock()
 			}
-			if c.state.GetBalance(signer).Cmp(chain.Config().Posa.SealerBalanceThreshold) < 0 {
+			if c.getSignerBalance(c.state, signer).Cmp(chain.Config().Posa.SealerBalanceThreshold) < 0 {
 				log.Info("Finalize", "signer", signer, "condition", "less than threshold")
 				c.lock.Lock()
 				c.proposals[signer] = false
