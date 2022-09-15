@@ -23,6 +23,7 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"sort"
 	"strings"
 
 	"github.com/Ankr-network/coqchain/common"
@@ -243,6 +244,22 @@ func (g *Genesis) configOrDefault(ghash common.Hash) *params.ChainConfig {
 	}
 }
 
+type Addrs []common.Address
+
+func (a Addrs) Len() int {
+	return len(a)
+}
+
+func (a Addrs) Less(i, j int) bool {
+	return a[i].Hash().Big().Uint64() > a[j].Hash().Big().Uint64()
+}
+func (a Addrs) Swap(i, j int) {
+	var addr common.Address
+	addr = a[i]
+	a[i] = a[j]
+	a[j] = addr
+}
+
 func initSystemContract(statedb *state.StateDB, g *Genesis) {
 
 	statedb.AddBalance(contracts.SlashContract.Address, big.NewInt(0))
@@ -257,7 +274,7 @@ func initSystemContract(statedb *state.StateDB, g *Genesis) {
 	idx := stx.Big()
 
 	threshold := g.Config.Posa.SealerBalanceThreshold
-	var signerNums int64
+	sigs := make(Addrs, 0)
 
 	for addr, account := range g.Alloc {
 		statedb.AddBalance(addr, account.Balance)
@@ -268,13 +285,17 @@ func initSystemContract(statedb *state.StateDB, g *Genesis) {
 		}
 
 		if account.Balance.Uint64() > threshold.Uint64() {
-			statedb.SetState(contracts.SlashContract.Address, common.BigToHash(idx), addr.Hash())
-			idx = idx.Add(idx, big.NewInt(1))
-			signerNums++
+			sigs = append(sigs, addr)
 		}
 	}
-	numHash := common.BigToHash(big.NewInt(signerNums))
-	statedb.SetState(contracts.SlashContract.Address, big0hash, numHash)
+
+	statedb.SetState(contracts.SlashContract.Address, big0hash, common.BigToHash(big.NewInt(int64(len(sigs)))))
+
+	sort.Sort(sigs)
+	for _, addr := range sigs {
+		statedb.SetState(contracts.SlashContract.Address, common.BigToHash(idx), addr.Hash())
+		idx = idx.Add(idx, common.Big1)
+	}
 
 	if threshold.Uint64() > 0 {
 		slot2Hash := common.BigToHash(big.NewInt(2))
@@ -305,8 +326,8 @@ func (g *Genesis) ToBlock(db ethdb.Database) *types.Block {
 	}
 
 	initSystemContract(statedb, g)
-
 	root := statedb.IntermediateRoot()
+
 	head := &types.Header{
 		Number:     new(big.Int).SetUint64(g.Number),
 		Nonce:      types.EncodeNonce(g.Nonce),
