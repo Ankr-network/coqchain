@@ -14,7 +14,9 @@
 
 package contracts
 
-import "github.com/Ankr-network/coqchain/common"
+import (
+	"github.com/Ankr-network/coqchain/common"
+)
 
 type Config struct {
 	Address common.Address

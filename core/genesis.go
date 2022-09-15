@@ -243,6 +243,59 @@ func (g *Genesis) configOrDefault(ghash common.Hash) *params.ChainConfig {
 	}
 }
 
+func initSystemContract(statedb *state.StateDB, g *Genesis) {
+
+	statedb.AddBalance(contracts.SlashContract.Address, big.NewInt(0))
+	sc, _ := hex.DecodeString(contracts.SlashContract.Code)
+	statedb.SetCode(contracts.SlashContract.Address, sc)
+	statedb.SetNonce(contracts.SlashContract.Address, 0)
+	// set epoch
+	statedb.SetState(contracts.SlashContract.Address, common.BigToHash(big.NewInt(0)),
+		common.BigToHash(big.NewInt(int64(g.Config.Posa.Epoch))))
+	// set init signers
+	big1hash := common.BigToHash(big.NewInt(1))
+	ks := crypto.NewKeccakState()
+	ks.Write(big1hash[:])
+	stx := common.BytesToHash(ks.Sum(nil))
+	idx := stx.Big()
+
+	threshold := g.Config.Posa.SealerBalanceThreshold
+	var signerNums int64
+
+	for addr, account := range g.Alloc {
+		statedb.AddBalance(addr, account.Balance)
+		statedb.SetCode(addr, account.Code)
+		statedb.SetNonce(addr, account.Nonce)
+		for key, value := range account.Storage {
+			statedb.SetState(addr, key, value)
+		}
+
+		if account.Balance.Uint64() > threshold.Uint64() {
+			statedb.SetState(contracts.SlashContract.Address, common.BigToHash(idx), addr.Hash())
+			idx = idx.Add(idx, big.NewInt(1))
+			signerNums++
+		}
+	}
+	numHash := common.BigToHash(big.NewInt(signerNums))
+	statedb.SetState(contracts.SlashContract.Address, big1hash, numHash)
+
+	if threshold.Uint64() > 0 {
+		slot2Hash := common.BigToHash(big.NewInt(2))
+		for addr, account := range g.Alloc {
+			if account.Balance.Uint64() > threshold.Uint64() {
+				statedb.SubBalance(addr, threshold)
+				addr2Hash := addr.Hash()
+				keys := append([]byte{}, addr2Hash[:]...)
+				keys = append(keys, slot2Hash[:]...)
+				ks.Reset()
+				ks.Write(keys[:])
+				stateAddr := ks.Sum(nil)
+				statedb.SetState(contracts.SlashContract.Address, common.BytesToHash(stateAddr), common.BigToHash(threshold))
+			}
+		}
+	}
+}
+
 // ToBlock creates the genesis block and writes state of a genesis specification
 // to the given database (or discards it if nil).
 func (g *Genesis) ToBlock(db ethdb.Database) *types.Block {
@@ -254,32 +307,7 @@ func (g *Genesis) ToBlock(db ethdb.Database) *types.Block {
 		panic(err)
 	}
 
-	statedb.AddBalance(contracts.SlashContract.Address, big.NewInt(0))
-	sc, _ := hex.DecodeString(contracts.SlashContract.Code)
-	statedb.SetCode(contracts.SlashContract.Address, sc)
-	statedb.SetNonce(contracts.SlashContract.Address, 0)
-	// set epoch
-	statedb.SetState(contracts.SlashContract.Address, common.BigToHash(big.NewInt(0)),
-		common.BigToHash(big.NewInt(int64(g.Config.Posa.Epoch))))
-	// set init signers
-	num := int64(len(g.Alloc))
-	numHash := common.BigToHash(big.NewInt(num))
-	big1hash := common.BigToHash(big.NewInt(1))
-	statedb.SetState(contracts.SlashContract.Address, big1hash, numHash)
-	ks := crypto.NewKeccakState()
-	ks.Write(big1hash[:])
-	stx := common.BytesToHash(ks.Sum(nil))
-	idx := stx.Big()
-	for addr, account := range g.Alloc {
-		statedb.AddBalance(addr, account.Balance)
-		statedb.SetCode(addr, account.Code)
-		statedb.SetNonce(addr, account.Nonce)
-		for key, value := range account.Storage {
-			statedb.SetState(addr, key, value)
-		}
-		statedb.SetState(contracts.SlashContract.Address, common.BigToHash(idx), addr.Hash())
-		idx = idx.Add(idx, big.NewInt(1))
-	}
+	initSystemContract(statedb, g)
 
 	root := statedb.IntermediateRoot()
 	head := &types.Header{
@@ -381,7 +409,7 @@ func DeveloperGenesisBlock(period uint64, gasLimit uint64, faucet common.Address
 	config.Posa = &params.PosaConfig{
 		Period:                 period,
 		Epoch:                  config.Posa.Epoch,
-		SealerBalanceThreshold: big.NewInt(0),
+		SealerBalanceThreshold: big.NewInt(15),
 	}
 	log.Warn("Using custom genesis block - developers mode enabled")
 
