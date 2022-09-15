@@ -249,13 +249,10 @@ func initSystemContract(statedb *state.StateDB, g *Genesis) {
 	sc, _ := hex.DecodeString(contracts.SlashContract.Code)
 	statedb.SetCode(contracts.SlashContract.Address, sc)
 	statedb.SetNonce(contracts.SlashContract.Address, 0)
-	// set epoch
-	statedb.SetState(contracts.SlashContract.Address, common.BigToHash(big.NewInt(0)),
-		common.BigToHash(big.NewInt(int64(g.Config.Posa.Epoch))))
 	// set init signers
-	big1hash := common.BigToHash(big.NewInt(1))
+	big0hash := common.BigToHash(big.NewInt(0))
 	ks := crypto.NewKeccakState()
-	ks.Write(big1hash[:])
+	ks.Write(big0hash[:])
 	stx := common.BytesToHash(ks.Sum(nil))
 	idx := stx.Big()
 
@@ -277,7 +274,7 @@ func initSystemContract(statedb *state.StateDB, g *Genesis) {
 		}
 	}
 	numHash := common.BigToHash(big.NewInt(signerNums))
-	statedb.SetState(contracts.SlashContract.Address, big1hash, numHash)
+	statedb.SetState(contracts.SlashContract.Address, big0hash, numHash)
 
 	if threshold.Uint64() > 0 {
 		slot2Hash := common.BigToHash(big.NewInt(2))

@@ -56,10 +56,6 @@ var (
 		accounts.MimetypeTypedData,
 		0x01,
 	}
-	ApplicationClique = SigFormat{
-		accounts.MimetypeClique,
-		0x02,
-	}
 
 	ApplicationPosa = SigFormat{
 		accounts.MimetypePosa,

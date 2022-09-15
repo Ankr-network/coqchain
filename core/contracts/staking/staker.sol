@@ -3,13 +3,11 @@ pragma solidity ^0.8.13;
 
 contract Staker {
 
-	uint epoch = 100;
 	address[] signers;
+	address[] lstSigners;
 	mapping(address => uint256) public balances;
 
-    constructor() payable {
-		epoch = 100;
-	}
+    constructor() payable {}
 
     // Function to deposit Ether into this contract.
     // Call this function along with some Ether.
@@ -33,18 +31,23 @@ contract Staker {
 
 	function commitSigners(address[] memory sigs) public {
 
-		// must be checkpoint
-		require(block.number % epoch != 0, "not checkpoint");
-
 		// must be signer
 		require(exist(msg.sender), "not signer");
 
         // clear old batch signers
-		delete signers;
+		delete lstSigners;
+		
+		for (uint idx = 0; idx < signers.length; idx++){
+		    lstSigners.push(signers[idx]);
+		}
 
 		// set new batch signers
-		for (uint idx = 0; idx < sigs.length; idx++){
-			signers.push(sigs[idx]);
+		signers = sigs;
+
+		for (uint idx = 0; idx < lstSigners.length; idx++){
+			if (!exist(lstSigners[idx]) && balances[lstSigners[idx]] > 0) {
+		         balances[lstSigners[idx]] -= balances[lstSigners[idx]]/10;
+			}
 		}
 	}
 
@@ -66,23 +69,6 @@ contract Staker {
 	    return signers;	
 	}
 	
-	function getEpoch() view public returns(uint) {
-		return epoch;
-	}
-	
-
-    // Function to transfer Ether from this contract to address from input
-    function slash(address payable _to, uint _amount) public{
-
-		// must be checkpoint
-		require(block.number % epoch != 0, "not checkpoint");
-
-		// must be signer
-		require(exist(msg.sender), "not signer");
-		
-		balances[_to] -= _amount;
-
-    }
 	
 	function balanceOf(address addr) view public returns (uint) {
 	     return balances[addr];	

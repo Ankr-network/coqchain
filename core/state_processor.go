@@ -80,7 +80,7 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 		if err != nil {
 			return nil, nil, 0, fmt.Errorf("could not apply tx %d [%v]: %w", i, tx.Hash().Hex(), err)
 		}
-		gasfee := big.NewInt(0).Mul(big.NewInt(int64(receipt.GasUsed)), msg.GasPrice())
+		gasfee := big.NewInt(0).Mul(big.NewInt(int64(receipt.GasUsed)), big.NewInt(0).Add(msg.GasPrice(), header.BaseFee))
 		cost = cost.Add(cost, gasfee)
 		receipts = append(receipts, receipt)
 		allLogs = append(allLogs, receipt.Logs...)

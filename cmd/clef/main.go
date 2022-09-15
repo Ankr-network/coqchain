@@ -883,7 +883,7 @@ func testExternalUI(api *core.SignerAPI) {
 			utils.Fatalf("Should not error: %v", err)
 		}
 		addr, _ := common.NewMixedcaseAddressFromString("0x0011223344556677889900112233445566778899")
-		_, err = api.SignData(ctx, accounts.MimetypeClique, *addr, hexutil.Encode(cliqueRlp))
+		_, err = api.SignData(ctx, accounts.MimetypePosa, *addr, hexutil.Encode(cliqueRlp))
 		expectApprove("signdata - clique header", err)
 	}
 	{ // Sign data test - typed data

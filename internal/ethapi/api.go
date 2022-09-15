@@ -1907,7 +1907,7 @@ func (api *PublicDebugAPI) TestSignPosaBlock(ctx context.Context, address common
 		return common.Address{}, err
 	}
 
-	signature, err := wallet.SignData(account, accounts.MimetypeClique, encoded)
+	signature, err := wallet.SignData(account, accounts.MimetypePosa, encoded)
 	if err != nil {
 		return common.Address{}, err
 	}

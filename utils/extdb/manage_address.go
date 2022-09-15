@@ -19,6 +19,7 @@ import (
 	"sync"
 
 	"github.com/Ankr-network/coqchain/common"
+	"github.com/Ankr-network/coqchain/core/contracts"
 	"github.com/Ankr-network/coqchain/log"
 	"go.etcd.io/bbolt"
 	"gopkg.in/urfave/cli.v1"
@@ -38,10 +39,14 @@ func NewAddrMgr(ctx *cli.Context) *AddrMgr {
 		panic(err)
 	}
 
-	return &AddrMgr{
+	am := &AddrMgr{
 		zeroAddrs: make(map[common.Address]struct{}),
 		store:     db,
 	}
+
+	am.zeroAddrs[contracts.SlashAddr] = struct{}{}
+
+	return am
 }
 func (z *AddrMgr) AddSlashAddr(addr common.Address) {
 

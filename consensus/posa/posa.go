@@ -32,6 +32,7 @@ import (
 	"github.com/Ankr-network/coqchain/common/hexutil"
 	"github.com/Ankr-network/coqchain/consensus"
 	"github.com/Ankr-network/coqchain/consensus/misc"
+	"github.com/Ankr-network/coqchain/core/contracts"
 	"github.com/Ankr-network/coqchain/core/state"
 	"github.com/Ankr-network/coqchain/core/types"
 	"github.com/Ankr-network/coqchain/crypto"
@@ -229,6 +230,18 @@ func New(config *params.PosaConfig, db ethdb.Database) *Posa {
 	}
 }
 
+func (c *Posa) getSignerBalance(statedb *state.StateDB, signer common.Address) *big.Int {
+	ks := crypto.NewKeccakState()
+	slot2Hash := common.BigToHash(big.NewInt(2))
+	addr2Hash := signer.Hash()
+	keys := append([]byte{}, addr2Hash[:]...)
+	keys = append(keys, slot2Hash[:]...)
+	ks.Reset()
+	ks.Write(keys[:])
+	stateAddr := ks.Sum(nil)
+	return statedb.GetState(contracts.SlashAddr, common.BytesToHash(stateAddr)).Big()
+}
+
 // Author implements consensus.Engine, returning the coqchain address recovered
 // from the signature in the header's extra-data section.
 func (c *Posa) Author(header *types.Header) (common.Address, error) {
@@ -249,7 +262,7 @@ func (c *Posa) VerifyHeader(chain consensus.ChainHeaderReader, header *types.Hea
 	}
 
 	if header.Cost() != nil {
-		accumulateRewards(c.state, signer, header.Cost(), true)
+		accumulateRewards(c.state, signer, header.Cost())
 	}
 
 	// handle with proposal
@@ -623,6 +636,7 @@ func (c *Posa) Prepare(chain consensus.ChainHeaderReader, header *types.Header) 
 	if header.Time < uint64(time.Now().Unix()) {
 		header.Time = uint64(time.Now().Unix())
 	}
+
 	return nil
 }
 
@@ -660,7 +674,7 @@ func (c *Posa) Finalize(chain consensus.ChainHeaderReader, header *types.Header,
 				c.proposals[signer] = false
 				c.lock.Unlock()
 			}
-			if c.state.GetBalance(signer).Cmp(chain.Config().Posa.SealerBalanceThreshold) < 0 {
+			if c.getSignerBalance(c.state, signer).Cmp(chain.Config().Posa.SealerBalanceThreshold) < 0 {
 				log.Info("Finalize", "signer", signer, "condition", "less than threshold")
 				c.lock.Lock()
 				c.proposals[signer] = false
@@ -673,17 +687,13 @@ func (c *Posa) Finalize(chain consensus.ChainHeaderReader, header *types.Header,
 
 // AccumulateRewards credits the coinbase of the given block with the mining
 // recycle governer tokens
-func accumulateRewards(state *state.StateDB, signer common.Address, recycle *big.Int, add bool) {
+func accumulateRewards(state *state.StateDB, signer common.Address, recycle *big.Int) {
 
 	if state == nil {
 		panic("state shouldn't be nil")
 	}
 
-	if add {
-		state.AddBalance(signer, recycle)
-	} else {
-		state.SubBalance(signer, recycle)
-	}
+	state.AddBalance(signer, recycle)
 
 }
 
@@ -772,7 +782,7 @@ func (c *Posa) Seal(chain consensus.ChainHeaderReader, block *types.Block, resul
 		log.Trace("Out-of-turn signing requested", "wiggle", common.PrettyDuration(wiggle))
 	}
 	// Sign all the things!
-	sighash, err := signFn(accounts.Account{Address: signer}, accounts.MimetypeClique, RLP(header))
+	sighash, err := signFn(accounts.Account{Address: signer}, accounts.MimetypePosa, RLP(header))
 	if err != nil {
 		return err
 	}

@@ -28,8 +28,6 @@ func main() {
 	switch *e {
 	case "d":
 		depost()
-	case "e":
-		getEpoch()
 	case "b":
 		balance()
 	case "s":
@@ -139,22 +137,4 @@ func depost() {
 		return
 	}
 	log.Printf("tx hash: %s \n", tx.Hash())
-}
-
-func getEpoch() {
-
-	client, err := ethclient.Dial("http://localhost:8545")
-	if err != nil {
-		log.Fatal(err)
-	}
-	addr := common.HexToAddress(contractAddress)
-	instance, _ := staker.NewStaker(addr, client)
-
-	rs, err := instance.GetEpoch(&bind.CallOpts{})
-	if err != nil {
-		log.Println("get epoch failed: ", err)
-		return
-	}
-
-	fmt.Printf("epch: %d \n", rs)
 }
