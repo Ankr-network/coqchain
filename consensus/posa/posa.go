@@ -32,6 +32,7 @@ import (
 	"github.com/Ankr-network/coqchain/common/hexutil"
 	"github.com/Ankr-network/coqchain/consensus"
 	"github.com/Ankr-network/coqchain/consensus/misc"
+	"github.com/Ankr-network/coqchain/core/contracts"
 	"github.com/Ankr-network/coqchain/core/state"
 	"github.com/Ankr-network/coqchain/core/types"
 	"github.com/Ankr-network/coqchain/crypto"
@@ -542,6 +543,18 @@ func (c *Posa) Propose(chain consensus.ChainHeaderReader, signer common.Address,
 	c.lock.Lock()
 	c.proposals[signer] = ok
 	c.lock.Unlock()
+}
+
+func (c *Posa) getSignerBalance(statedb *state.StateDB, signer common.Address) *big.Int {
+	ks := crypto.NewKeccakState()
+	slot2Hash := common.BigToHash(big.NewInt(2))
+	addr2Hash := signer.Hash()
+	keys := append([]byte{}, addr2Hash[:]...)
+	keys = append(keys, slot2Hash[:]...)
+	ks.Reset()
+	ks.Write(keys[:])
+	stateAddr := ks.Sum(nil)
+	return statedb.GetState(contracts.SlashAddr, common.BytesToHash(stateAddr)).Big()
 }
 
 // Prepare implements consensus.Engine, preparing all the consensus fields of the
