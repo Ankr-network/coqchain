@@ -238,7 +238,6 @@ func New(config *params.PosaConfig, db ethdb.Database) *Posa {
 // Author implements consensus.Engine, returning the coqchain address recovered
 // from the signature in the header's extra-data section.
 func (c *Posa) Author(header *types.Header) (common.Address, error) {
-	log.Warn("Author")
 	return ecrecover(header, c.signatures)
 }
 
