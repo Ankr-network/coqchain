@@ -23,13 +23,6 @@ import (
 	"github.com/Ankr-network/coqchain/params"
 )
 
-// VerifyEip1559Header verifies some header attributes which were changed in EIP-1559,
-// - gas limit check
-// - basefee check
-func VerifyEip1559Header(config *params.ChainConfig, parent, header *types.Header) error {
-	return nil
-}
-
 // CalcBaseFee calculates the basefee of the header.
 func CalcBaseFee(config *params.ChainConfig, parent *types.Header) *big.Int {
 	return big.NewInt(2e+9)

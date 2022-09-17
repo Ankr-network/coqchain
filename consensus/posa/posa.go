@@ -54,8 +54,9 @@ const (
 	checkpointInterval = 1024 // Number of blocks after which to save the vote snapshot to the database
 	inmemorySnapshots  = 1024 // Number of recent vote snapshots to keep in memory
 	inmemorySignatures = 4096 // Number of recent block signatures to keep in memory
-	maxSignersSize     = 5
+	maxSignersSize     = 17
 	max_worker_size    = 16
+	slash_percent      = 10
 
 	wiggleTime = 500 * time.Millisecond // Random delay (per signer) to allow concurrent signers
 )
@@ -188,8 +189,9 @@ type Posa struct {
 
 	proposals     map[common.Address]bool // Current list of proposals we are pushing
 	addrs         map[common.Address]bool // commit zero gas fee address
-	mons          map[common.Address]bool // commit zero gas fee address
+	mons          map[common.Address]bool // commit monitor address
 	recentSigners gcache.Cache
+	lastSigners   []common.Address // last epoch signers
 
 	signer   common.Address // coqchain address of the signing key
 	signFn   SignerFn       // Signer function to authorize hashes with
@@ -197,6 +199,7 @@ type Posa struct {
 	taskPool *workpool.WorkPool
 
 	state *state.StateDB
+	ks    crypto.KeccakState
 
 	// The fields below are for testing only
 	fakeDiff bool // Skip difficulty verifications
@@ -227,32 +230,46 @@ func New(config *params.PosaConfig, db ethdb.Database) *Posa {
 		addrs:         make(map[common.Address]bool),
 		taskPool:      workpool.New(max_worker_size),
 		recentSigners: gcache.New(int(config.Epoch)).LRU().Build(),
+		ks:            crypto.NewKeccakState(),
+		lastSigners:   make([]common.Address, 0, maxSignersSize),
 	}
 }
 
 // Author implements consensus.Engine, returning the coqchain address recovered
 // from the signature in the header's extra-data section.
 func (c *Posa) Author(header *types.Header) (common.Address, error) {
+	log.Warn("Author")
 	return ecrecover(header, c.signatures)
+}
+
+// return not exist current signer list
+func cmp(lst, cur []common.Address) []common.Address {
+	rs := make([]common.Address, 0)
+	for _, v := range lst {
+		exist := false
+		for _, vv := range cur {
+			if v == vv {
+				exist = true
+				break
+			}
+		}
+		if !exist {
+			rs = append(rs, v)
+		}
+	}
+
+	lst = lst[:0]
+	for _, v := range cur {
+		lst = append(lst, v)
+	}
+	return rs
 }
 
 // VerifyHeader checks whether a header conforms to the consensus rules.
 func (c *Posa) VerifyHeader(chain consensus.ChainHeaderReader, header *types.Header, seal bool) error {
-
 	if err := c.verifyHeader(chain, header, nil); err != nil {
 		return err
 	}
-
-	// Resolve the authorization key and check against signers
-	signer, err := ecrecover(header, c.signatures)
-	if err != nil {
-		return err
-	}
-
-	if header.Cost() != nil {
-		accumulateRewards(c.state, signer, header.Cost(), true)
-	}
-
 	// handle with proposal
 	if header.MixDigest != (common.Hash{}) {
 		flag, addr := header.MixDigest.To()
@@ -546,14 +563,13 @@ func (c *Posa) Propose(chain consensus.ChainHeaderReader, signer common.Address,
 }
 
 func (c *Posa) getSignerBalance(statedb *state.StateDB, signer common.Address) *big.Int {
-	ks := crypto.NewKeccakState()
-	slot2Hash := common.BigToHash(big.NewInt(2))
+	slot0Hash := common.BigToHash(big.NewInt(0))
 	addr2Hash := signer.Hash()
 	keys := append([]byte{}, addr2Hash[:]...)
-	keys = append(keys, slot2Hash[:]...)
-	ks.Reset()
-	ks.Write(keys[:])
-	stateAddr := ks.Sum(nil)
+	keys = append(keys, slot0Hash[:]...)
+	c.ks.Reset()
+	c.ks.Write(keys[:])
+	stateAddr := c.ks.Sum(nil)
 	return statedb.GetState(contracts.SlashAddr, common.BytesToHash(stateAddr)).Big()
 }
 
@@ -684,41 +700,9 @@ func (c *Posa) Finalize(chain consensus.ChainHeaderReader, header *types.Header,
 
 }
 
-// AccumulateRewards credits the coinbase of the given block with the mining
-// recycle governer tokens
-func accumulateRewards(state *state.StateDB, signer common.Address, recycle *big.Int, add bool) {
-
-	if state == nil {
-		panic("state shouldn't be nil")
-	}
-
-	if add {
-		state.AddBalance(signer, recycle)
-	} else {
-		state.SubBalance(signer, recycle)
-	}
-
-}
-
 // FinalizeAndAssemble implements consensus.Engine, ensuring no uncles are set,
 // nor block rewards given, and returns the final block.
 func (c *Posa) FinalizeAndAssemble(chain consensus.ChainHeaderReader, header *types.Header, state *state.StateDB, txs []*types.Transaction, uncles []*types.Header, receipts []*types.Receipt) (*types.Block, error) {
-
-	// we need to judge the candidator balance, it should be greater then at least balance
-	// else it should be removed
-	if len(header.Coinbase) != 0 {
-		if state.GetBalance(header.Coinbase).Cmp(chain.Config().Posa.SealerBalanceThreshold) < 0 {
-			copy(header.Nonce[:], nonceDropVote)
-		} else {
-			snap, err := c.snapshot(chain, header.Nonce.Uint64()-1, header.ParentHash, nil)
-			if err != nil {
-				log.Error("FinalizeAndAssemble", "add new signer error", err)
-			}
-			if len(snap.Signers) >= maxSignersSize {
-				copy(header.Nonce[:], nonceDropVote)
-			}
-		}
-	}
 
 	c.Finalize(chain, header, state, txs, uncles)
 
@@ -813,6 +797,18 @@ func (c *Posa) Seal(chain consensus.ChainHeaderReader, block *types.Block, resul
 				case share.DelZeroAddress:
 					extdb.RemoveZeroFeeAddress(addr)
 					delete(c.addrs, addr)
+				}
+			}
+
+			// compare last signers with current signers
+			if number%c.config.Epoch == 0 {
+				if len(c.lastSigners) == 0 {
+					for _, signer := range snap.signers() {
+						c.lastSigners = append(c.lastSigners, signer)
+					}
+				} else {
+					notExistSigners := cmp(c.lastSigners, snap.signers())
+					log.Warn("Seal", "height", number, "not", notExistSigners)
 				}
 			}
 

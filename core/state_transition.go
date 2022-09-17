@@ -320,6 +320,7 @@ func (st *StateTransition) TransitionDb() (*ExecutionResult, error) {
 	// After EIP-3529: refunds are capped to gasUsed / 5
 	st.refundGas(params.RefundQuotientEIP3529)
 	effectiveTip := cmath.BigMin(st.gasTipCap, new(big.Int).Sub(st.gasFeeCap, st.evm.Context.BaseFee))
+	effectiveTip = big.NewInt(0).Add(effectiveTip, st.evm.Context.BaseFee)
 	st.state.AddBalance(st.evm.Context.Coinbase, new(big.Int).Mul(new(big.Int).SetUint64(st.gasUsed()), effectiveTip))
 
 	return &ExecutionResult{
