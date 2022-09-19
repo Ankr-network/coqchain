@@ -4,8 +4,14 @@ pragma solidity ^0.8.13;
 contract Staker {
 
 	mapping(address => uint256) public balances;
-
+	mapping(address => bool) public signers;
+    uint epoch;
+	uint stakeAmt = 1000;
     constructor() payable {}
+	
+	function vote(kickout address,confirm bool) {
+		
+	}
 
     // Function to deposit Ether into this contract.
     // Call this function along with some Ether.

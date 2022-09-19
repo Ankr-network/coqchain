@@ -11,6 +11,7 @@ require (
 	github.com/bluele/gcache v0.0.2
 	github.com/btcsuite/btcd v0.20.1-beta
 	github.com/cespare/cp v0.1.0
+	github.com/cockroachdb/pebble v0.0.0-20220916170419-c04d128767e6
 	github.com/consensys/gnark-crypto v0.4.1-0.20210426202927-39ac3d4b3f1f
 	github.com/davecgh/go-spew v1.1.1
 	github.com/deckarep/golang-set v0.0.0-20180603214616-504e848d77ea
@@ -24,7 +25,6 @@ require (
 	github.com/go-stack/stack v1.8.0
 	github.com/golang/protobuf v1.4.3 // indirect
 	github.com/golang/snappy v0.0.4
-	github.com/google/go-cmp v0.5.4 // indirect
 	github.com/google/gofuzz v1.1.1-0.20200604201612-c04b05f3adfa
 	github.com/google/uuid v1.1.5
 	github.com/gorilla/websocket v1.4.2
@@ -58,7 +58,7 @@ require (
 	go.etcd.io/bbolt v1.3.6
 	golang.org/x/crypto v0.0.0-20211215165025-cf75a172585e
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
-	golang.org/x/sys v0.0.0-20210816183151-1e6c022a8912
+	golang.org/x/sys v0.0.0-20210909193231-528a39cd75f3
 	golang.org/x/time v0.0.0-20210220033141-f8bda1e9f3ba
 	gopkg.in/natefinch/npipe.v2 v2.0.0-20160621034901-c1b8fa8bdcce
 	gopkg.in/olebedev/go-duktape.v3 v3.0.0-20200619000410-60c24ae608a6
