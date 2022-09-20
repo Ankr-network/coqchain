@@ -34,6 +34,8 @@ const (
 	DefaultWSPort      = 8546        // Default TCP port for the websocket RPC server
 	DefaultGraphQLHost = "localhost" // Default host interface for the GraphQL server
 	DefaultGraphQLPort = 8547        // Default TCP port for the GraphQL server
+	DefaultRebuildHost = "localhost" // Default host interface for the Rebuild state service host
+	DefaultRebuildPort = 8548        // Default TCP port for the Rebuild state service port
 )
 
 // DefaultConfig contains reasonable default settings.

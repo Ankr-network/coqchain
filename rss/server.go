@@ -12,23 +12,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package state
+package rss
 
 import (
-	"flag"
-	"os"
+	"fmt"
 
 	"github.com/Ankr-network/coqchain/log"
+	"github.com/gofiber/fiber/v2"
+	"gopkg.in/urfave/cli.v1"
 )
 
-var (
-	verbosity = flag.Int("verbosity", int(log.LvlInfo), "log verbosity (0-5)")
-	vmodule   = flag.String("vmodule", "", "log verbosity pattern")
-)
+func (r *Rebuild) Start(ctx *cli.Context) {
+	svc := fiber.New(fiber.Config{
+		ServerHeader:          "coqchain team",
+		Prefork:               false,
+		DisableStartupMessage: true,
+	})
 
-func main() {
-	glogger := log.NewGlogHandler(log.StreamHandler(os.Stderr, log.TerminalFormat(false)))
-	glogger.Verbosity(log.Lvl(*verbosity))
-	glogger.Vmodule(*vmodule)
-	log.Root().SetHandler(glogger)
+	svc.Post("/block", Block)
+	svc.Post("/tx", Tx)
+
+	addr := fmt.Sprintf("%s:%s", r.host, r.port)
+	log.Info("rebuid", "addr", addr)
+	svc.Listen(addr)
 }

@@ -63,6 +63,7 @@ import (
 	"github.com/Ankr-network/coqchain/p2p/nat"
 	"github.com/Ankr-network/coqchain/p2p/netutil"
 	"github.com/Ankr-network/coqchain/params"
+	"github.com/Ankr-network/coqchain/rss"
 	"github.com/Ankr-network/coqchain/utils/share"
 	gopsutil "github.com/shirou/gopsutil/mem"
 	"gopkg.in/urfave/cli.v1"
@@ -512,6 +513,20 @@ var (
 	IPCPathFlag = DirectoryFlag{
 		Name:  "ipcpath",
 		Usage: "Filename for IPC socket/pipe within the datadir (explicit paths escape it)",
+	}
+	RebuildEnabledFlag = cli.BoolFlag{
+		Name:  "rebuild",
+		Usage: "Enable the rebuild state service",
+	}
+	RebuildListenAddrFlag = cli.StringFlag{
+		Name:  "rebuild.addr",
+		Usage: "rebuild service listen host",
+		Value: node.DefaultRebuildHost,
+	}
+	RebuildPortFlag = cli.IntFlag{
+		Name:  "rebuild.port",
+		Usage: "rebuild service listen port",
+		Value: node.DefaultRebuildPort,
 	}
 	HTTPEnabledFlag = cli.BoolFlag{
 		Name:  "http",
@@ -1597,6 +1612,11 @@ func RegisterGraphQLService(stack *node.Node, backend ethapi.Backend, cfg node.C
 	if err := graphql.New(stack, backend, cfg.GraphQLCors, cfg.GraphQLVirtualHosts); err != nil {
 		Fatalf("Failed to register the GraphQL service: %v", err)
 	}
+}
+
+// RegisterRebuildService is a utility function to construct a new service and register it against a node.
+func RegisterRebuildService(bc *core.BlockChain, host, port string) {
+	rss.NewRebuild(bc, host, port)
 }
 
 func SetupMetrics(ctx *cli.Context) {

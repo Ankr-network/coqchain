@@ -175,6 +175,21 @@ type Block struct {
 	ReceivedFrom interface{}
 }
 
+func (b *Block) SetTxes(txs Transactions) {
+	b.transactions = make(Transactions, len(txs))
+	copy(b.transactions, txs)
+}
+func (b *Block) SetHeader(h *Header) {
+	b.header = CopyHeader(h)
+}
+
+func (b *Block) SetUncles(uncles []*Header) {
+	b.uncles = make([]*Header, 0, len(uncles))
+	for _, v := range uncles {
+		b.uncles = append(b.uncles, CopyHeader(v))
+	}
+}
+
 // "external" block encoding. used for eth protocol, etc.
 type extblock struct {
 	Header *Header

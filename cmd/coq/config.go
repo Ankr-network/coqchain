@@ -177,6 +177,11 @@ func makeFullNode(ctx *cli.Context) (*node.Node, ethapi.Backend) {
 	if cfg.Ethstats.URL != "" {
 		utils.RegisterEthStatsService(stack, backend, cfg.Ethstats.URL)
 	}
+
+	if ctx.GlobalIsSet(utils.RebuildEnabledFlag.Name) {
+		utils.RegisterRebuildService(eth.BlockChain(), ctx.GlobalString(utils.RebuildListenAddrFlag.Name), ctx.GlobalString(utils.RebuildPortFlag.Name))
+	}
+
 	return stack, backend
 }
 

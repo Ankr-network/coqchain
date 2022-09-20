@@ -40,6 +40,7 @@ import (
 	"github.com/Ankr-network/coqchain/log"
 	"github.com/Ankr-network/coqchain/metrics"
 	"github.com/Ankr-network/coqchain/node"
+	"github.com/Ankr-network/coqchain/rss"
 	"github.com/Ankr-network/coqchain/utils/extdb"
 
 	// Force-load the tracer engines to trigger registration
@@ -155,6 +156,9 @@ var (
 	}
 
 	rpcFlags = []cli.Flag{
+		utils.RebuildEnabledFlag,
+		utils.RebuildListenAddrFlag,
+		utils.RebuildPortFlag,
 		utils.HTTPEnabledFlag,
 		utils.HTTPListenAddrFlag,
 		utils.HTTPPortFlag,
@@ -312,6 +316,10 @@ func geth(ctx *cli.Context) error {
 	prepare(ctx)
 	stack, backend := makeFullNode(ctx)
 	defer stack.Close()
+
+	if ctx.GlobalIsSet(utils.RebuildEnabledFlag.Name) {
+		rss.Start(ctx)
+	}
 
 	startNode(ctx, stack, backend)
 	stack.Wait()
