@@ -14,10 +14,12 @@
 
 package pebble
 
-import "github.com/cockroachdb/pebble"
+import (
+	"github.com/cockroachdb/pebble"
+)
 
 type Iter struct {
-	kvi   pebble.Iterator
+	kvi   *pebble.Iterator
 	index uint64
 }
 
@@ -58,4 +60,22 @@ func (i *Iter) Value() []byte {
 func (i *Iter) Release() {
 	i.index = 0
 	i.kvi.Close()
+}
+
+func bytesPrefix(prefix []byte, start []byte) ([]byte, []byte) {
+	if prefix == nil && start == nil {
+		return nil, nil
+	}
+	var limit []byte
+	for i := len(prefix) - 1; i >= 0; i-- {
+		c := prefix[i]
+		if c < 0xff {
+			limit = make([]byte, i+1)
+			copy(limit, prefix)
+			limit[i] = c + 1
+			break
+		}
+	}
+	prefix = append(prefix, start...)
+	return prefix, limit
 }

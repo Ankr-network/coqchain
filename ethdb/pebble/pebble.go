@@ -61,6 +61,9 @@ func New(file string, caches int64, namespace string, readonly bool) (*Database,
 // Has retrieves if a key is present in the key-value data store.
 func (d *Database) Has(key []byte) (bool, error) {
 	val, err := d.Get(key)
+	if err == pebble.ErrNotFound {
+		err = nil
+	}
 	if err == nil && len(val) != 0 {
 		return true, nil
 	}
@@ -143,8 +146,8 @@ func (d *Database) Sync() error {
 // until a final write is called.
 func (d *Database) NewBatch() ethdb.Batch {
 	return &batch{
-		db: d.kv,
-		b:  d.kv.NewBatch(),
+		db:     d.kv,
+		writes: make([]keyvalue, 0),
 	}
 }
 
@@ -163,14 +166,15 @@ var (
 // Note: This method assumes that the prefix is NOT part of the start, so there's
 // no need for the caller to prepend the prefix to the start
 func (d *Database) NewIterator(prefix []byte, start []byte) ethdb.Iterator {
-	buf, _ := bufpool.Get().(*bytes.Buffer)
-	defer bufpool.Put(buf)
-	buf.Write(prefix)
-	buf.Write(start)
-
-	return &Iter{kvi: *d.kv.NewIter(&pebble.IterOptions{
-		LowerBound: buf.Bytes(),
-	})}
+	if prefix != nil || start != nil {
+		lowBound, upBound := bytesPrefix(prefix, start)
+		return &Iter{kvi: d.kv.NewIter(&pebble.IterOptions{
+			LowerBound: lowBound,
+			UpperBound: upBound,
+		})}
+	} else {
+		return &Iter{kvi: d.kv.NewIter(&pebble.IterOptions{})}
+	}
 }
 
 // Stat returns a particular internal stat of the database.
