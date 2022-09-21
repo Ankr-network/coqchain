@@ -55,6 +55,13 @@ type Compacter interface {
 	Compact(start []byte, limit []byte) error
 }
 
+type StateStore interface {
+	KeyValueReader
+	KeyValueWriter
+	Batcher
+	Iteratee
+}
+
 // KeyValueStore contains all the methods required to allow handling different
 // key-value data stores backing the high level database.
 type KeyValueStore interface {

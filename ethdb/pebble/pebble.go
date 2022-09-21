@@ -51,7 +51,7 @@ func New(file string, caches int64, namespace string, readonly bool) (*Database,
 
 	ldb := &Database{
 		kv: kv,
-		wo: &pebble.WriteOptions{Sync: true},
+		wo: &pebble.WriteOptions{},
 		ro: &pebble.IterOptions{},
 	}
 
