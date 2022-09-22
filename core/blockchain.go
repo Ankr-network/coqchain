@@ -408,6 +408,10 @@ func NewBlockChain(db ethdb.Database, cacheConfig *CacheConfig, chainConfig *par
 	return bc, nil
 }
 
+func (bc *BlockChain) DiskDB() ethdb.Database {
+	return bc.db
+}
+
 // empty returns an indicator whether the blockchain is empty.
 // Note, it's a special case that we connect a non-empty ancient
 // database with an empty node, so that we can plugin the ancient
@@ -1198,7 +1202,7 @@ func (bc *BlockChain) writeBlockWithState(block *types.Block, receipts []*types.
 	}
 	// emit block
 	if IsRunning() {
-		SetLatestBlock(block.NumberU64(), block.Root(), bc.StateCache().TrieDB())
+		SetLatestBlock(block.NumberU64(), block.Root(), bc.DiskDB())
 	}
 	// Calculate the total difficulty of the block
 	ptd := bc.GetTd(block.ParentHash(), block.NumberU64()-1)
