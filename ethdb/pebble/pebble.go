@@ -51,7 +51,7 @@ func New(file string, caches int64, namespace string, readonly bool) (*Database,
 
 	ldb := &Database{
 		kv: kv,
-		wo: &pebble.WriteOptions{},
+		wo: &pebble.WriteOptions{Sync: true},
 		ro: &pebble.IterOptions{},
 	}
 
@@ -79,42 +79,6 @@ func (d *Database) Get(key []byte) ([]byte, error) {
 	return val, err
 }
 
-// HasAncient returns an indicator whether the specified data exists in the
-// ancient store.
-func (d *Database) HasAncient(kind string, number uint64) (bool, error) {
-	return false, nil
-}
-
-// Ancient retrieves an ancient binary blob from the append-only immutable files.
-func (d *Database) Ancient(kind string, number uint64) ([]byte, error) {
-	return nil, nil
-}
-
-// AncientRange retrieves multiple items in sequence, starting from the index 'start'.
-// It will return
-//   - at most 'count' items,
-//   - at least 1 item (even if exceeding the maxBytes), but will otherwise
-//     return as many items as fit into maxBytes.
-func (d *Database) AncientRange(kind string, start uint64, count uint64, maxBytes uint64) ([][]byte, error) {
-	return nil, nil
-}
-
-// Ancients returns the ancient item numbers in the ancient store.
-func (d *Database) Ancients() (uint64, error) {
-	return 0, nil
-}
-
-// AncientSize returns the ancient size of the specified category.
-func (d *Database) AncientSize(kind string) (uint64, error) {
-	return 0, nil
-}
-
-// ReadAncients runs the given read operation while ensuring that no writes take place
-// on the underlying freezer.
-func (d *Database) ReadAncients(fn func(ethdb.AncientReader) error) (err error) {
-	return nil
-}
-
 // Put inserts the given value into the key-value data store.
 func (d *Database) Put(key []byte, value []byte) error {
 	return d.kv.Set(key, value, d.wo)
@@ -123,23 +87,6 @@ func (d *Database) Put(key []byte, value []byte) error {
 // Delete removes the key from the key-value data store.
 func (d *Database) Delete(key []byte) error {
 	return d.kv.Delete(key, d.wo)
-}
-
-// ModifyAncients runs a write operation on the ancient store.
-// If the function returns an error, any changes to the underlying store are reverted.
-// The integer return value is the total size of the written data.
-func (d *Database) ModifyAncients(_ func(ethdb.AncientWriteOp) error) (int64, error) {
-	return 0, nil
-}
-
-// TruncateAncients discards all but the first n ancient data from the ancient store.
-func (d *Database) TruncateAncients(n uint64) error {
-	return nil
-}
-
-// Sync flushes all in-memory ancient store data to disk.
-func (d *Database) Sync() error {
-	return nil
 }
 
 // NewBatch creates a write-only database that buffers changes to its host db

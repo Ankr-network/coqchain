@@ -55,6 +55,7 @@ require (
 	github.com/stretchr/testify v1.7.0
 	github.com/sunvim/utils v0.0.6
 	github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7
+	github.com/tidwall/tinylru v1.1.0
 	github.com/tklauser/go-sysconf v0.3.5 // indirect
 	go.etcd.io/bbolt v1.3.6
 	golang.org/x/crypto v0.0.0-20220214200702-86341886e292
