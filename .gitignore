@@ -10,6 +10,7 @@
 
 build/bin/
 ethdb/pebble/tmp/
+ethdb/kv/wal/testlog
 
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
