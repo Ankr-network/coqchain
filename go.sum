@@ -382,8 +382,10 @@ github.com/stretchr/testify v1.4.0/go.mod h1:j7eGeouHqKxXV5pUuKE4zz7dFj8WfuZ+81P
 github.com/stretchr/testify v1.5.1/go.mod h1:5W2xD1RspED5o8YsWQXVCued0rvSQ+mT+I5cxcmMvtA=
 github.com/stretchr/testify v1.7.0 h1:nwc3DEeHmmLAfoZucVR881uASk0Mfjw8xYJ99tb5CcY=
 github.com/stretchr/testify v1.7.0/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
-github.com/sunvim/utils v0.0.6 h1:0IksFvcV0MJZBhgHUmQdlHRGXUE6yGTRQfn75RXJzXw=
-github.com/sunvim/utils v0.0.6/go.mod h1:2n7JhJaBxQvREBdQQdUPeUr7Cgvl/l87xZVrkTutqsU=
+github.com/sunvim/utils v0.0.7 h1:m5IV2PaqMGd7YucRXLNDLYcHC1NwqQWGNBzIYzcszQc=
+github.com/sunvim/utils v0.0.7/go.mod h1:2n7JhJaBxQvREBdQQdUPeUr7Cgvl/l87xZVrkTutqsU=
+github.com/sunvim/wal v0.0.0-20220927083728-6daf92bcc43a h1:kcMW38jRPVVqCqzjj5LVW7eYJZ918DuYazoen+4sr0s=
+github.com/sunvim/wal v0.0.0-20220927083728-6daf92bcc43a/go.mod h1:55zjI0TnCSvFUc2EwbCIjhTnq+r25fNhhv0BGUcfrpo=
 github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7 h1:epCh84lMvA70Z7CTTCmYQn2CKbY8j86K7/FAIr141uY=
 github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7/go.mod h1:q4W45IWZaF22tdD+VEXcAWRA037jwmWEB5VWYORlTpc=
 github.com/tinylib/msgp v1.0.2/go.mod h1:+d+yLhGm8mzTaHzB+wgMYrodPfmZrzkirds8fDWklFE=
