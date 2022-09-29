@@ -469,7 +469,7 @@ func (c *ChainIndexer) Prune(threshold uint64) error {
 // loadValidSections reads the number of valid sections from the index database
 // and caches is into the local state.
 func (c *ChainIndexer) loadValidSections() {
-	data, _ := c.indexDb.Get([]byte("count"))
+	data, _ := c.indexDb.Get([]byte("count"), ethdb.GlobalDataOption)
 	if len(data) == 8 {
 		c.storedSections = binary.BigEndian.Uint64(data)
 	}
@@ -480,7 +480,7 @@ func (c *ChainIndexer) setValidSections(sections uint64) {
 	// Set the current number of valid sections in the database
 	var data [8]byte
 	binary.BigEndian.PutUint64(data[:], sections)
-	c.indexDb.Put([]byte("count"), data[:])
+	c.indexDb.Put([]byte("count"), data[:], ethdb.GlobalDataOption)
 
 	// Remove any reorged sections, caching the valids in the mean time
 	for c.storedSections > sections {
@@ -496,7 +496,7 @@ func (c *ChainIndexer) SectionHead(section uint64) common.Hash {
 	var data [8]byte
 	binary.BigEndian.PutUint64(data[:], section)
 
-	hash, _ := c.indexDb.Get(append([]byte("shead"), data[:]...))
+	hash, _ := c.indexDb.Get(append([]byte("shead"), data[:]...), ethdb.GlobalDataOption)
 	if len(hash) == len(common.Hash{}) {
 		return common.BytesToHash(hash)
 	}
@@ -509,7 +509,7 @@ func (c *ChainIndexer) setSectionHead(section uint64, hash common.Hash) {
 	var data [8]byte
 	binary.BigEndian.PutUint64(data[:], section)
 
-	c.indexDb.Put(append([]byte("shead"), data[:]...), hash.Bytes())
+	c.indexDb.Put(append([]byte("shead"), data[:]...), hash.Bytes(), ethdb.GlobalDataOption)
 }
 
 // removeSectionHead removes the reference to a processed section from the index
@@ -518,5 +518,5 @@ func (c *ChainIndexer) removeSectionHead(section uint64) {
 	var data [8]byte
 	binary.BigEndian.PutUint64(data[:], section)
 
-	c.indexDb.Delete(append([]byte("shead"), data[:]...))
+	c.indexDb.Delete(append([]byte("shead"), data[:]...), ethdb.GlobalDataOption)
 }

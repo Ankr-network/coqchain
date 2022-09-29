@@ -279,12 +279,12 @@ func inspect(ctx *cli.Context) error {
 }
 
 func showLeveldbStats(db ethdb.Stater) {
-	if stats, err := db.Stat("leveldb.stats"); err != nil {
+	if stats, err := db.Stat("leveldb.stats", nil); err != nil {
 		log.Warn("Failed to read database stats", "error", err)
 	} else {
 		fmt.Println(stats)
 	}
-	if ioStats, err := db.Stat("leveldb.iostats"); err != nil {
+	if ioStats, err := db.Stat("leveldb.iostats", nil); err != nil {
 		log.Warn("Failed to read database iostats", "error", err)
 	} else {
 		fmt.Println(ioStats)
@@ -313,7 +313,7 @@ func dbCompact(ctx *cli.Context) error {
 	showLeveldbStats(db)
 
 	log.Info("Triggering compaction")
-	if err := db.Compact(nil, nil); err != nil {
+	if err := db.Compact(nil, nil, nil); err != nil {
 		log.Info("Compact err", "error", err)
 		return err
 	}
@@ -339,7 +339,7 @@ func dbGet(ctx *cli.Context) error {
 		return err
 	}
 
-	data, err := db.Get(key)
+	data, err := db.Get(key, nil)
 	if err != nil {
 		log.Info("Get operation failed", "key", fmt.Sprintf("0x%#x", key), "error", err)
 		return err
@@ -364,11 +364,11 @@ func dbDelete(ctx *cli.Context) error {
 		log.Info("Could not decode the key", "error", err)
 		return err
 	}
-	data, err := db.Get(key)
+	data, err := db.Get(key, nil)
 	if err == nil {
 		fmt.Printf("Previous value: %#x\n", data)
 	}
-	if err = db.Delete(key); err != nil {
+	if err = db.Delete(key, nil); err != nil {
 		log.Info("Delete operation returned an error", "key", fmt.Sprintf("0x%#x", key), "error", err)
 		return err
 	}
@@ -402,11 +402,11 @@ func dbPut(ctx *cli.Context) error {
 		log.Info("Could not decode the value", "error", err)
 		return err
 	}
-	data, err = db.Get(key)
+	data, err = db.Get(key, nil)
 	if err == nil {
 		fmt.Printf("Previous value: %#x\n", data)
 	}
-	return db.Put(key, value)
+	return db.Put(key, value, nil)
 }
 
 // dbDumpTrie shows the key-value slots of a given storage trie
@@ -594,12 +594,12 @@ func (iter *snapshotIterator) Release() {
 // chainExporters defines the export scheme for all exportable chain data.
 var chainExporters = map[string]func(db ethdb.Database) utils.ChainDataIterator{
 	"preimage": func(db ethdb.Database) utils.ChainDataIterator {
-		iter := db.NewIterator(rawdb.PreimagePrefix, nil)
+		iter := db.NewIterator(rawdb.PreimagePrefix, nil, ethdb.PreimageOption)
 		return &preimageIterator{iter: iter}
 	},
 	"snapshot": func(db ethdb.Database) utils.ChainDataIterator {
-		account := db.NewIterator(rawdb.SnapshotAccountPrefix, nil)
-		storage := db.NewIterator(rawdb.SnapshotStoragePrefix, nil)
+		account := db.NewIterator(rawdb.SnapshotAccountPrefix, nil, ethdb.SnapOption)
+		storage := db.NewIterator(rawdb.SnapshotStoragePrefix, nil, ethdb.SnapOption)
 		return &snapshotIterator{account: account, storage: storage}
 	},
 }

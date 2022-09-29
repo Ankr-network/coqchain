@@ -107,7 +107,7 @@ func (db *nodeDB) key(id []byte, neg bool) []byte {
 }
 
 func (db *nodeDB) getExpiration() (utils.Fixed64, utils.Fixed64) {
-	blob, err := db.db.Get(append(db.verbuf[:], expirationKey...))
+	blob, err := db.db.Get(append(db.verbuf[:], expirationKey...), ethdb.StateOption)
 	if err != nil || len(blob) != 16 {
 		return 0, 0
 	}
@@ -118,7 +118,7 @@ func (db *nodeDB) setExpiration(pos, neg utils.Fixed64) {
 	var buff [16]byte
 	binary.BigEndian.PutUint64(buff[:8], uint64(pos))
 	binary.BigEndian.PutUint64(buff[8:16], uint64(neg))
-	db.db.Put(append(db.verbuf[:], expirationKey...), buff[:16])
+	db.db.Put(append(db.verbuf[:], expirationKey...), buff[:16], ethdb.StateOption)
 }
 
 func (db *nodeDB) getOrNewBalance(id []byte, neg bool) utils.ExpiredValue {
@@ -128,7 +128,7 @@ func (db *nodeDB) getOrNewBalance(id []byte, neg bool) utils.ExpiredValue {
 		return item.(utils.ExpiredValue)
 	}
 	var b utils.ExpiredValue
-	enc, err := db.db.Get(key)
+	enc, err := db.db.Get(key, ethdb.StateOption)
 	if err != nil || len(enc) == 0 {
 		return b
 	}
@@ -145,13 +145,13 @@ func (db *nodeDB) setBalance(id []byte, neg bool, b utils.ExpiredValue) {
 	if err != nil {
 		log.Crit("Failed to encode positive balance", "err", err)
 	}
-	db.db.Put(key, enc)
+	db.db.Put(key, enc, ethdb.StateOption)
 	db.cache.Add(string(key), b)
 }
 
 func (db *nodeDB) delBalance(id []byte, neg bool) {
 	key := db.key(id, neg)
-	db.db.Delete(key)
+	db.db.Delete(key, ethdb.SnapOption)
 	db.cache.Remove(string(key))
 }
 
@@ -164,7 +164,7 @@ func (db *nodeDB) getPosBalanceIDs(start, stop enode.ID, maxCount int) (result [
 	prefix := db.getPrefix(false)
 	keylen := len(prefix) + len(enode.ID{})
 
-	it := db.db.NewIterator(prefix, start.Bytes())
+	it := db.db.NewIterator(prefix, start.Bytes(), ethdb.StateOption)
 	defer it.Release()
 
 	for it.Next() {
@@ -189,7 +189,7 @@ func (db *nodeDB) forEachBalance(neg bool, callback func(id enode.ID, balance ut
 	prefix := db.getPrefix(neg)
 	keylen := len(prefix) + len(enode.ID{})
 
-	it := db.db.NewIterator(prefix, nil)
+	it := db.db.NewIterator(prefix, nil, ethdb.StateOption)
 	defer it.Release()
 
 	for it.Next() {
@@ -229,7 +229,7 @@ func (db *nodeDB) expireNodes() {
 		start   = time.Now()
 	)
 	for _, neg := range []bool{false, true} {
-		iter := db.db.NewIterator(db.getPrefix(neg), nil)
+		iter := db.db.NewIterator(db.getPrefix(neg), nil, ethdb.StateOption)
 		for iter.Next() {
 			visited++
 			var balance utils.ExpiredValue
@@ -238,7 +238,7 @@ func (db *nodeDB) expireNodes() {
 			}
 			if db.evictCallBack != nil && db.evictCallBack(db.clock.Now(), neg, balance) {
 				deleted++
-				db.db.Delete(iter.Key())
+				db.db.Delete(iter.Key(), ethdb.StateOption)
 			}
 		}
 	}

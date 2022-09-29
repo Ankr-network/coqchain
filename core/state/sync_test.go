@@ -102,7 +102,7 @@ func checkStateAccounts(t *testing.T, db ethdb.Database, root common.Hash, accou
 
 // checkTrieConsistency checks that all nodes in a (sub-)trie are indeed present.
 func checkTrieConsistency(db ethdb.Database, root common.Hash) error {
-	if v, _ := db.Get(root[:]); v == nil {
+	if v, _ := db.Get(root[:], ethdb.StateOption); v == nil {
 		return nil // Consider a non existent state consistent.
 	}
 	trie, err := trie.New(root, trie.NewDatabase(db))
@@ -118,7 +118,7 @@ func checkTrieConsistency(db ethdb.Database, root common.Hash) error {
 // checkStateConsistency checks that all data of a state root is present.
 func checkStateConsistency(db ethdb.Database, root common.Hash) error {
 	// Create and iterate a state trie rooted in a sub-node
-	if _, err := db.Get(root.Bytes()); err != nil {
+	if _, err := db.Get(root.Bytes(), ethdb.SnapOption); err != nil {
 		return nil // Consider a non existent state consistent.
 	}
 	state, err := New(root, NewDatabase(db), nil)

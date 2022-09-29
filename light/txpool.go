@@ -439,7 +439,7 @@ func (pool *TxPool) Add(ctx context.Context, tx *types.Transaction) error {
 	//fmt.Println("Send", tx.Hash())
 	pool.relay.Send(types.Transactions{tx})
 
-	pool.chainDb.Put(tx.Hash().Bytes(), data)
+	pool.chainDb.Put(tx.Hash().Bytes(), data, ethdb.StateOption)
 	return nil
 }
 
@@ -531,7 +531,7 @@ func (pool *TxPool) RemoveTransactions(txs types.Transactions) {
 	for _, tx := range txs {
 		hash := tx.Hash()
 		delete(pool.pending, hash)
-		batch.Delete(hash.Bytes())
+		batch.Delete(hash.Bytes(), ethdb.StateOption)
 		hashes = append(hashes, hash)
 	}
 	batch.Write()
@@ -544,6 +544,6 @@ func (pool *TxPool) RemoveTx(hash common.Hash) {
 	defer pool.mu.Unlock()
 	// delete from pending pool
 	delete(pool.pending, hash)
-	pool.chainDb.Delete(hash[:])
+	pool.chainDb.Delete(hash[:], ethdb.StateOption)
 	pool.relay.Discard([]common.Hash{hash})
 }

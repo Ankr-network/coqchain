@@ -66,9 +66,9 @@ var (
 // Pruner is an offline tool to prune the stale state with the
 // help of the snapshot. The workflow of pruner is very simple:
 //
-// - iterate the snapshot, reconstruct the relevant state
-// - iterate the database, delete all other state entries which
-//   don't belong to the target state and the genesis state
+//   - iterate the snapshot, reconstruct the relevant state
+//   - iterate the database, delete all other state entries which
+//     don't belong to the target state and the genesis state
 //
 // It can take several hours(around 2 hours for mainnet) to finish
 // the whole pruning work. It's recommended to run this offline tool
@@ -126,7 +126,7 @@ func prune(snaptree *snapshot.Tree, root common.Hash, maindb ethdb.Database, sta
 		pstart = time.Now()
 		logged = time.Now()
 		batch  = maindb.NewBatch()
-		iter   = maindb.NewIterator(nil, nil)
+		iter   = maindb.NewIterator(nil, nil, ethdb.StateOption)
 	)
 	for iter.Next() {
 		key := iter.Key()
@@ -144,7 +144,7 @@ func prune(snaptree *snapshot.Tree, root common.Hash, maindb ethdb.Database, sta
 			if _, exist := middleStateRoots[common.BytesToHash(checkKey)]; exist {
 				log.Debug("Forcibly delete the middle state roots", "hash", common.BytesToHash(checkKey))
 			} else {
-				if ok, err := stateBloom.Contain(checkKey); err != nil {
+				if ok, err := stateBloom.Contain(checkKey, ethdb.StateOption); err != nil {
 					return err
 				} else if ok {
 					continue
@@ -152,7 +152,7 @@ func prune(snaptree *snapshot.Tree, root common.Hash, maindb ethdb.Database, sta
 			}
 			count += 1
 			size += common.StorageSize(len(key) + len(iter.Value()))
-			batch.Delete(key)
+			batch.Delete(key, ethdb.StateOption)
 
 			var eta time.Duration // Realistically will never remain uninited
 			if done := binary.BigEndian.Uint64(key[:8]); done > 0 {
@@ -174,7 +174,7 @@ func prune(snaptree *snapshot.Tree, root common.Hash, maindb ethdb.Database, sta
 				batch.Reset()
 
 				iter.Release()
-				iter = maindb.NewIterator(nil, key)
+				iter = maindb.NewIterator(nil, key, ethdb.StateOption)
 			}
 		}
 	}
@@ -217,7 +217,7 @@ func prune(snaptree *snapshot.Tree, root common.Hash, maindb ethdb.Database, sta
 				end = nil
 			}
 			log.Info("Compacting database", "range", fmt.Sprintf("%#x-%#x", start, end), "elapsed", common.PrettyDuration(time.Since(cstart)))
-			if err := maindb.Compact(start, end); err != nil {
+			if err := maindb.Compact(start, end, ethdb.StateOption); err != nil {
 				log.Error("Database compaction failed", "error", err)
 				return err
 			}
@@ -420,7 +420,7 @@ func extractGenesis(db ethdb.Database, stateBloom *stateBloom) error {
 
 		// Embedded nodes don't have hash.
 		if hash != (common.Hash{}) {
-			stateBloom.Put(hash.Bytes(), nil)
+			stateBloom.Put(hash.Bytes(), nil, ethdb.StateOption)
 		}
 		// If it's a leaf node, yes we are touching an account,
 		// dig into the storage trie further.
@@ -438,7 +438,7 @@ func extractGenesis(db ethdb.Database, stateBloom *stateBloom) error {
 				for storageIter.Next(true) {
 					hash := storageIter.Hash()
 					if hash != (common.Hash{}) {
-						stateBloom.Put(hash.Bytes(), nil)
+						stateBloom.Put(hash.Bytes(), nil, ethdb.StateOption)
 					}
 				}
 				if storageIter.Error() != nil {
@@ -446,7 +446,7 @@ func extractGenesis(db ethdb.Database, stateBloom *stateBloom) error {
 				}
 			}
 			if !bytes.Equal(acc.CodeHash, emptyCode) {
-				stateBloom.Put(acc.CodeHash, nil)
+				stateBloom.Put(acc.CodeHash, nil, ethdb.StateOption)
 			}
 		}
 	}

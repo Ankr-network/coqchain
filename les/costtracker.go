@@ -250,7 +250,7 @@ func (ct *costTracker) gfLoop() {
 	)
 
 	// Load historical cost factor statistics from the database.
-	data, _ := ct.db.Get([]byte(gfDbKey))
+	data, _ := ct.db.Get([]byte(gfDbKey), ethdb.StateOption)
 	if len(data) == 8 {
 		gfLog = math.Float64frombits(binary.BigEndian.Uint64(data[:]))
 	}
@@ -265,7 +265,7 @@ func (ct *costTracker) gfLoop() {
 		saveCostFactor := func() {
 			var data [8]byte
 			binary.BigEndian.PutUint64(data[:], math.Float64bits(gfLog))
-			ct.db.Put([]byte(gfDbKey), data[:])
+			ct.db.Put([]byte(gfDbKey), data[:], ethdb.StateOption)
 			log.Debug("global cost factor saved", "value", factor)
 		}
 		saveTicker := time.NewTicker(time.Minute * 10)

@@ -99,12 +99,12 @@ func TestDatabaseSuite(t *testing.T, New func() ethdb.KeyValueStore) {
 			// Create the key-value data store
 			db := New()
 			for key, val := range tt.content {
-				if err := db.Put([]byte(key), []byte(val)); err != nil {
+				if err := db.Put([]byte(key), []byte(val), ethdb.GlobalDataOption); err != nil {
 					t.Fatalf("test %d: failed to insert item %s:%s into database: %v", i, key, val, err)
 				}
 			}
 			// Iterate over the database with the given configs and verify the results
-			it, idx := db.NewIterator([]byte(tt.prefix), []byte(tt.start)), 0
+			it, idx := db.NewIterator([]byte(tt.prefix), []byte(tt.start), ethdb.GlobalDataOption), 0
 			for it.Next() {
 				if len(tt.order) <= idx {
 					t.Errorf("test %d: prefix=%q more items than expected: checking idx=%d (key %q), expecting len=%d", i, tt.prefix, idx, it.Key(), len(tt.order))
@@ -136,13 +136,13 @@ func TestDatabaseSuite(t *testing.T, New func() ethdb.KeyValueStore) {
 		sort.Strings(keys) // 1, 10, 11, etc
 
 		for _, k := range keys {
-			if err := db.Put([]byte(k), nil); err != nil {
+			if err := db.Put([]byte(k), nil, ethdb.GlobalDataOption); err != nil {
 				t.Fatal(err)
 			}
 		}
 
 		{
-			it := db.NewIterator(nil, nil)
+			it := db.NewIterator(nil, nil, ethdb.GlobalDataOption)
 			got, want := iterateKeys(it), keys
 			if err := it.Error(); err != nil {
 				t.Fatal(err)
@@ -153,7 +153,7 @@ func TestDatabaseSuite(t *testing.T, New func() ethdb.KeyValueStore) {
 		}
 
 		{
-			it := db.NewIterator([]byte("1"), nil)
+			it := db.NewIterator([]byte("1"), nil, ethdb.GlobalDataOption)
 			got, want := iterateKeys(it), []string{"1", "10", "11", "12"}
 			if err := it.Error(); err != nil {
 				t.Fatal(err)
@@ -164,7 +164,7 @@ func TestDatabaseSuite(t *testing.T, New func() ethdb.KeyValueStore) {
 		}
 
 		{
-			it := db.NewIterator([]byte("5"), nil)
+			it := db.NewIterator([]byte("5"), nil, ethdb.GlobalDataOption)
 			got, want := iterateKeys(it), []string{}
 			if err := it.Error(); err != nil {
 				t.Fatal(err)
@@ -175,7 +175,7 @@ func TestDatabaseSuite(t *testing.T, New func() ethdb.KeyValueStore) {
 		}
 
 		{
-			it := db.NewIterator(nil, []byte("2"))
+			it := db.NewIterator(nil, []byte("2"), ethdb.GlobalDataOption)
 			got, want := iterateKeys(it), []string{"2", "20", "21", "22", "3", "4", "6"}
 			if err := it.Error(); err != nil {
 				t.Fatal(err)
@@ -186,7 +186,7 @@ func TestDatabaseSuite(t *testing.T, New func() ethdb.KeyValueStore) {
 		}
 
 		{
-			it := db.NewIterator(nil, []byte("5"))
+			it := db.NewIterator(nil, []byte("5"), ethdb.GlobalDataOption)
 			got, want := iterateKeys(it), []string{"6"}
 			if err := it.Error(); err != nil {
 				t.Fatal(err)
@@ -203,34 +203,34 @@ func TestDatabaseSuite(t *testing.T, New func() ethdb.KeyValueStore) {
 
 		key := []byte("foo")
 
-		if got, err := db.Has(key); err != nil {
+		if got, err := db.Has(key, ethdb.GlobalDataOption); err != nil {
 			t.Error(err)
 		} else if got {
 			t.Errorf("wrong value: %t", got)
 		}
 
 		value := []byte("hello world")
-		if err := db.Put(key, value); err != nil {
+		if err := db.Put(key, value, ethdb.GlobalDataOption); err != nil {
 			t.Error(err)
 		}
 
-		if got, err := db.Has(key); err != nil {
+		if got, err := db.Has(key, ethdb.GlobalDataOption); err != nil {
 			t.Error(err)
 		} else if !got {
 			t.Errorf("wrong value: %t", got)
 		}
 
-		if got, err := db.Get(key); err != nil {
+		if got, err := db.Get(key, ethdb.GlobalDataOption); err != nil {
 			t.Error(err)
 		} else if !bytes.Equal(got, value) {
 			t.Errorf("wrong value: %q", got)
 		}
 
-		if err := db.Delete(key); err != nil {
+		if err := db.Delete(key, ethdb.GlobalDataOption); err != nil {
 			t.Error(err)
 		}
 
-		if got, err := db.Has(key); err != nil {
+		if got, err := db.Has(key, ethdb.GlobalDataOption); err != nil {
 			t.Error(err)
 		} else if got {
 			t.Errorf("wrong value: %t", got)
@@ -243,12 +243,12 @@ func TestDatabaseSuite(t *testing.T, New func() ethdb.KeyValueStore) {
 
 		b := db.NewBatch()
 		for _, k := range []string{"1", "2", "3", "4"} {
-			if err := b.Put([]byte(k), nil); err != nil {
+			if err := b.Put([]byte(k), nil, ethdb.GlobalDataOption); err != nil {
 				t.Fatal(err)
 			}
 		}
 
-		if has, err := db.Has([]byte("1")); err != nil {
+		if has, err := db.Has([]byte("1"), ethdb.GlobalDataOption); err != nil {
 			t.Fatal(err)
 		} else if has {
 			t.Error("db contains element before batch write")
@@ -259,7 +259,7 @@ func TestDatabaseSuite(t *testing.T, New func() ethdb.KeyValueStore) {
 		}
 
 		{
-			it := db.NewIterator(nil, nil)
+			it := db.NewIterator(nil, nil, ethdb.GlobalDataOption)
 			if got, want := iterateKeys(it), []string{"1", "2", "3", "4"}; !reflect.DeepEqual(got, want) {
 				t.Errorf("got: %s; want: %s", got, want)
 			}
@@ -268,18 +268,18 @@ func TestDatabaseSuite(t *testing.T, New func() ethdb.KeyValueStore) {
 		b.Reset()
 
 		// Mix writes and deletes in batch
-		b.Put([]byte("5"), nil)
-		b.Delete([]byte("1"))
-		b.Put([]byte("6"), nil)
-		b.Delete([]byte("3"))
-		b.Put([]byte("3"), nil)
+		b.Put([]byte("5"), nil, ethdb.GlobalDataOption)
+		b.Delete([]byte("1"), ethdb.GlobalDataOption)
+		b.Put([]byte("6"), nil, ethdb.GlobalDataOption)
+		b.Delete([]byte("3"), ethdb.GlobalDataOption)
+		b.Put([]byte("3"), nil, ethdb.GlobalDataOption)
 
 		if err := b.Write(); err != nil {
 			t.Fatal(err)
 		}
 
 		{
-			it := db.NewIterator(nil, nil)
+			it := db.NewIterator(nil, nil, ethdb.GlobalDataOption)
 			if got, want := iterateKeys(it), []string{"2", "3", "4", "5", "6"}; !reflect.DeepEqual(got, want) {
 				t.Errorf("got: %s; want: %s", got, want)
 			}
@@ -293,21 +293,21 @@ func TestDatabaseSuite(t *testing.T, New func() ethdb.KeyValueStore) {
 		want := []string{"1", "2", "3", "4"}
 		b := db.NewBatch()
 		for _, k := range want {
-			if err := b.Put([]byte(k), nil); err != nil {
+			if err := b.Put([]byte(k), nil, ethdb.GlobalDataOption); err != nil {
 				t.Fatal(err)
 			}
 		}
 
 		b2 := db.NewBatch()
-		if err := b.Replay(b2); err != nil {
+		if err := b.Replay(b2, ethdb.GlobalDataOption); err != nil {
 			t.Fatal(err)
 		}
 
-		if err := b2.Replay(db); err != nil {
+		if err := b2.Replay(db, ethdb.GlobalDataOption); err != nil {
 			t.Fatal(err)
 		}
 
-		it := db.NewIterator(nil, nil)
+		it := db.NewIterator(nil, nil, ethdb.GlobalDataOption)
 		if got := iterateKeys(it); !reflect.DeepEqual(got, want) {
 			t.Errorf("got: %s; want: %s", got, want)
 		}

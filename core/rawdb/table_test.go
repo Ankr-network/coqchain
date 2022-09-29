@@ -31,12 +31,12 @@ type testReplayer struct {
 	dels [][]byte
 }
 
-func (r *testReplayer) Put(key []byte, value []byte) error {
+func (r *testReplayer) Put(key []byte, value []byte, opts *ethdb.Option) error {
 	r.puts = append(r.puts, key)
 	return nil
 }
 
-func (r *testReplayer) Delete(key []byte) error {
+func (r *testReplayer) Delete(key []byte, opts *ethdb.Option) error {
 	r.dels = append(r.dels, key)
 	return nil
 }
@@ -59,10 +59,10 @@ func testTableDatabase(t *testing.T, prefix string) {
 
 	// Test Put/Get operation
 	for _, entry := range entries {
-		db.Put(entry.key, entry.value)
+		db.Put(entry.key, entry.value, ethdb.GlobalDataOption)
 	}
 	for _, entry := range entries {
-		got, err := db.Get(entry.key)
+		got, err := db.Get(entry.key, ethdb.GlobalDataOption)
 		if err != nil {
 			t.Fatalf("Failed to get value: %v", err)
 		}
@@ -75,11 +75,11 @@ func testTableDatabase(t *testing.T, prefix string) {
 	db = NewTable(NewMemoryDatabase(), prefix)
 	batch := db.NewBatch()
 	for _, entry := range entries {
-		batch.Put(entry.key, entry.value)
+		batch.Put(entry.key, entry.value, ethdb.GlobalDataOption)
 	}
 	batch.Write()
 	for _, entry := range entries {
-		got, err := db.Get(entry.key)
+		got, err := db.Get(entry.key, ethdb.GlobalDataOption)
 		if err != nil {
 			t.Fatalf("Failed to get value: %v", err)
 		}
@@ -90,7 +90,7 @@ func testTableDatabase(t *testing.T, prefix string) {
 
 	// Test batch replayer
 	r := &testReplayer{}
-	batch.Replay(r)
+	batch.Replay(r, ethdb.GlobalDataOption)
 	for index, entry := range entries {
 		got := r.puts[index]
 		if !bytes.Equal(got, entry.key) {
@@ -117,12 +117,12 @@ func testTableDatabase(t *testing.T, prefix string) {
 		iter.Release()
 	}
 	// Test iterators
-	check(db.NewIterator(nil, nil), 6, 0)
+	check(db.NewIterator(nil, nil, ethdb.GlobalDataOption), 6, 0)
 	// Test iterators with prefix
-	check(db.NewIterator([]byte{0xff, 0xff}, nil), 3, 3)
+	check(db.NewIterator([]byte{0xff, 0xff}, nil, ethdb.GlobalDataOption), 3, 3)
 	// Test iterators with start point
-	check(db.NewIterator(nil, []byte{0xff, 0xff, 0x02}), 2, 4)
+	check(db.NewIterator(nil, []byte{0xff, 0xff, 0x02}, ethdb.GlobalDataOption), 2, 4)
 	// Test iterators with prefix and start point
-	check(db.NewIterator([]byte{0xee}, nil), 0, 0)
-	check(db.NewIterator(nil, []byte{0x00}), 6, 0)
+	check(db.NewIterator([]byte{0xee}, nil, ethdb.GlobalDataOption), 0, 0)
+	check(db.NewIterator(nil, []byte{0x00}, ethdb.GlobalDataOption), 6, 0)
 }

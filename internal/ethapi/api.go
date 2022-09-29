@@ -38,6 +38,7 @@ import (
 	"github.com/Ankr-network/coqchain/core/types"
 	"github.com/Ankr-network/coqchain/core/vm"
 	"github.com/Ankr-network/coqchain/crypto"
+	"github.com/Ankr-network/coqchain/ethdb"
 	"github.com/Ankr-network/coqchain/log"
 	"github.com/Ankr-network/coqchain/p2p"
 	"github.com/Ankr-network/coqchain/params"
@@ -1962,7 +1963,7 @@ func (api *PrivateDebugAPI) ChaindbProperty(property string) (string, error) {
 	} else if !strings.HasPrefix(property, "leveldb.") {
 		property = "leveldb." + property
 	}
-	return api.b.ChainDb().Stat(property)
+	return api.b.ChainDb().Stat(property, ethdb.GlobalDataOption)
 }
 
 // ChaindbCompact flattens the entire key-value database into a single level,
@@ -1970,7 +1971,7 @@ func (api *PrivateDebugAPI) ChaindbProperty(property string) (string, error) {
 func (api *PrivateDebugAPI) ChaindbCompact() error {
 	for b := byte(0); b < 255; b++ {
 		log.Info("Compacting chain database", "range", fmt.Sprintf("0x%0.2X-0x%0.2X", b, b+1))
-		if err := api.b.ChainDb().Compact([]byte{b}, []byte{b + 1}); err != nil {
+		if err := api.b.ChainDb().Compact([]byte{b}, []byte{b + 1}, ethdb.GlobalDataOption); err != nil {
 			log.Error("Database compaction failed", "err", err)
 			return err
 		}

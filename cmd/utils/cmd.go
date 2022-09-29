@@ -337,7 +337,7 @@ func ExportPreimages(db ethdb.Database, fn string) error {
 		defer writer.(*gzip.Writer).Close()
 	}
 	// Iterate over the preimages and export them
-	it := db.NewIterator([]byte("secure-key-"), nil)
+	it := db.NewIterator([]byte("secure-key-"), nil, ethdb.PreimageOption)
 	defer it.Release()
 
 	for it.Next() {
@@ -431,9 +431,9 @@ func ImportLDBData(db ethdb.Database, f string, startIndex int64, interrupt chan
 		}
 		switch op {
 		case OpBatchDel:
-			batch.Delete(key)
+			batch.Delete(key, nil)
 		case OpBatchAdd:
-			batch.Put(key, val)
+			batch.Put(key, val, nil)
 		default:
 			return fmt.Errorf("unknown op %d\n", op)
 		}

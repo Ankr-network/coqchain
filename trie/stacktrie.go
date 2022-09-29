@@ -363,11 +363,12 @@ func (st *StackTrie) insert(key, value []byte) {
 // hash() hashes the node 'st' and converts it into 'hashedNode', if possible.
 // Possible outcomes:
 // 1. The rlp-encoded value was >= 32 bytes:
-//  - Then the 32-byte `hash` will be accessible in `st.val`.
-//  - And the 'st.type' will be 'hashedNode'
+//   - Then the 32-byte `hash` will be accessible in `st.val`.
+//   - And the 'st.type' will be 'hashedNode'
+//
 // 2. The rlp-encoded value was < 32 bytes
-//  - Then the <32 byte rlp-encoded value will be accessible in 'st.val'.
-//  - And the 'st.type' will be 'hashedNode' AGAIN
+//   - Then the <32 byte rlp-encoded value will be accessible in 'st.val'.
+//   - And the 'st.type' will be 'hashedNode' AGAIN
 //
 // This method will also:
 // set 'st.type' to hashedNode
@@ -462,7 +463,7 @@ func (st *StackTrie) hash() {
 	if st.db != nil {
 		// TODO! Is it safe to Put the slice here?
 		// Do all db implementations copy the value provided?
-		st.db.Put(st.val, h.tmp)
+		st.db.Put(st.val, h.tmp, ethdb.StateOption)
 	}
 }
 
@@ -506,7 +507,7 @@ func (st *StackTrie) Commit() (common.Hash, error) {
 		h.sha.Reset()
 		h.sha.Write(st.val)
 		h.sha.Read(ret)
-		st.db.Put(ret, st.val)
+		st.db.Put(ret, st.val, ethdb.StateOption)
 		return common.BytesToHash(ret), nil
 	}
 	return common.BytesToHash(st.val), nil

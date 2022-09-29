@@ -245,7 +245,7 @@ func (vt *ValueTracker) StatsExpFactor() utils.ExpirationFactor {
 // loadFromDb loads the value tracker's state from the database and converts saved
 // request basket index mapping if it does not match the specified index to name mapping.
 func (vt *ValueTracker) loadFromDb(mapping []string) error {
-	enc, err := vt.db.Get(vtKey)
+	enc, err := vt.db.Get(vtKey, ethdb.StateOption)
 	if err != nil {
 		return err
 	}
@@ -322,7 +322,7 @@ func (vt *ValueTracker) saveToDb() {
 		log.Error("Encoding value tracker state failed", "err", err)
 		return
 	}
-	if err := vt.db.Put(vtKey, append(enc1, enc2...)); err != nil {
+	if err := vt.db.Put(vtKey, append(enc1, enc2...), ethdb.StateOption); err != nil {
 		log.Error("Saving value tracker state failed", "err", err)
 	}
 }
@@ -390,7 +390,7 @@ func (vt *ValueTracker) loadOrNewNode(id enode.ID) *NodeValueTracker {
 		return nv
 	}
 	nv := &NodeValueTracker{vt: vt, lastTransfer: vt.clock.Now()}
-	enc, err := vt.db.Get(append(vtNodeKey, id[:]...))
+	enc, err := vt.db.Get(append(vtNodeKey, id[:]...), ethdb.StateOption)
 	if err != nil {
 		return nv
 	}
@@ -445,7 +445,7 @@ func (vt *ValueTracker) saveNode(id enode.ID, nv *NodeValueTracker) {
 		log.Error("Failed to encode service value information", "id", id, "err", err)
 		return
 	}
-	if err := vt.db.Put(append(vtNodeKey, id[:]...), append(enc1, enc2...)); err != nil {
+	if err := vt.db.Put(append(vtNodeKey, id[:]...), append(enc1, enc2...), ethdb.StateOption); err != nil {
 		log.Error("Failed to save service value information", "id", id, "err", err)
 	}
 }

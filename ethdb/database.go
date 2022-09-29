@@ -17,30 +17,49 @@
 // Package ethdb defines the interfaces for an coqchain data store.
 package ethdb
 
-import "io"
+import (
+	"io"
+
+	"github.com/ledgerwatch/erigon-lib/kv"
+)
+
+type Option struct {
+	Name string
+}
+
+var (
+	GlobalDataOption = &Option{Name: kv.StorageKeys}
+	SnapOption       = &Option{Name: kv.StorageHistoryKeys}
+	AncientOption    = &Option{Name: kv.StorageKeys}
+	HeaderHashOption = &Option{Name: kv.StorageKeys}
+	PreimageOption   = &Option{Name: kv.StorageKeys}
+	BlockTxOption    = &Option{Name: kv.HashedStorage}
+	StateOption      = &Option{Name: kv.PlainState}
+	JournalOption    = &Option{Name: kv.StorageKeys}
+)
 
 // KeyValueReader wraps the Has and Get method of a backing data store.
 type KeyValueReader interface {
 	// Has retrieves if a key is present in the key-value data store.
-	Has(key []byte) (bool, error)
+	Has(key []byte, opts *Option) (bool, error)
 
 	// Get retrieves the given key if it's present in the key-value data store.
-	Get(key []byte) ([]byte, error)
+	Get(key []byte, opts *Option) ([]byte, error)
 }
 
 // KeyValueWriter wraps the Put method of a backing data store.
 type KeyValueWriter interface {
 	// Put inserts the given value into the key-value data store.
-	Put(key []byte, value []byte) error
+	Put(key []byte, value []byte, opts *Option) error
 
 	// Delete removes the key from the key-value data store.
-	Delete(key []byte) error
+	Delete(key []byte, opts *Option) error
 }
 
 // Stater wraps the Stat method of a backing data store.
 type Stater interface {
 	// Stat returns a particular internal stat of the database.
-	Stat(property string) (string, error)
+	Stat(property string, opts *Option) (string, error)
 }
 
 // Compacter wraps the Compact method of a backing data store.
@@ -52,7 +71,7 @@ type Compacter interface {
 	// A nil start is treated as a key before all keys in the data store; a nil limit
 	// is treated as a key after all keys in the data store. If both is nil then it
 	// will compact entire data store.
-	Compact(start []byte, limit []byte) error
+	Compact(start []byte, limit []byte, opts *Option) error
 }
 
 // KeyValueStore contains all the methods required to allow handling different

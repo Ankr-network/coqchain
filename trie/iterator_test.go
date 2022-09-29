@@ -123,7 +123,7 @@ func TestNodeIteratorCoverage(t *testing.T) {
 			}
 		}
 	}
-	it := db.diskdb.NewIterator(nil, nil)
+	it := db.diskdb.NewIterator(nil, nil, ethdb.StateOption)
 	for it.Next() {
 		key := it.Key()
 		if _, ok := hashes[common.BytesToHash(key)]; !ok {
@@ -315,7 +315,7 @@ func testIteratorContinueAfterError(t *testing.T, memonly bool) {
 	if memonly {
 		memKeys = triedb.Nodes()
 	} else {
-		it := diskdb.NewIterator(nil, nil)
+		it := diskdb.NewIterator(nil, nil, ethdb.StateOption)
 		for it.Next() {
 			diskKeys = append(diskKeys, it.Key())
 		}
@@ -346,8 +346,8 @@ func testIteratorContinueAfterError(t *testing.T, memonly bool) {
 			robj = triedb.dirties[rkey]
 			delete(triedb.dirties, rkey)
 		} else {
-			rval, _ = diskdb.Get(rkey[:])
-			diskdb.Delete(rkey[:])
+			rval, _ = diskdb.Get(rkey[:], ethdb.StateOption)
+			diskdb.Delete(rkey[:], ethdb.StateOption)
 		}
 		// Iterate until the error is hit.
 		seen := make(map[string]bool)
@@ -362,7 +362,7 @@ func testIteratorContinueAfterError(t *testing.T, memonly bool) {
 		if memonly {
 			triedb.dirties[rkey] = robj
 		} else {
-			diskdb.Put(rkey[:], rval)
+			diskdb.Put(rkey[:], rval, ethdb.StateOption)
 		}
 		checkIteratorNoDups(t, it, seen)
 		if it.Error() != nil {
@@ -406,8 +406,8 @@ func testIteratorContinueAfterSeekError(t *testing.T, memonly bool) {
 		barNodeObj = triedb.dirties[barNodeHash]
 		delete(triedb.dirties, barNodeHash)
 	} else {
-		barNodeBlob, _ = diskdb.Get(barNodeHash[:])
-		diskdb.Delete(barNodeHash[:])
+		barNodeBlob, _ = diskdb.Get(barNodeHash[:], ethdb.StateOption)
+		diskdb.Delete(barNodeHash[:], ethdb.StateOption)
 	}
 	// Create a new iterator that seeks to "bars". Seeking can't proceed because
 	// the node is missing.
@@ -423,7 +423,7 @@ func testIteratorContinueAfterSeekError(t *testing.T, memonly bool) {
 	if memonly {
 		triedb.dirties[barNodeHash] = barNodeObj
 	} else {
-		diskdb.Put(barNodeHash[:], barNodeBlob)
+		diskdb.Put(barNodeHash[:], barNodeBlob, ethdb.StateOption)
 	}
 	// Check that iteration produces the right set of values.
 	if err := checkIteratorOrder(testdata1[2:], NewIterator(it)); err != nil {
@@ -449,37 +449,37 @@ type loggingDb struct {
 	backend  ethdb.KeyValueStore
 }
 
-func (l *loggingDb) Has(key []byte) (bool, error) {
-	return l.backend.Has(key)
+func (l *loggingDb) Has(key []byte, opts *ethdb.Option) (bool, error) {
+	return l.backend.Has(key, opts)
 }
 
-func (l *loggingDb) Get(key []byte) ([]byte, error) {
+func (l *loggingDb) Get(key []byte, opts *ethdb.Option) ([]byte, error) {
 	l.getCount++
-	return l.backend.Get(key)
+	return l.backend.Get(key, opts)
 }
 
-func (l *loggingDb) Put(key []byte, value []byte) error {
-	return l.backend.Put(key, value)
+func (l *loggingDb) Put(key []byte, value []byte, opts *ethdb.Option) error {
+	return l.backend.Put(key, value, opts)
 }
 
-func (l *loggingDb) Delete(key []byte) error {
-	return l.backend.Delete(key)
+func (l *loggingDb) Delete(key []byte, opts *ethdb.Option) error {
+	return l.backend.Delete(key, opts)
 }
 
 func (l *loggingDb) NewBatch() ethdb.Batch {
 	return l.backend.NewBatch()
 }
 
-func (l *loggingDb) NewIterator(prefix []byte, start []byte) ethdb.Iterator {
+func (l *loggingDb) NewIterator(prefix []byte, start []byte, opts *ethdb.Option) ethdb.Iterator {
 	fmt.Printf("NewIterator\n")
-	return l.backend.NewIterator(prefix, start)
+	return l.backend.NewIterator(prefix, start, opts)
 }
-func (l *loggingDb) Stat(property string) (string, error) {
-	return l.backend.Stat(property)
+func (l *loggingDb) Stat(property string, opts *ethdb.Option) (string, error) {
+	return l.backend.Stat(property, opts)
 }
 
-func (l *loggingDb) Compact(start []byte, limit []byte) error {
-	return l.backend.Compact(start, limit)
+func (l *loggingDb) Compact(start []byte, limit []byte, opts *ethdb.Option) error {
+	return l.backend.Compact(start, limit, opts)
 }
 
 func (l *loggingDb) Close() error {

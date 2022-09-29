@@ -179,10 +179,10 @@ type Tree struct {
 // If the memory layers in the journal do not match the disk layer (e.g. there is
 // a gap) or the journal is missing, there are two repair cases:
 //
-// - if the 'recovery' parameter is true, all memory diff-layers will be discarded.
-//   This case happens when the snapshot is 'ahead' of the state trie.
-// - otherwise, the entire snapshot is considered invalid and will be recreated on
-//   a background thread.
+//   - if the 'recovery' parameter is true, all memory diff-layers will be discarded.
+//     This case happens when the snapshot is 'ahead' of the state trie.
+//   - otherwise, the entire snapshot is considered invalid and will be recreated on
+//     a background thread.
 func New(diskdb ethdb.KeyValueStore, triedb *trie.Database, cache int, root common.Hash, async bool, rebuild bool, recovery bool) (*Tree, error) {
 	// Create a new, empty snapshot tree
 	snap := &Tree{
@@ -547,7 +547,7 @@ func diffToDisk(bottom *diffLayer) *diskLayer {
 		it := rawdb.IterateStorageSnapshots(base.diskdb, hash)
 		for it.Next() {
 			if key := it.Key(); len(key) == 65 { // TODO(karalabe): Yuck, we should move this into the iterator
-				batch.Delete(key)
+				batch.Delete(key, ethdb.SnapOption)
 				base.cache.Del(key[1:])
 				snapshotFlushStorageItemMeter.Mark(1)
 

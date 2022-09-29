@@ -521,16 +521,16 @@ type readTraceDB struct {
 }
 
 // Get returns a stored node
-func (db *readTraceDB) Get(k []byte) ([]byte, error) {
+func (db *readTraceDB) Get(k []byte, opts *ethdb.Option) ([]byte, error) {
 	if db.reads == nil {
 		db.reads = make(map[string]struct{})
 	}
 	db.reads[string(k)] = struct{}{}
-	return db.db.Get(k)
+	return db.db.Get(k, opts)
 }
 
 // Has returns true if the node set contains the given key
-func (db *readTraceDB) Has(key []byte) (bool, error) {
-	_, err := db.Get(key)
+func (db *readTraceDB) Has(key []byte, opts *ethdb.Option) (bool, error) {
+	_, err := db.Get(key, opts)
 	return err == nil, nil
 }

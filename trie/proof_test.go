@@ -27,6 +27,7 @@ import (
 
 	"github.com/Ankr-network/coqchain/common"
 	"github.com/Ankr-network/coqchain/crypto"
+	"github.com/Ankr-network/coqchain/ethdb"
 	"github.com/Ankr-network/coqchain/ethdb/memorydb"
 )
 
@@ -50,7 +51,7 @@ func makeProvers(trie *Trie) []func(key []byte) *memorydb.Database {
 		proof := memorydb.New()
 		if it := NewIterator(trie.NodeIterator(key)); it.Next() && bytes.Equal(key, it.Key) {
 			for _, p := range it.Prove() {
-				proof.Put(crypto.Keccak256(p), p)
+				proof.Put(crypto.Keccak256(p), p, ethdb.StateOption)
 			}
 		}
 		return proof
@@ -108,17 +109,17 @@ func TestBadProof(t *testing.T) {
 			if proof == nil {
 				t.Fatalf("prover %d: nil proof", i)
 			}
-			it := proof.NewIterator(nil, nil)
+			it := proof.NewIterator(nil, nil, ethdb.StateOption)
 			for i, d := 0, mrand.Intn(proof.Len()); i <= d; i++ {
 				it.Next()
 			}
 			key := it.Key()
-			val, _ := proof.Get(key)
-			proof.Delete(key)
+			val, _ := proof.Get(key, ethdb.StateOption)
+			proof.Delete(key, ethdb.SnapOption)
 			it.Release()
 
 			mutateByte(val)
-			proof.Put(crypto.Keccak256(val), val)
+			proof.Put(crypto.Keccak256(val), val, ethdb.StateOption)
 
 			if _, err := VerifyProof(root, kv.k, proof); err == nil {
 				t.Fatalf("prover %d: expected proof to fail for key %x", i, kv.k)

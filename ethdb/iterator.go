@@ -57,5 +57,5 @@ type Iteratee interface {
 	//
 	// Note: This method assumes that the prefix is NOT part of the start, so there's
 	// no need for the caller to prepend the prefix to the start
-	NewIterator(prefix []byte, start []byte) Iterator
+	NewIterator(prefix []byte, start []byte, opts *Option) Iterator
 }

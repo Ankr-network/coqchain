@@ -162,12 +162,12 @@ func TestNodeCloseClosesDB(t *testing.T) {
 	if err != nil {
 		t.Fatal("can't open DB:", err)
 	}
-	if err = db.Put([]byte{}, []byte{}); err != nil {
+	if err = db.Put([]byte{}, []byte{}, ethdb.StateOption); err != nil {
 		t.Fatal("can't Put on open DB:", err)
 	}
 
 	stack.Close()
-	if err = db.Put([]byte{}, []byte{}); err == nil {
+	if err = db.Put([]byte{}, []byte{}, ethdb.StateOption); err == nil {
 		t.Fatal("Put succeeded after node is closed")
 	}
 }

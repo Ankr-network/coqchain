@@ -23,6 +23,7 @@ import (
 
 	"github.com/Ankr-network/coqchain/common"
 	"github.com/Ankr-network/coqchain/core/rawdb"
+	"github.com/Ankr-network/coqchain/ethdb"
 	"github.com/Ankr-network/coqchain/log"
 	bloomfilter "github.com/holiman/bloomfilter/v2"
 )
@@ -105,7 +106,7 @@ func (bloom *stateBloom) Commit(filename, tempname string) error {
 }
 
 // Put implements the KeyValueWriter interface. But here only the key is needed.
-func (bloom *stateBloom) Put(key []byte, value []byte) error {
+func (bloom *stateBloom) Put(key []byte, value []byte, opts *ethdb.Option) error {
 	// If the key length is not 32bytes, ensure it's contract code
 	// entry with new scheme.
 	if len(key) != common.HashLength {
@@ -121,12 +122,12 @@ func (bloom *stateBloom) Put(key []byte, value []byte) error {
 }
 
 // Delete removes the key from the key-value data store.
-func (bloom *stateBloom) Delete(key []byte) error { panic("not supported") }
+func (bloom *stateBloom) Delete(key []byte, opts *ethdb.Option) error { panic("not supported") }
 
 // Contain is the wrapper of the underlying contains function which
 // reports whether the key is contained.
 // - If it says yes, the key may be contained
 // - If it says no, the key is definitely not contained.
-func (bloom *stateBloom) Contain(key []byte) (bool, error) {
+func (bloom *stateBloom) Contain(key []byte, opts *ethdb.Option) (bool, error) {
 	return bloom.bloom.Contains(stateBloomHasher(key)), nil
 }

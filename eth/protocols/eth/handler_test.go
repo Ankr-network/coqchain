@@ -422,7 +422,7 @@ func testGetNodeData(t *testing.T, protocol uint) {
 
 	// Collect all state tree hashes.
 	var hashes []common.Hash
-	it := backend.db.NewIterator(nil, nil)
+	it := backend.db.NewIterator(nil, nil, ethdb.GlobalDataOption)
 	for it.Next() {
 		if key := it.Key(); len(key) == common.HashLength {
 			hashes = append(hashes, common.BytesToHash(key))

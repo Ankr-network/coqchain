@@ -44,7 +44,7 @@ func NewNodeSet() *NodeSet {
 }
 
 // Put stores a new node in the set
-func (db *NodeSet) Put(key []byte, value []byte) error {
+func (db *NodeSet) Put(key []byte, value []byte, opts *ethdb.Option) error {
 	db.lock.Lock()
 	defer db.lock.Unlock()
 
@@ -61,7 +61,7 @@ func (db *NodeSet) Put(key []byte, value []byte) error {
 }
 
 // Delete removes a node from the set
-func (db *NodeSet) Delete(key []byte) error {
+func (db *NodeSet) Delete(key []byte, opts *ethdb.Option) error {
 	db.lock.Lock()
 	defer db.lock.Unlock()
 
@@ -70,7 +70,7 @@ func (db *NodeSet) Delete(key []byte) error {
 }
 
 // Get returns a stored node
-func (db *NodeSet) Get(key []byte) ([]byte, error) {
+func (db *NodeSet) Get(key []byte, opts *ethdb.Option) ([]byte, error) {
 	db.lock.RLock()
 	defer db.lock.RUnlock()
 
@@ -81,8 +81,8 @@ func (db *NodeSet) Get(key []byte) ([]byte, error) {
 }
 
 // Has returns true if the node set contains the given key
-func (db *NodeSet) Has(key []byte) (bool, error) {
-	_, err := db.Get(key)
+func (db *NodeSet) Has(key []byte, opts *ethdb.Option) (bool, error) {
+	_, err := db.Get(key, opts)
 	return err == nil, nil
 }
 
@@ -120,7 +120,7 @@ func (db *NodeSet) Store(target ethdb.KeyValueWriter) {
 	defer db.lock.RUnlock()
 
 	for key, value := range db.nodes {
-		target.Put([]byte(key), value)
+		target.Put([]byte(key), value, ethdb.StateOption)
 	}
 }
 
@@ -130,7 +130,7 @@ type NodeList []rlp.RawValue
 // Store writes the contents of the list to the given database
 func (n NodeList) Store(db ethdb.KeyValueWriter) {
 	for _, node := range n {
-		db.Put(crypto.Keccak256(node), node)
+		db.Put(crypto.Keccak256(node), node, ethdb.StateOption)
 	}
 }
 
@@ -142,13 +142,13 @@ func (n NodeList) NodeSet() *NodeSet {
 }
 
 // Put stores a new node at the end of the list
-func (n *NodeList) Put(key []byte, value []byte) error {
+func (n *NodeList) Put(key []byte, value []byte, opts *ethdb.Option) error {
 	*n = append(*n, value)
 	return nil
 }
 
 // Delete panics as there's no reason to remove a node from the list.
-func (n *NodeList) Delete(key []byte) error {
+func (n *NodeList) Delete(key []byte, opts *ethdb.Option) error {
 	panic("not supported")
 }
 

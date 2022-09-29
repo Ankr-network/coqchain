@@ -34,6 +34,7 @@ import (
 	"github.com/Ankr-network/coqchain/core/rawdb"
 	"github.com/Ankr-network/coqchain/core/state"
 	"github.com/Ankr-network/coqchain/core/types"
+	"github.com/Ankr-network/coqchain/ethdb"
 	"github.com/Ankr-network/coqchain/internal/ethapi"
 	"github.com/Ankr-network/coqchain/log"
 	"github.com/Ankr-network/coqchain/rlp"
@@ -601,7 +602,7 @@ func (api *PrivateDebugAPI) GetAccessibleState(from, to rpc.BlockNumber) (uint64
 		if h == nil {
 			return 0, fmt.Errorf("missing header %d", i)
 		}
-		if ok, _ := api.eth.ChainDb().Has(h.Root[:]); ok {
+		if ok, _ := api.eth.ChainDb().Has(h.Root[:], ethdb.StateOption); ok {
 			return uint64(i), nil
 		}
 	}

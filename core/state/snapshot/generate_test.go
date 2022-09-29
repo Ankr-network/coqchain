@@ -117,7 +117,7 @@ func TestGenerateExistentState(t *testing.T) {
 	acc = &Account{Balance: big.NewInt(2), Root: emptyRoot.Bytes(), CodeHash: emptyCode.Bytes()}
 	val, _ = rlp.EncodeToBytes(acc)
 	accTrie.Update([]byte("acc-2"), val) // 0x65145f923027566669a1ae5ccac66f945b55ff6eaeb17d2ea8e048b7d381f2d7
-	diskdb.Put(hashData([]byte("acc-2")).Bytes(), val)
+	diskdb.Put(hashData([]byte("acc-2")).Bytes(), val, ethdb.StateOption)
 	rawdb.WriteAccountSnapshot(diskdb, hashData([]byte("acc-2")), val)
 
 	acc = &Account{Balance: big.NewInt(3), Root: stTrie.Hash().Bytes(), CodeHash: emptyCode.Bytes()}
@@ -234,10 +234,12 @@ func (t *testHelper) Generate() (common.Hash, *diskLayer) {
 //   - miss in the beginning
 //   - miss in the middle
 //   - miss in the end
+//
 // - the contract(non-empty storage) has wrong storage slots
 //   - wrong slots in the beginning
 //   - wrong slots in the middle
 //   - wrong slots in the end
+//
 // - the contract(non-empty storage) has extra storage slots
 //   - extra slots in the beginning
 //   - extra slots in the middle
@@ -398,7 +400,7 @@ func TestGenerateCorruptAccountTrie(t *testing.T) {
 
 	// Delete an account trie leaf and ensure the generator chokes
 	triedb.Commit(common.HexToHash("0xa04693ea110a31037fb5ee814308a6f1d76bdab0b11676bdf4541d2de55ba978"), false, nil)
-	diskdb.Delete(common.HexToHash("0x65145f923027566669a1ae5ccac66f945b55ff6eaeb17d2ea8e048b7d381f2d7").Bytes())
+	diskdb.Delete(common.HexToHash("0x65145f923027566669a1ae5ccac66f945b55ff6eaeb17d2ea8e048b7d381f2d7").Bytes(), ethdb.StateOption)
 
 	snap := generateSnapshot(diskdb, triedb, 16, common.HexToHash("0xa04693ea110a31037fb5ee814308a6f1d76bdab0b11676bdf4541d2de55ba978"))
 	select {
@@ -458,7 +460,7 @@ func TestGenerateMissingStorageTrie(t *testing.T) {
 	triedb.Commit(common.HexToHash("0xe3712f1a226f3782caca78ca770ccc19ee000552813a9f59d479f8611db9b1fd"), false, nil)
 
 	// Delete a storage trie root and ensure the generator chokes
-	diskdb.Delete(common.HexToHash("0xddefcd9376dd029653ef384bd2f0a126bb755fe84fdcc9e7cf421ba454f2bc67").Bytes())
+	diskdb.Delete(common.HexToHash("0xddefcd9376dd029653ef384bd2f0a126bb755fe84fdcc9e7cf421ba454f2bc67").Bytes(), ethdb.StateOption)
 
 	snap := generateSnapshot(diskdb, triedb, 16, common.HexToHash("0xe3712f1a226f3782caca78ca770ccc19ee000552813a9f59d479f8611db9b1fd"))
 	select {
@@ -517,7 +519,7 @@ func TestGenerateCorruptStorageTrie(t *testing.T) {
 	triedb.Commit(common.HexToHash("0xe3712f1a226f3782caca78ca770ccc19ee000552813a9f59d479f8611db9b1fd"), false, nil)
 
 	// Delete a storage trie leaf and ensure the generator chokes
-	diskdb.Delete(common.HexToHash("0x18a0f4d79cff4459642dd7604f303886ad9d77c30cf3d7d7cedb3a693ab6d371").Bytes())
+	diskdb.Delete(common.HexToHash("0x18a0f4d79cff4459642dd7604f303886ad9d77c30cf3d7d7cedb3a693ab6d371").Bytes(), ethdb.StateOption)
 
 	snap := generateSnapshot(diskdb, triedb, 16, common.HexToHash("0xe3712f1a226f3782caca78ca770ccc19ee000552813a9f59d479f8611db9b1fd"))
 	select {

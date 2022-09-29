@@ -31,7 +31,7 @@ import (
 // ReadTxLookupEntry retrieves the positional metadata associated with a transaction
 // hash to allow retrieving the transaction or receipt by hash.
 func ReadTxLookupEntry(db ethdb.Reader, hash common.Hash) *uint64 {
-	data, _ := db.Get(txLookupKey(hash))
+	data, _ := db.Get(txLookupKey(hash), ethdb.BlockTxOption)
 	if len(data) == 0 {
 		return nil
 	}
@@ -56,7 +56,7 @@ func ReadTxLookupEntry(db ethdb.Reader, hash common.Hash) *uint64 {
 // writeTxLookupEntry stores a positional metadata for a transaction,
 // enabling hash based transaction and receipt lookups.
 func writeTxLookupEntry(db ethdb.KeyValueWriter, hash common.Hash, numberBytes []byte) {
-	if err := db.Put(txLookupKey(hash), numberBytes); err != nil {
+	if err := db.Put(txLookupKey(hash), numberBytes, ethdb.BlockTxOption); err != nil {
 		log.Crit("Failed to store transaction lookup entry", "err", err)
 	}
 }
@@ -81,7 +81,7 @@ func WriteTxLookupEntriesByBlock(db ethdb.KeyValueWriter, block *types.Block) {
 
 // DeleteTxLookupEntry removes all transaction data associated with a hash.
 func DeleteTxLookupEntry(db ethdb.KeyValueWriter, hash common.Hash) {
-	if err := db.Delete(txLookupKey(hash)); err != nil {
+	if err := db.Delete(txLookupKey(hash), ethdb.BlockTxOption); err != nil {
 		log.Crit("Failed to delete transaction lookup entry", "err", err)
 	}
 }
@@ -144,13 +144,13 @@ func ReadReceipt(db ethdb.Reader, hash common.Hash, config *params.ChainConfig) 
 // ReadBloomBits retrieves the compressed bloom bit vector belonging to the given
 // section and bit index from the.
 func ReadBloomBits(db ethdb.KeyValueReader, bit uint, section uint64, head common.Hash) ([]byte, error) {
-	return db.Get(bloomBitsKey(bit, section, head))
+	return db.Get(bloomBitsKey(bit, section, head), ethdb.BlockTxOption)
 }
 
 // WriteBloomBits stores the compressed bloom bits vector belonging to the given
 // section and bit index.
 func WriteBloomBits(db ethdb.KeyValueWriter, bit uint, section uint64, head common.Hash, bits []byte) {
-	if err := db.Put(bloomBitsKey(bit, section, head), bits); err != nil {
+	if err := db.Put(bloomBitsKey(bit, section, head), bits, ethdb.BlockTxOption); err != nil {
 		log.Crit("Failed to store bloom bits", "err", err)
 	}
 }
@@ -159,7 +159,7 @@ func WriteBloomBits(db ethdb.KeyValueWriter, bit uint, section uint64, head comm
 // given section range and bit index.
 func DeleteBloombits(db ethdb.Database, bit uint, from uint64, to uint64) {
 	start, end := bloomBitsKey(bit, from, common.Hash{}), bloomBitsKey(bit, to, common.Hash{})
-	it := db.NewIterator(nil, start)
+	it := db.NewIterator(nil, start, ethdb.BlockTxOption)
 	defer it.Release()
 
 	for it.Next() {
@@ -169,7 +169,7 @@ func DeleteBloombits(db ethdb.Database, bit uint, from uint64, to uint64) {
 		if len(it.Key()) != len(bloomBitsPrefix)+2+8+32 {
 			continue
 		}
-		db.Delete(it.Key())
+		db.Delete(it.Key(), ethdb.BlockTxOption)
 	}
 	if it.Error() != nil {
 		log.Crit("Failed to delete bloom bits", "err", it.Error())

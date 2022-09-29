@@ -72,7 +72,7 @@ func (db *Database) Close() error {
 }
 
 // Has retrieves if a key is present in the key-value store.
-func (db *Database) Has(key []byte) (bool, error) {
+func (db *Database) Has(key []byte, opts *ethdb.Option) (bool, error) {
 	db.lock.RLock()
 	defer db.lock.RUnlock()
 
@@ -84,7 +84,7 @@ func (db *Database) Has(key []byte) (bool, error) {
 }
 
 // Get retrieves the given key if it's present in the key-value store.
-func (db *Database) Get(key []byte) ([]byte, error) {
+func (db *Database) Get(key []byte, opts *ethdb.Option) ([]byte, error) {
 	db.lock.RLock()
 	defer db.lock.RUnlock()
 
@@ -98,7 +98,7 @@ func (db *Database) Get(key []byte) ([]byte, error) {
 }
 
 // Put inserts the given value into the key-value store.
-func (db *Database) Put(key []byte, value []byte) error {
+func (db *Database) Put(key []byte, value []byte, opts *ethdb.Option) error {
 	db.lock.Lock()
 	defer db.lock.Unlock()
 
@@ -110,7 +110,7 @@ func (db *Database) Put(key []byte, value []byte) error {
 }
 
 // Delete removes the key from the key-value store.
-func (db *Database) Delete(key []byte) error {
+func (db *Database) Delete(key []byte, opts *ethdb.Option) error {
 	db.lock.Lock()
 	defer db.lock.Unlock()
 
@@ -132,7 +132,7 @@ func (db *Database) NewBatch() ethdb.Batch {
 // NewIterator creates a binary-alphabetical iterator over a subset
 // of database content with a particular key prefix, starting at a particular
 // initial key (or after, if it does not exist).
-func (db *Database) NewIterator(prefix []byte, start []byte) ethdb.Iterator {
+func (db *Database) NewIterator(prefix []byte, start []byte, opts *ethdb.Option) ethdb.Iterator {
 	db.lock.RLock()
 	defer db.lock.RUnlock()
 
@@ -164,13 +164,13 @@ func (db *Database) NewIterator(prefix []byte, start []byte) ethdb.Iterator {
 }
 
 // Stat returns a particular internal stat of the database.
-func (db *Database) Stat(property string) (string, error) {
+func (db *Database) Stat(property string, opts *ethdb.Option) (string, error) {
 	return "", errors.New("unknown property")
 }
 
 // Compact is not supported on a memory database, but there's no need either as
 // a memory database doesn't waste space anyway.
-func (db *Database) Compact(start []byte, limit []byte) error {
+func (db *Database) Compact(start []byte, limit []byte, opts *ethdb.Option) error {
 	return nil
 }
 
@@ -202,14 +202,14 @@ type batch struct {
 }
 
 // Put inserts the given value into the batch for later committing.
-func (b *batch) Put(key, value []byte) error {
+func (b *batch) Put(key, value []byte, opts *ethdb.Option) error {
 	b.writes = append(b.writes, keyvalue{common.CopyBytes(key), common.CopyBytes(value), false})
 	b.size += len(key) + len(value)
 	return nil
 }
 
 // Delete inserts the a key removal into the batch for later committing.
-func (b *batch) Delete(key []byte) error {
+func (b *batch) Delete(key []byte, opts *ethdb.Option) error {
 	b.writes = append(b.writes, keyvalue{common.CopyBytes(key), nil, true})
 	b.size += len(key)
 	return nil
@@ -242,15 +242,15 @@ func (b *batch) Reset() {
 }
 
 // Replay replays the batch contents.
-func (b *batch) Replay(w ethdb.KeyValueWriter) error {
+func (b *batch) Replay(w ethdb.KeyValueWriter, opts *ethdb.Option) error {
 	for _, keyvalue := range b.writes {
 		if keyvalue.delete {
-			if err := w.Delete(keyvalue.key); err != nil {
+			if err := w.Delete(keyvalue.key, opts); err != nil {
 				return err
 			}
 			continue
 		}
-		if err := w.Put(keyvalue.key, keyvalue.value); err != nil {
+		if err := w.Put(keyvalue.key, keyvalue.value, opts); err != nil {
 			return err
 		}
 	}

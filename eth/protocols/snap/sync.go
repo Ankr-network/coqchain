@@ -1761,7 +1761,7 @@ func (s *Syncer) processAccountResponse(res *accountResponse) {
 		}
 		// Check if the account is a contract with an unknown storage trie
 		if account.Root != emptyRoot {
-			if node, err := s.db.Get(account.Root[:]); err != nil || node == nil {
+			if node, err := s.db.Get(account.Root[:], ethdb.SnapOption); err != nil || node == nil {
 				// If there was a previous large state retrieval in progress,
 				// don't restart it from scratch. This happens if a sync cycle
 				// is interrupted and resumed later. However, *do* update the

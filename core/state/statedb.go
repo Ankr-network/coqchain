@@ -29,6 +29,7 @@ import (
 	"github.com/Ankr-network/coqchain/core/state/snapshot"
 	"github.com/Ankr-network/coqchain/core/types"
 	"github.com/Ankr-network/coqchain/crypto"
+	"github.com/Ankr-network/coqchain/ethdb"
 	"github.com/Ankr-network/coqchain/log"
 	"github.com/Ankr-network/coqchain/metrics"
 	"github.com/Ankr-network/coqchain/rlp"
@@ -47,12 +48,12 @@ var (
 
 type proofList [][]byte
 
-func (n *proofList) Put(key []byte, value []byte) error {
+func (n *proofList) Put(key []byte, value []byte, opts *ethdb.Option) error {
 	*n = append(*n, value)
 	return nil
 }
 
-func (n *proofList) Delete(key []byte) error {
+func (n *proofList) Delete(key []byte, opts *ethdb.Option) error {
 	panic("not supported")
 }
 

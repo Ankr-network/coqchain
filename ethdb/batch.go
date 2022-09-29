@@ -35,7 +35,7 @@ type Batch interface {
 	Reset()
 
 	// Replay replays the batch contents.
-	Replay(w KeyValueWriter) error
+	Replay(w KeyValueWriter, opts *Option) error
 }
 
 // Batcher wraps the NewBatch method of a backing data store.
@@ -55,17 +55,17 @@ type HookedBatch struct {
 }
 
 // Put inserts the given value into the key-value data store.
-func (b HookedBatch) Put(key []byte, value []byte) error {
+func (b HookedBatch) Put(key []byte, value []byte, opts *Option) error {
 	if b.OnPut != nil {
 		b.OnPut(key, value)
 	}
-	return b.Batch.Put(key, value)
+	return b.Batch.Put(key, value, opts)
 }
 
 // Delete removes the key from the key-value data store.
-func (b HookedBatch) Delete(key []byte) error {
+func (b HookedBatch) Delete(key []byte, opts *Option) error {
 	if b.OnDelete != nil {
 		b.OnDelete(key)
 	}
-	return b.Batch.Delete(key)
+	return b.Batch.Delete(key, opts)
 }

@@ -67,14 +67,14 @@ func wipeContent(db ethdb.KeyValueStore) error {
 	end := common.CopyBytes(rawdb.SnapshotAccountPrefix)
 	end[len(end)-1]++
 
-	if err := db.Compact(rawdb.SnapshotAccountPrefix, end); err != nil {
+	if err := db.Compact(rawdb.SnapshotAccountPrefix, end, ethdb.SnapOption); err != nil {
 		return err
 	}
 	log.Info("Compacting snapshot storage area ")
 	end = common.CopyBytes(rawdb.SnapshotStoragePrefix)
 	end[len(end)-1]++
 
-	if err := db.Compact(rawdb.SnapshotStoragePrefix, end); err != nil {
+	if err := db.Compact(rawdb.SnapshotStoragePrefix, end, ethdb.SnapOption); err != nil {
 		return err
 	}
 	log.Info("Compacted snapshot area in database", "elapsed", common.PrettyDuration(time.Since(start)))
@@ -96,7 +96,7 @@ func wipeKeyRange(db ethdb.KeyValueStore, kind string, prefix []byte, origin []b
 	// Iterate over the key-range and delete all of them
 	start, logged := time.Now(), time.Now()
 
-	it := db.NewIterator(prefix, origin)
+	it := db.NewIterator(prefix, origin, ethdb.SnapOption)
 	var stop []byte
 	if limit != nil {
 		stop = append(prefix, limit...)
@@ -114,7 +114,7 @@ func wipeKeyRange(db ethdb.KeyValueStore, kind string, prefix []byte, origin []b
 			break
 		}
 		// Delete the key and periodically recreate the batch and iterator
-		batch.Delete(key)
+		batch.Delete(key, ethdb.SnapOption)
 		items++
 
 		if items%10000 == 0 {
@@ -125,7 +125,7 @@ func wipeKeyRange(db ethdb.KeyValueStore, kind string, prefix []byte, origin []b
 			}
 			batch.Reset()
 			seekPos := key[len(prefix):]
-			it = db.NewIterator(prefix, seekPos)
+			it = db.NewIterator(prefix, seekPos, ethdb.SnapOption)
 
 			if time.Since(logged) > 8*time.Second && report {
 				log.Info("Deleting state snapshot leftovers", "kind", kind, "wiped", items, "elapsed", common.PrettyDuration(time.Since(start)))

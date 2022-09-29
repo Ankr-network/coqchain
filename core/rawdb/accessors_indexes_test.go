@@ -68,7 +68,7 @@ func TestLookupStorage(t *testing.T) {
 			"DatabaseV4-V5",
 			func(db ethdb.Writer, block *types.Block) {
 				for _, tx := range block.Transactions() {
-					db.Put(txLookupKey(tx.Hash()), block.Hash().Bytes())
+					db.Put(txLookupKey(tx.Hash()), block.Hash().Bytes(), ethdb.BlockTxOption)
 				}
 			},
 		},
@@ -82,7 +82,7 @@ func TestLookupStorage(t *testing.T) {
 						Index:      uint64(index),
 					}
 					data, _ := rlp.EncodeToBytes(entry)
-					db.Put(txLookupKey(tx.Hash()), data)
+					db.Put(txLookupKey(tx.Hash()), data, ethdb.BlockTxOption)
 				}
 			},
 		},

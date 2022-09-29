@@ -26,7 +26,7 @@ import (
 
 	"github.com/Ankr-network/coqchain/common"
 	"github.com/Ankr-network/coqchain/ethdb"
-	"github.com/Ankr-network/coqchain/ethdb/leveldb"
+	"github.com/Ankr-network/coqchain/ethdb/mdbx"
 	"github.com/Ankr-network/coqchain/ethdb/memorydb"
 	"github.com/Ankr-network/coqchain/log"
 	"github.com/olekukonko/tablewriter"
@@ -172,7 +172,7 @@ func NewDatabaseWithFreezer(db ethdb.KeyValueStore, freezer string, namespace st
 	// If the genesis hash is empty, we have a new key-value store, so nothing to
 	// validate in this method. If, however, the genesis hash is not nil, compare
 	// it to the freezer content.
-	if kvgenesis, _ := db.Get(headerHashKey(0)); len(kvgenesis) > 0 {
+	if kvgenesis, _ := db.Get(headerHashKey(0), ethdb.BlockTxOption); len(kvgenesis) > 0 {
 		if frozen, _ := frdb.Ancients(); frozen > 0 {
 			// If the freezer already contains something, ensure that the genesis blocks
 			// match, otherwise we might mix up freezers across chains and destroy both
@@ -185,7 +185,7 @@ func NewDatabaseWithFreezer(db ethdb.KeyValueStore, freezer string, namespace st
 			}
 			// Key-value store and freezer belong to the same network. Ensure that they
 			// are contiguous, otherwise we might end up with a non-functional freezer.
-			if kvhash, _ := db.Get(headerHashKey(frozen)); len(kvhash) == 0 {
+			if kvhash, _ := db.Get(headerHashKey(frozen), ethdb.BlockTxOption); len(kvhash) == 0 {
 				// Subsequent header after the freezer limit is missing from the database.
 				// Reject startup is the database has a more recent head.
 				if *ReadHeaderNumber(db, ReadHeadHeaderHash(db)) > frozen-1 {
@@ -205,7 +205,7 @@ func NewDatabaseWithFreezer(db ethdb.KeyValueStore, freezer string, namespace st
 			if ReadHeadHeaderHash(db) != common.BytesToHash(kvgenesis) {
 				// Key-value store contains more data than the genesis block, make sure we
 				// didn't freeze anything yet.
-				if kvblob, _ := db.Get(headerHashKey(1)); len(kvblob) == 0 {
+				if kvblob, _ := db.Get(headerHashKey(1), ethdb.BlockTxOption); len(kvblob) == 0 {
 					return nil, errors.New("ancient chain segments already extracted, please set --datadir.ancient to the correct path")
 				}
 				// Block #1 is still in the database, we're allowed to init a new feezer
@@ -244,20 +244,14 @@ func NewMemoryDatabaseWithCap(size int) ethdb.Database {
 // NewLevelDBDatabase creates a persistent key-value database without a freezer
 // moving immutable chain segments into cold storage.
 func NewLevelDBDatabase(file string, cache int, handles int, namespace string, readonly bool) (ethdb.Database, error) {
-	db, err := leveldb.New(file, cache, handles, namespace, readonly)
-	if err != nil {
-		return nil, err
-	}
+	db := mdbx.NewMDBXDB(file)
 	return NewDatabase(db), nil
 }
 
 // NewLevelDBDatabaseWithFreezer creates a persistent key-value database with a
 // freezer moving immutable chain segments into cold storage.
 func NewLevelDBDatabaseWithFreezer(file string, cache int, handles int, freezer string, namespace string, readonly bool) (ethdb.Database, error) {
-	kvdb, err := leveldb.New(file, cache, handles, namespace, readonly)
-	if err != nil {
-		return nil, err
-	}
+	kvdb := mdbx.NewMDBXDB(file)
 	frdb, err := NewDatabaseWithFreezer(kvdb, freezer, namespace, readonly)
 	if err != nil {
 		kvdb.Close()
@@ -299,7 +293,7 @@ func (s *stat) Count() string {
 // InspectDatabase traverses the entire database and checks the size
 // of all different categories of data.
 func InspectDatabase(db ethdb.Database, keyPrefix, keyStart []byte) error {
-	it := db.NewIterator(keyPrefix, keyStart)
+	it := db.NewIterator(keyPrefix, keyStart, ethdb.GlobalDataOption)
 	defer it.Release()
 
 	var (

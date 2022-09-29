@@ -41,13 +41,13 @@ func (t *table) Close() error {
 }
 
 // Has retrieves if a prefixed version of a key is present in the database.
-func (t *table) Has(key []byte) (bool, error) {
-	return t.db.Has(append([]byte(t.prefix), key...))
+func (t *table) Has(key []byte, opts *ethdb.Option) (bool, error) {
+	return t.db.Has(append([]byte(t.prefix), key...), opts)
 }
 
 // Get retrieves the given prefixed key if it's present in the database.
-func (t *table) Get(key []byte) ([]byte, error) {
-	return t.db.Get(append([]byte(t.prefix), key...))
+func (t *table) Get(key []byte, opts *ethdb.Option) ([]byte, error) {
+	return t.db.Get(append([]byte(t.prefix), key...), opts)
 }
 
 // HasAncient is a noop passthrough that just forwards the request to the underlying
@@ -103,21 +103,21 @@ func (t *table) Sync() error {
 
 // Put inserts the given value into the database at a prefixed version of the
 // provided key.
-func (t *table) Put(key []byte, value []byte) error {
-	return t.db.Put(append([]byte(t.prefix), key...), value)
+func (t *table) Put(key []byte, value []byte, opts *ethdb.Option) error {
+	return t.db.Put(append([]byte(t.prefix), key...), value, opts)
 }
 
 // Delete removes the given prefixed key from the database.
-func (t *table) Delete(key []byte) error {
-	return t.db.Delete(append([]byte(t.prefix), key...))
+func (t *table) Delete(key []byte, opts *ethdb.Option) error {
+	return t.db.Delete(append([]byte(t.prefix), key...), opts)
 }
 
 // NewIterator creates a binary-alphabetical iterator over a subset
 // of database content with a particular key prefix, starting at a particular
 // initial key (or after, if it does not exist).
-func (t *table) NewIterator(prefix []byte, start []byte) ethdb.Iterator {
+func (t *table) NewIterator(prefix []byte, start []byte, opts *ethdb.Option) ethdb.Iterator {
 	innerPrefix := append([]byte(t.prefix), prefix...)
-	iter := t.db.NewIterator(innerPrefix, start)
+	iter := t.db.NewIterator(innerPrefix, start, opts)
 	return &tableIterator{
 		iter:   iter,
 		prefix: t.prefix,
@@ -125,8 +125,8 @@ func (t *table) NewIterator(prefix []byte, start []byte) ethdb.Iterator {
 }
 
 // Stat returns a particular internal stat of the database.
-func (t *table) Stat(property string) (string, error) {
-	return t.db.Stat(property)
+func (t *table) Stat(property string, opts *ethdb.Option) (string, error) {
+	return t.db.Stat(property, opts)
 }
 
 // Compact flattens the underlying data store for the given key range. In essence,
@@ -136,7 +136,7 @@ func (t *table) Stat(property string) (string, error) {
 // A nil start is treated as a key before all keys in the data store; a nil limit
 // is treated as a key after all keys in the data store. If both is nil then it
 // will compact entire data store.
-func (t *table) Compact(start []byte, limit []byte) error {
+func (t *table) Compact(start []byte, limit []byte, opts *ethdb.Option) error {
 	// If no start was specified, use the table prefix as the first value
 	if start == nil {
 		start = []byte(t.prefix)
@@ -162,7 +162,7 @@ func (t *table) Compact(start []byte, limit []byte) error {
 		limit = append([]byte(t.prefix), limit...)
 	}
 	// Range correctly calculated based on table prefix, delegate down
-	return t.db.Compact(start, limit)
+	return t.db.Compact(start, limit, opts)
 }
 
 // NewBatch creates a write-only database that buffers changes to its host db
@@ -180,13 +180,13 @@ type tableBatch struct {
 }
 
 // Put inserts the given value into the batch for later committing.
-func (b *tableBatch) Put(key, value []byte) error {
-	return b.batch.Put(append([]byte(b.prefix), key...), value)
+func (b *tableBatch) Put(key, value []byte, opts *ethdb.Option) error {
+	return b.batch.Put(append([]byte(b.prefix), key...), value, opts)
 }
 
 // Delete inserts the a key removal into the batch for later committing.
-func (b *tableBatch) Delete(key []byte) error {
-	return b.batch.Delete(append([]byte(b.prefix), key...))
+func (b *tableBatch) Delete(key []byte, opts *ethdb.Option) error {
+	return b.batch.Delete(append([]byte(b.prefix), key...), opts)
 }
 
 // ValueSize retrieves the amount of data queued up for writing.
@@ -212,20 +212,20 @@ type tableReplayer struct {
 }
 
 // Put implements the interface KeyValueWriter.
-func (r *tableReplayer) Put(key []byte, value []byte) error {
+func (r *tableReplayer) Put(key []byte, value []byte, opts *ethdb.Option) error {
 	trimmed := key[len(r.prefix):]
-	return r.w.Put(trimmed, value)
+	return r.w.Put(trimmed, value, opts)
 }
 
 // Delete implements the interface KeyValueWriter.
-func (r *tableReplayer) Delete(key []byte) error {
+func (r *tableReplayer) Delete(key []byte, opts *ethdb.Option) error {
 	trimmed := key[len(r.prefix):]
-	return r.w.Delete(trimmed)
+	return r.w.Delete(trimmed, opts)
 }
 
 // Replay replays the batch contents.
-func (b *tableBatch) Replay(w ethdb.KeyValueWriter) error {
-	return b.batch.Replay(&tableReplayer{w: w, prefix: b.prefix})
+func (b *tableBatch) Replay(w ethdb.KeyValueWriter, opts *ethdb.Option) error {
+	return b.batch.Replay(&tableReplayer{w: w, prefix: b.prefix}, opts)
 }
 
 // tableIterator is a wrapper around a database iterator that prefixes each key access

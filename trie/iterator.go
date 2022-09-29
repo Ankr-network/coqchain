@@ -352,7 +352,7 @@ func (it *nodeIterator) peekSeek(seekKey []byte) (*nodeIteratorState, *int, []by
 
 func (it *nodeIterator) resolveHash(hash hashNode, path []byte) (node, error) {
 	if it.resolver != nil {
-		if blob, err := it.resolver.Get(hash); err == nil && len(blob) > 0 {
+		if blob, err := it.resolver.Get(hash, ethdb.StateOption); err == nil && len(blob) > 0 {
 			if resolved, err := decodeNode(hash, blob); err == nil {
 				return resolved, nil
 			}

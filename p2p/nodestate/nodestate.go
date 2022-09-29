@@ -455,7 +455,7 @@ func (ns *NodeStateMachine) Stop() {
 
 // loadFromDb loads persisted node states from the database
 func (ns *NodeStateMachine) loadFromDb() {
-	it := ns.db.NewIterator(ns.dbNodeKey, nil)
+	it := ns.db.NewIterator(ns.dbNodeKey, nil, ethdb.StateOption)
 	for it.Next() {
 		var id enode.ID
 		if len(it.Key()) != len(ns.dbNodeKey)+len(id) {
@@ -565,7 +565,7 @@ func (ns *NodeStateMachine) saveNode(id enode.ID, node *nodeInfo) error {
 	if err != nil {
 		return err
 	}
-	if err := ns.db.Put(append(ns.dbNodeKey, id[:]...), data); err != nil {
+	if err := ns.db.Put(append(ns.dbNodeKey, id[:]...), data, ethdb.StateOption); err != nil {
 		return err
 	}
 	node.dirty, node.db = false, true
@@ -578,7 +578,7 @@ func (ns *NodeStateMachine) saveNode(id enode.ID, node *nodeInfo) error {
 
 // deleteNode removes a node info from the database
 func (ns *NodeStateMachine) deleteNode(id enode.ID) {
-	ns.db.Delete(append(ns.dbNodeKey, id[:]...))
+	ns.db.Delete(append(ns.dbNodeKey, id[:]...), ethdb.StateOption)
 }
 
 // saveToDb saves the persistent flags and fields of all nodes that have been changed

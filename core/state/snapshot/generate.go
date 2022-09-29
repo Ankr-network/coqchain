@@ -24,7 +24,6 @@ import (
 	"math/big"
 	"time"
 
-	"github.com/VictoriaMetrics/fastcache"
 	"github.com/Ankr-network/coqchain/common"
 	"github.com/Ankr-network/coqchain/common/hexutil"
 	"github.com/Ankr-network/coqchain/common/math"
@@ -36,6 +35,7 @@ import (
 	"github.com/Ankr-network/coqchain/metrics"
 	"github.com/Ankr-network/coqchain/rlp"
 	"github.com/Ankr-network/coqchain/trie"
+	"github.com/VictoriaMetrics/fastcache"
 )
 
 var (
@@ -255,7 +255,7 @@ func (dl *diskLayer) proveRange(stats *generatorStats, root common.Hash, prefix 
 		proof    = rawdb.NewMemoryDatabase()
 		diskMore = false
 	)
-	iter := dl.diskdb.NewIterator(prefix, origin)
+	iter := dl.diskdb.NewIterator(prefix, origin, ethdb.SnapOption)
 	defer iter.Release()
 
 	var start = time.Now()

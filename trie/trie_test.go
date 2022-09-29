@@ -30,14 +30,14 @@ import (
 	"testing"
 	"testing/quick"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/Ankr-network/coqchain/common"
 	"github.com/Ankr-network/coqchain/core/types"
 	"github.com/Ankr-network/coqchain/crypto"
 	"github.com/Ankr-network/coqchain/ethdb"
-	"github.com/Ankr-network/coqchain/ethdb/leveldb"
+	"github.com/Ankr-network/coqchain/ethdb/mdbx"
 	"github.com/Ankr-network/coqchain/ethdb/memorydb"
 	"github.com/Ankr-network/coqchain/rlp"
+	"github.com/davecgh/go-spew/spew"
 	"golang.org/x/crypto/sha3"
 )
 
@@ -126,7 +126,7 @@ func testMissingNode(t *testing.T, memonly bool) {
 	if memonly {
 		delete(triedb.dirties, hash)
 	} else {
-		diskdb.Delete(hash[:])
+		diskdb.Delete(hash[:], ethdb.StateOption)
 	}
 
 	trie, _ = New(root, triedb)
@@ -502,7 +502,7 @@ func benchGet(b *testing.B, commit bool) {
 	b.StopTimer()
 
 	if commit {
-		ldb := trie.db.diskdb.(*leveldb.Database)
+		ldb := trie.db.diskdb.(*mdbx.DbImpl)
 		ldb.Close()
 		os.RemoveAll(ldb.Path())
 	}
@@ -671,14 +671,18 @@ type spongeDb struct {
 	journal []string
 }
 
-func (s *spongeDb) Has(key []byte) (bool, error)             { panic("implement me") }
-func (s *spongeDb) Get(key []byte) ([]byte, error)           { return nil, errors.New("no such elem") }
-func (s *spongeDb) Delete(key []byte) error                  { panic("implement me") }
-func (s *spongeDb) NewBatch() ethdb.Batch                    { return &spongeBatch{s} }
-func (s *spongeDb) Stat(property string) (string, error)     { panic("implement me") }
-func (s *spongeDb) Compact(start []byte, limit []byte) error { panic("implement me") }
-func (s *spongeDb) Close() error                             { return nil }
-func (s *spongeDb) Put(key []byte, value []byte) error {
+func (s *spongeDb) Has(key []byte, opts *ethdb.Option) (bool, error) { panic("implement me") }
+func (s *spongeDb) Get(key []byte, opts *ethdb.Option) ([]byte, error) {
+	return nil, errors.New("no such elem")
+}
+func (s *spongeDb) Delete(key []byte, opts *ethdb.Option) error              { panic("implement me") }
+func (s *spongeDb) NewBatch() ethdb.Batch                                    { return &spongeBatch{s} }
+func (s *spongeDb) Stat(property string, opts *ethdb.Option) (string, error) { panic("implement me") }
+func (s *spongeDb) Compact(start []byte, limit []byte, opts *ethdb.Option) error {
+	panic("implement me")
+}
+func (s *spongeDb) Close() error { return nil }
+func (s *spongeDb) Put(key []byte, value []byte, opts *ethdb.Option) error {
 	valbrief := value
 	if len(valbrief) > 8 {
 		valbrief = valbrief[:8]
@@ -688,22 +692,24 @@ func (s *spongeDb) Put(key []byte, value []byte) error {
 	s.sponge.Write(value)
 	return nil
 }
-func (s *spongeDb) NewIterator(prefix []byte, start []byte) ethdb.Iterator { panic("implement me") }
+func (s *spongeDb) NewIterator(prefix []byte, start []byte, opts *ethdb.Option) ethdb.Iterator {
+	panic("implement me")
+}
 
 // spongeBatch is a dummy batch which immediately writes to the underlying spongedb
 type spongeBatch struct {
 	db *spongeDb
 }
 
-func (b *spongeBatch) Put(key, value []byte) error {
-	b.db.Put(key, value)
+func (b *spongeBatch) Put(key, value []byte, opts *ethdb.Option) error {
+	b.db.Put(key, value, opts)
 	return nil
 }
-func (b *spongeBatch) Delete(key []byte) error             { panic("implement me") }
-func (b *spongeBatch) ValueSize() int                      { return 100 }
-func (b *spongeBatch) Write() error                        { return nil }
-func (b *spongeBatch) Reset()                              {}
-func (b *spongeBatch) Replay(w ethdb.KeyValueWriter) error { return nil }
+func (b *spongeBatch) Delete(key []byte, opts *ethdb.Option) error             { panic("implement me") }
+func (b *spongeBatch) ValueSize() int                                          { return 100 }
+func (b *spongeBatch) Write() error                                            { return nil }
+func (b *spongeBatch) Reset()                                                  {}
+func (b *spongeBatch) Replay(w ethdb.KeyValueWriter, opts *ethdb.Option) error { return nil }
 
 // TestCommitSequence tests that the trie.Commit operation writes the elements of the trie
 // in the expected order, and calls the callbacks in the expected order.
@@ -1054,10 +1060,8 @@ func tempDB() (string, *Database) {
 	if err != nil {
 		panic(fmt.Sprintf("can't create temporary directory: %v", err))
 	}
-	diskdb, err := leveldb.New(dir, 256, 0, "", false)
-	if err != nil {
-		panic(fmt.Sprintf("can't create temporary database: %v", err))
-	}
+
+	diskdb := mdbx.NewMDBXDB(dir)
 	return dir, NewDatabase(diskdb)
 }
 

@@ -89,7 +89,7 @@ func (b *SyncBloom) init(database ethdb.Iteratee) {
 	// Note, this is fine, because everything inserted into leveldb by fast sync is
 	// also pushed into the bloom directly, so we're not missing anything when the
 	// iterator is swapped out for a new one.
-	it := database.NewIterator(nil, nil)
+	it := database.NewIterator(nil, nil, ethdb.StateOption)
 
 	var (
 		start = time.Now()
@@ -111,7 +111,7 @@ func (b *SyncBloom) init(database ethdb.Iteratee) {
 			key := common.CopyBytes(it.Key())
 
 			it.Release()
-			it = database.NewIterator(nil, key)
+			it = database.NewIterator(nil, key, ethdb.StateOption)
 
 			log.Info("Initializing state bloom", "items", b.bloom.N(), "errorrate", b.bloom.FalsePosititveProbability(), "elapsed", common.PrettyDuration(time.Since(start)))
 			swap = time.Now()

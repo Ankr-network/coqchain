@@ -22,6 +22,7 @@ import (
 
 	"github.com/Ankr-network/coqchain/common"
 	"github.com/Ankr-network/coqchain/core/rawdb"
+	"github.com/Ankr-network/coqchain/ethdb"
 	"github.com/Ankr-network/coqchain/ethdb/memorydb"
 )
 
@@ -52,15 +53,15 @@ func TestWipe(t *testing.T) {
 		rand.Read(keysuffix)
 
 		if rand.Int31n(2) == 0 {
-			db.Put(append(rawdb.SnapshotAccountPrefix, keysuffix...), randomHash().Bytes())
+			db.Put(append(rawdb.SnapshotAccountPrefix, keysuffix...), randomHash().Bytes(), ethdb.SnapOption)
 		} else {
-			db.Put(append(rawdb.SnapshotStoragePrefix, keysuffix...), randomHash().Bytes())
+			db.Put(append(rawdb.SnapshotStoragePrefix, keysuffix...), randomHash().Bytes(), ethdb.SnapOption)
 		}
 	}
 	// Sanity check that all the keys are present
 	var items int
 
-	it := db.NewIterator(rawdb.SnapshotAccountPrefix, nil)
+	it := db.NewIterator(rawdb.SnapshotAccountPrefix, nil, ethdb.SnapOption)
 	defer it.Release()
 
 	for it.Next() {
@@ -69,7 +70,7 @@ func TestWipe(t *testing.T) {
 			items++
 		}
 	}
-	it = db.NewIterator(rawdb.SnapshotStoragePrefix, nil)
+	it = db.NewIterator(rawdb.SnapshotStoragePrefix, nil, ethdb.SnapOption)
 	defer it.Release()
 
 	for it.Next() {
@@ -88,7 +89,7 @@ func TestWipe(t *testing.T) {
 	<-wipeSnapshot(db, true)
 
 	// Iterate over the database end ensure no snapshot information remains
-	it = db.NewIterator(rawdb.SnapshotAccountPrefix, nil)
+	it = db.NewIterator(rawdb.SnapshotAccountPrefix, nil, ethdb.SnapOption)
 	defer it.Release()
 
 	for it.Next() {
@@ -97,7 +98,7 @@ func TestWipe(t *testing.T) {
 			t.Errorf("snapshot entry remained after wipe: %x", key)
 		}
 	}
-	it = db.NewIterator(rawdb.SnapshotStoragePrefix, nil)
+	it = db.NewIterator(rawdb.SnapshotStoragePrefix, nil, ethdb.SnapOption)
 	defer it.Release()
 
 	for it.Next() {
@@ -112,7 +113,7 @@ func TestWipe(t *testing.T) {
 	// Iterate over the database and ensure miscellaneous items are present
 	items = 0
 
-	it = db.NewIterator(nil, nil)
+	it = db.NewIterator(nil, nil, ethdb.SnapOption)
 	defer it.Release()
 
 	for it.Next() {

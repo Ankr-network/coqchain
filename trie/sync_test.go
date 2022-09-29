@@ -22,6 +22,7 @@ import (
 
 	"github.com/Ankr-network/coqchain/common"
 	"github.com/Ankr-network/coqchain/crypto"
+	"github.com/Ankr-network/coqchain/ethdb"
 	"github.com/Ankr-network/coqchain/ethdb/memorydb"
 )
 
@@ -412,13 +413,13 @@ func TestIncompleteSync(t *testing.T) {
 	// Sanity check that removing any node from the database is detected
 	for _, node := range added[1:] {
 		key := node.Bytes()
-		value, _ := diskdb.Get(key)
+		value, _ := diskdb.Get(key, ethdb.StateOption)
 
-		diskdb.Delete(key)
+		diskdb.Delete(key, ethdb.StateOption)
 		if err := checkTrieConsistency(triedb, added[0]); err == nil {
 			t.Fatalf("trie inconsistency not caught, missing: %x", key)
 		}
-		diskdb.Put(key, value)
+		diskdb.Put(key, value, ethdb.StateOption)
 	}
 }
 

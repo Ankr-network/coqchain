@@ -62,15 +62,19 @@ type spongeDb struct {
 	debug  bool
 }
 
-func (s *spongeDb) Has(key []byte) (bool, error)             { panic("implement me") }
-func (s *spongeDb) Get(key []byte) ([]byte, error)           { return nil, errors.New("no such elem") }
-func (s *spongeDb) Delete(key []byte) error                  { panic("implement me") }
-func (s *spongeDb) NewBatch() ethdb.Batch                    { return &spongeBatch{s} }
-func (s *spongeDb) Stat(property string) (string, error)     { panic("implement me") }
-func (s *spongeDb) Compact(start []byte, limit []byte) error { panic("implement me") }
-func (s *spongeDb) Close() error                             { return nil }
+func (s *spongeDb) Has(key []byte, opts *ethdb.Option) (bool, error) { panic("implement me") }
+func (s *spongeDb) Get(key []byte, opts *ethdb.Option) ([]byte, error) {
+	return nil, errors.New("no such elem")
+}
+func (s *spongeDb) Delete(key []byte, opts *ethdb.Option) error              { panic("implement me") }
+func (s *spongeDb) NewBatch() ethdb.Batch                                    { return &spongeBatch{s} }
+func (s *spongeDb) Stat(property string, opts *ethdb.Option) (string, error) { panic("implement me") }
+func (s *spongeDb) Compact(start []byte, limit []byte, opts *ethdb.Option) error {
+	panic("implement me")
+}
+func (s *spongeDb) Close() error { return nil }
 
-func (s *spongeDb) Put(key []byte, value []byte) error {
+func (s *spongeDb) Put(key []byte, value []byte, opts *ethdb.Option) error {
 	if s.debug {
 		fmt.Printf("db.Put %x : %x\n", key, value)
 	}
@@ -78,22 +82,24 @@ func (s *spongeDb) Put(key []byte, value []byte) error {
 	s.sponge.Write(value)
 	return nil
 }
-func (s *spongeDb) NewIterator(prefix []byte, start []byte) ethdb.Iterator { panic("implement me") }
+func (s *spongeDb) NewIterator(prefix []byte, start []byte, opts *ethdb.Option) ethdb.Iterator {
+	panic("implement me")
+}
 
 // spongeBatch is a dummy batch which immediately writes to the underlying spongedb
 type spongeBatch struct {
 	db *spongeDb
 }
 
-func (b *spongeBatch) Put(key, value []byte) error {
-	b.db.Put(key, value)
+func (b *spongeBatch) Put(key, value []byte, opts *ethdb.Option) error {
+	b.db.Put(key, value, opts)
 	return nil
 }
-func (b *spongeBatch) Delete(key []byte) error             { panic("implement me") }
-func (b *spongeBatch) ValueSize() int                      { return 100 }
-func (b *spongeBatch) Write() error                        { return nil }
-func (b *spongeBatch) Reset()                              {}
-func (b *spongeBatch) Replay(w ethdb.KeyValueWriter) error { return nil }
+func (b *spongeBatch) Delete(key []byte, opts *ethdb.Option) error             { panic("implement me") }
+func (b *spongeBatch) ValueSize() int                                          { return 100 }
+func (b *spongeBatch) Write() error                                            { return nil }
+func (b *spongeBatch) Reset()                                                  {}
+func (b *spongeBatch) Replay(w ethdb.KeyValueWriter, opts *ethdb.Option) error { return nil }
 
 type kv struct {
 	k, v []byte
@@ -114,8 +120,10 @@ func (k kvs) Swap(i, j int) {
 
 // The function must return
 // 1 if the fuzzer should increase priority of the
-//    given input during subsequent fuzzing (for example, the input is lexically
-//    correct and was parsed successfully);
+//
+//	given input during subsequent fuzzing (for example, the input is lexically
+//	correct and was parsed successfully);
+//
 // -1 if the input must not be added to corpus even if gives new coverage; and
 // 0  otherwise
 // other values are reserved for future use.

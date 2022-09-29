@@ -32,6 +32,7 @@ import (
 	"github.com/Ankr-network/coqchain/common"
 	"github.com/Ankr-network/coqchain/core/rawdb"
 	"github.com/Ankr-network/coqchain/core/types"
+	"github.com/Ankr-network/coqchain/ethdb"
 )
 
 // Tests that updating a state trie does not leak any database writes prior to
@@ -60,7 +61,7 @@ func TestUpdateLeaks(t *testing.T) {
 	}
 
 	// Ensure that no data was leaked into the database
-	it := db.NewIterator(nil, nil)
+	it := db.NewIterator(nil, nil, ethdb.StateOption)
 	for it.Next() {
 		t.Errorf("State leaked into database: %x -> %x", it.Key(), it.Value())
 	}
@@ -118,10 +119,10 @@ func TestIntermediateLeaks(t *testing.T) {
 		t.Errorf("can not commit trie %v to persistent database", finalRoot.Hex())
 	}
 
-	it := finalDb.NewIterator(nil, nil)
+	it := finalDb.NewIterator(nil, nil, ethdb.StateOption)
 	for it.Next() {
 		key, fvalue := it.Key(), it.Value()
-		tvalue, err := transDb.Get(key)
+		tvalue, err := transDb.Get(key, ethdb.StateOption)
 		if err != nil {
 			t.Errorf("entry missing from the transition database: %x -> %x", key, fvalue)
 		}
@@ -131,10 +132,10 @@ func TestIntermediateLeaks(t *testing.T) {
 	}
 	it.Release()
 
-	it = transDb.NewIterator(nil, nil)
+	it = transDb.NewIterator(nil, nil, ethdb.StateOption)
 	for it.Next() {
 		key, tvalue := it.Key(), it.Value()
-		fvalue, err := finalDb.Get(key)
+		fvalue, err := finalDb.Get(key, ethdb.SnapOption)
 		if err != nil {
 			t.Errorf("extra entry in the transition database: %x -> %x", key, it.Value())
 		}
@@ -720,13 +721,13 @@ func TestMissingTrieNodes(t *testing.T) {
 	// Create a new state on the old root
 	state, _ = New(root, db, nil)
 	// Now we clear out the memdb
-	it := memDb.NewIterator(nil, nil)
+	it := memDb.NewIterator(nil, nil, ethdb.StateOption)
 	for it.Next() {
 		k := it.Key()
 		// Leave the root intact
 		if !bytes.Equal(k, root[:]) {
 			t.Logf("key: %x", k)
-			memDb.Delete(k)
+			memDb.Delete(k, ethdb.StateOption)
 		}
 	}
 	balance := state.GetBalance(addr)

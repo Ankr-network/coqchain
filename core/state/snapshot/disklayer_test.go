@@ -22,13 +22,13 @@ import (
 	"os"
 	"testing"
 
-	"github.com/VictoriaMetrics/fastcache"
 	"github.com/Ankr-network/coqchain/common"
 	"github.com/Ankr-network/coqchain/core/rawdb"
 	"github.com/Ankr-network/coqchain/ethdb"
-	"github.com/Ankr-network/coqchain/ethdb/leveldb"
+	"github.com/Ankr-network/coqchain/ethdb/mdbx"
 	"github.com/Ankr-network/coqchain/ethdb/memorydb"
 	"github.com/Ankr-network/coqchain/rlp"
+	"github.com/VictoriaMetrics/fastcache"
 )
 
 // reverse reverses the contents of a byte slice. It's used to update random accs
@@ -524,10 +524,7 @@ func TestDiskSeek(t *testing.T) {
 		t.Fatal(err)
 	} else {
 		defer os.RemoveAll(dir)
-		diskdb, err := leveldb.New(dir, 256, 0, "", false)
-		if err != nil {
-			t.Fatal(err)
-		}
+		diskdb := mdbx.NewMDBXDB(dir)
 		db = rawdb.NewDatabase(diskdb)
 	}
 	// Fill even keys [0,2,4...]
@@ -537,7 +534,7 @@ func TestDiskSeek(t *testing.T) {
 	}
 	// Add an 'higher' key, with incorrect (higher) prefix
 	highKey := []byte{rawdb.SnapshotAccountPrefix[0] + 1}
-	db.Put(highKey, []byte{0xff, 0xff})
+	db.Put(highKey, []byte{0xff, 0xff}, ethdb.SnapOption)
 
 	baseRoot := randomHash()
 	rawdb.WriteSnapshotRoot(db, baseRoot)

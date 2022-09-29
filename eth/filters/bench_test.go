@@ -148,9 +148,9 @@ var bloomBitsPrefix = []byte("bloomBits-")
 
 func clearBloomBits(db ethdb.Database) {
 	fmt.Println("Clearing bloombits data...")
-	it := db.NewIterator(bloomBitsPrefix, nil)
+	it := db.NewIterator(bloomBitsPrefix, nil, ethdb.GlobalDataOption)
 	for it.Next() {
-		db.Delete(it.Key())
+		db.Delete(it.Key(), ethdb.GlobalDataOption)
 	}
 	it.Release()
 }

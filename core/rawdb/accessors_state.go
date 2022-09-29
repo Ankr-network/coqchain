@@ -24,14 +24,14 @@ import (
 
 // ReadPreimage retrieves a single preimage of the provided hash.
 func ReadPreimage(db ethdb.KeyValueReader, hash common.Hash) []byte {
-	data, _ := db.Get(preimageKey(hash))
+	data, _ := db.Get(preimageKey(hash), ethdb.PreimageOption)
 	return data
 }
 
 // WritePreimages writes the provided set of preimages to the database.
 func WritePreimages(db ethdb.KeyValueWriter, preimages map[common.Hash][]byte) {
 	for hash, preimage := range preimages {
-		if err := db.Put(preimageKey(hash), preimage); err != nil {
+		if err := db.Put(preimageKey(hash), preimage, ethdb.PreimageOption); err != nil {
 			log.Crit("Failed to store trie preimage", "err", err)
 		}
 	}
@@ -46,7 +46,7 @@ func ReadCode(db ethdb.KeyValueReader, hash common.Hash) []byte {
 	//
 	// todo(rjl493456442) change the order when we forcibly upgrade the code
 	// scheme with snapshot.
-	data, _ := db.Get(hash[:])
+	data, _ := db.Get(hash[:], ethdb.StateOption)
 	if len(data) != 0 {
 		return data
 	}
@@ -57,40 +57,40 @@ func ReadCode(db ethdb.KeyValueReader, hash common.Hash) []byte {
 // The main difference between this function and ReadCode is this function
 // will only check the existence with latest scheme(with prefix).
 func ReadCodeWithPrefix(db ethdb.KeyValueReader, hash common.Hash) []byte {
-	data, _ := db.Get(codeKey(hash))
+	data, _ := db.Get(codeKey(hash), ethdb.StateOption)
 	return data
 }
 
 // WriteCode writes the provided contract code database.
 func WriteCode(db ethdb.KeyValueWriter, hash common.Hash, code []byte) {
-	if err := db.Put(codeKey(hash), code); err != nil {
+	if err := db.Put(codeKey(hash), code, ethdb.StateOption); err != nil {
 		log.Crit("Failed to store contract code", "err", err)
 	}
 }
 
 // DeleteCode deletes the specified contract code from the database.
 func DeleteCode(db ethdb.KeyValueWriter, hash common.Hash) {
-	if err := db.Delete(codeKey(hash)); err != nil {
+	if err := db.Delete(codeKey(hash), ethdb.StateOption); err != nil {
 		log.Crit("Failed to delete contract code", "err", err)
 	}
 }
 
 // ReadTrieNode retrieves the trie node of the provided hash.
 func ReadTrieNode(db ethdb.KeyValueReader, hash common.Hash) []byte {
-	data, _ := db.Get(hash.Bytes())
+	data, _ := db.Get(hash.Bytes(), ethdb.StateOption)
 	return data
 }
 
 // WriteTrieNode writes the provided trie node database.
 func WriteTrieNode(db ethdb.KeyValueWriter, hash common.Hash, node []byte) {
-	if err := db.Put(hash.Bytes(), node); err != nil {
+	if err := db.Put(hash.Bytes(), node, ethdb.StateOption); err != nil {
 		log.Crit("Failed to store trie node", "err", err)
 	}
 }
 
 // DeleteTrieNode deletes the specified trie node from the database.
 func DeleteTrieNode(db ethdb.KeyValueWriter, hash common.Hash) {
-	if err := db.Delete(hash.Bytes()); err != nil {
+	if err := db.Delete(hash.Bytes(), ethdb.StateOption); err != nil {
 		log.Crit("Failed to delete trie node", "err", err)
 	}
 }

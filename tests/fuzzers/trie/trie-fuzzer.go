@@ -22,6 +22,7 @@ import (
 	"fmt"
 
 	"github.com/Ankr-network/coqchain/common"
+	"github.com/Ankr-network/coqchain/ethdb"
 	"github.com/Ankr-network/coqchain/ethdb/memorydb"
 	"github.com/Ankr-network/coqchain/trie"
 )
@@ -39,11 +40,11 @@ type randTestStep struct {
 
 type proofDb struct{}
 
-func (proofDb) Put(key []byte, value []byte) error {
+func (proofDb) Put(key []byte, value []byte, opts *ethdb.Option) error {
 	return nil
 }
 
-func (proofDb) Delete(key []byte) error {
+func (proofDb) Delete(key []byte, opts *ethdb.Option) error {
 	return nil
 }
 
@@ -124,8 +125,10 @@ func Generate(input []byte) randTest {
 
 // The function must return
 // 1 if the fuzzer should increase priority of the
-//    given input during subsequent fuzzing (for example, the input is lexically
-//    correct and was parsed successfully);
+//
+//	given input during subsequent fuzzing (for example, the input is lexically
+//	correct and was parsed successfully);
+//
 // -1 if the input must not be added to corpus even if gives new coverage; and
 // 0  otherwise
 // other values are reserved for future use.

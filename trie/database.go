@@ -25,13 +25,13 @@ import (
 	"sync"
 	"time"
 
-	"github.com/VictoriaMetrics/fastcache"
 	"github.com/Ankr-network/coqchain/common"
 	"github.com/Ankr-network/coqchain/core/rawdb"
 	"github.com/Ankr-network/coqchain/ethdb"
 	"github.com/Ankr-network/coqchain/log"
 	"github.com/Ankr-network/coqchain/metrics"
 	"github.com/Ankr-network/coqchain/rlp"
+	"github.com/VictoriaMetrics/fastcache"
 )
 
 var (
@@ -391,7 +391,7 @@ func (db *Database) node(hash common.Hash) node {
 	memcacheDirtyMissMeter.Mark(1)
 
 	// Content unavailable in memory, attempt to retrieve from disk
-	enc, err := db.diskdb.Get(hash[:])
+	enc, err := db.diskdb.Get(hash[:], ethdb.StateOption)
 	if err != nil || enc == nil {
 		return nil
 	}
@@ -727,7 +727,7 @@ func (db *Database) Commit(node common.Hash, report bool, callback func(common.H
 	db.lock.Lock()
 	defer db.lock.Unlock()
 
-	batch.Replay(uncacher)
+	batch.Replay(uncacher, ethdb.StateOption)
 	batch.Reset()
 
 	// Reset the storage counters and bumped metrics
@@ -778,7 +778,7 @@ func (db *Database) commit(hash common.Hash, batch ethdb.Batch, uncacher *cleane
 			return err
 		}
 		db.lock.Lock()
-		batch.Replay(uncacher)
+		batch.Replay(uncacher, ethdb.StateOption)
 		batch.Reset()
 		db.lock.Unlock()
 	}
@@ -796,7 +796,7 @@ type cleaner struct {
 // removed from the dirty cache and moved into the clean cache. The reason behind
 // the two-phase commit is to ensure data availability while moving from memory
 // to disk.
-func (c *cleaner) Put(key []byte, rlp []byte) error {
+func (c *cleaner) Put(key []byte, rlp []byte, opts *ethdb.Option) error {
 	hash := common.BytesToHash(key)
 
 	// If the node does not exist, we're done on this path
@@ -830,7 +830,7 @@ func (c *cleaner) Put(key []byte, rlp []byte) error {
 	return nil
 }
 
-func (c *cleaner) Delete(key []byte) error {
+func (c *cleaner) Delete(key []byte, opts *ethdb.Option) error {
 	panic("not implemented")
 }
 

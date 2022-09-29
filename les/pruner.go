@@ -86,7 +86,7 @@ func (p *pruner) loop() {
 				return
 			}
 		}
-		p.db.Compact(nil, nil) // Compact entire database, ensure all removed data are deleted.
+		p.db.Compact(nil, nil, ethdb.StateOption) // Compact entire database, ensure all removed data are deleted.
 	}
 	for {
 		pruning()

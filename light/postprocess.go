@@ -25,7 +25,6 @@ import (
 	"math/big"
 	"time"
 
-	mapset "github.com/deckarep/golang-set"
 	"github.com/Ankr-network/coqchain/common"
 	"github.com/Ankr-network/coqchain/common/bitutil"
 	"github.com/Ankr-network/coqchain/core"
@@ -36,6 +35,7 @@ import (
 	"github.com/Ankr-network/coqchain/params"
 	"github.com/Ankr-network/coqchain/rlp"
 	"github.com/Ankr-network/coqchain/trie"
+	mapset "github.com/deckarep/golang-set"
 )
 
 // IndexerConfig includes a set of configs for chain indexers.
@@ -117,7 +117,7 @@ type ChtNode struct {
 func GetChtRoot(db ethdb.Database, sectionIdx uint64, sectionHead common.Hash) common.Hash {
 	var encNumber [8]byte
 	binary.BigEndian.PutUint64(encNumber[:], sectionIdx)
-	data, _ := db.Get(append(append(chtPrefix, encNumber[:]...), sectionHead.Bytes()...))
+	data, _ := db.Get(append(append(chtPrefix, encNumber[:]...), sectionHead.Bytes()...), ethdb.StateOption)
 	return common.BytesToHash(data)
 }
 
@@ -125,7 +125,7 @@ func GetChtRoot(db ethdb.Database, sectionIdx uint64, sectionHead common.Hash) c
 func StoreChtRoot(db ethdb.Database, sectionIdx uint64, sectionHead, root common.Hash) {
 	var encNumber [8]byte
 	binary.BigEndian.PutUint64(encNumber[:], sectionIdx)
-	db.Put(append(append(chtPrefix, encNumber[:]...), sectionHead.Bytes()...), root.Bytes())
+	db.Put(append(append(chtPrefix, encNumber[:]...), sectionHead.Bytes()...), root.Bytes(), ethdb.StateOption)
 }
 
 // ChtIndexerBackend implements core.ChainIndexerBackend.
@@ -227,7 +227,7 @@ func (c *ChtIndexerBackend) Commit() error {
 		c.trieset.Clear()
 		c.triedb.Commit(root, false, func(hash common.Hash) { c.trieset.Add(hash) })
 
-		it := c.trieTable.NewIterator(nil, nil)
+		it := c.trieTable.NewIterator(nil, nil, ethdb.StateOption)
 		defer it.Release()
 
 		var (
@@ -238,7 +238,7 @@ func (c *ChtIndexerBackend) Commit() error {
 		for it.Next() {
 			trimmed := bytes.TrimPrefix(it.Key(), []byte(ChtTablePrefix))
 			if !c.trieset.Contains(common.BytesToHash(trimmed)) {
-				c.trieTable.Delete(trimmed)
+				c.trieTable.Delete(trimmed, ethdb.StateOption)
 				deleted += 1
 			} else {
 				remaining += 1
@@ -307,7 +307,7 @@ var (
 func GetBloomTrieRoot(db ethdb.Database, sectionIdx uint64, sectionHead common.Hash) common.Hash {
 	var encNumber [8]byte
 	binary.BigEndian.PutUint64(encNumber[:], sectionIdx)
-	data, _ := db.Get(append(append(bloomTriePrefix, encNumber[:]...), sectionHead.Bytes()...))
+	data, _ := db.Get(append(append(bloomTriePrefix, encNumber[:]...), sectionHead.Bytes()...), ethdb.StateOption)
 	return common.BytesToHash(data)
 }
 
@@ -315,7 +315,7 @@ func GetBloomTrieRoot(db ethdb.Database, sectionIdx uint64, sectionHead common.H
 func StoreBloomTrieRoot(db ethdb.Database, sectionIdx uint64, sectionHead, root common.Hash) {
 	var encNumber [8]byte
 	binary.BigEndian.PutUint64(encNumber[:], sectionIdx)
-	db.Put(append(append(bloomTriePrefix, encNumber[:]...), sectionHead.Bytes()...), root.Bytes())
+	db.Put(append(append(bloomTriePrefix, encNumber[:]...), sectionHead.Bytes()...), root.Bytes(), ethdb.StateOption)
 }
 
 // BloomTrieIndexerBackend implements core.ChainIndexerBackend
@@ -464,7 +464,7 @@ func (b *BloomTrieIndexerBackend) Commit() error {
 		b.trieset.Clear()
 		b.triedb.Commit(root, false, func(hash common.Hash) { b.trieset.Add(hash) })
 
-		it := b.trieTable.NewIterator(nil, nil)
+		it := b.trieTable.NewIterator(nil, nil, ethdb.StateOption)
 		defer it.Release()
 
 		var (
@@ -475,7 +475,7 @@ func (b *BloomTrieIndexerBackend) Commit() error {
 		for it.Next() {
 			trimmed := bytes.TrimPrefix(it.Key(), []byte(BloomTrieTablePrefix))
 			if !b.trieset.Contains(common.BytesToHash(trimmed)) {
-				b.trieTable.Delete(trimmed)
+				b.trieTable.Delete(trimmed, ethdb.StateOption)
 				deleted += 1
 			} else {
 				remaining += 1

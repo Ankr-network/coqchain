@@ -87,7 +87,7 @@ func newTester() *downloadTester {
 		ancientChainTd:  map[common.Hash]*big.Int{testGenesis.Hash(): testGenesis.Difficulty()},
 	}
 	tester.stateDb = rawdb.NewMemoryDatabase()
-	tester.stateDb.Put(testGenesis.Root().Bytes(), []byte{0x00})
+	tester.stateDb.Put(testGenesis.Root().Bytes(), []byte{0x00}, ethdb.BlockTxOption)
 
 	tester.downloader = New(0, tester.stateDb, trie.NewSyncBloom(1, tester.stateDb), new(event.TypeMux), tester, nil, tester.dropPeer)
 	return tester
@@ -195,13 +195,13 @@ func (dl *downloadTester) CurrentBlock() *types.Block {
 
 	for i := len(dl.ownHashes) - 1; i >= 0; i-- {
 		if block := dl.ancientBlocks[dl.ownHashes[i]]; block != nil {
-			if _, err := dl.stateDb.Get(block.Root().Bytes()); err == nil {
+			if _, err := dl.stateDb.Get(block.Root().Bytes(), ethdb.StateOption); err == nil {
 				return block
 			}
 			return block
 		}
 		if block := dl.ownBlocks[dl.ownHashes[i]]; block != nil {
-			if _, err := dl.stateDb.Get(block.Root().Bytes()); err == nil {
+			if _, err := dl.stateDb.Get(block.Root().Bytes(), ethdb.StateOption); err == nil {
 				return block
 			}
 		}
@@ -296,7 +296,7 @@ func (dl *downloadTester) InsertChain(blocks types.Blocks) (i int, err error) {
 	for i, block := range blocks {
 		if parent, ok := dl.ownBlocks[block.ParentHash()]; !ok {
 			return i, fmt.Errorf("InsertChain: unknown parent at position %d / %d", i, len(blocks))
-		} else if _, err := dl.stateDb.Get(parent.Root().Bytes()); err != nil {
+		} else if _, err := dl.stateDb.Get(parent.Root().Bytes(), ethdb.StateOption); err != nil {
 			return i, fmt.Errorf("InsertChain: unknown parent state %x: %v", parent.Root(), err)
 		}
 		if hdr := dl.getHeaderByHash(block.Hash()); hdr == nil {
@@ -305,7 +305,7 @@ func (dl *downloadTester) InsertChain(blocks types.Blocks) (i int, err error) {
 		}
 		dl.ownBlocks[block.Hash()] = block
 		dl.ownReceipts[block.Hash()] = make(types.Receipts, 0)
-		dl.stateDb.Put(block.Root().Bytes(), []byte{0x00})
+		dl.stateDb.Put(block.Root().Bytes(), []byte{0x00}, ethdb.StateOption)
 		td := dl.getTd(block.ParentHash())
 		dl.ownChainTd[block.Hash()] = new(big.Int).Add(td, block.Difficulty())
 	}
@@ -474,7 +474,7 @@ func (dlp *downloadTesterPeer) RequestNodeData(hashes []common.Hash) error {
 
 	results := make([][]byte, 0, len(hashes))
 	for _, hash := range hashes {
-		if data, err := dlp.dl.peerDb.Get(hash.Bytes()); err == nil {
+		if data, err := dlp.dl.peerDb.Get(hash.Bytes(), ethdb.StateOption); err == nil {
 			if !dlp.missingStates[hash] {
 				results = append(results, data)
 			}

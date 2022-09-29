@@ -300,7 +300,7 @@ func importChain(ctx *cli.Context) error {
 	// Compact the entire database to more accurately measure disk io and print the stats
 	start = time.Now()
 	fmt.Println("Compacting entire database...")
-	if err := db.Compact(nil, nil); err != nil {
+	if err := db.Compact(nil, nil, nil); err != nil {
 		utils.Fatalf("Compaction failed: %v", err)
 	}
 	fmt.Printf("Compaction done in %v.\n\n", time.Since(start))

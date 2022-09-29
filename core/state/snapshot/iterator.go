@@ -171,7 +171,7 @@ func (dl *diskLayer) AccountIterator(seek common.Hash) AccountIterator {
 	pos := common.TrimRightZeroes(seek[:])
 	return &diskAccountIterator{
 		layer: dl,
-		it:    dl.diskdb.NewIterator(rawdb.SnapshotAccountPrefix, pos),
+		it:    dl.diskdb.NewIterator(rawdb.SnapshotAccountPrefix, pos, ethdb.SnapOption),
 	}
 }
 
@@ -344,7 +344,7 @@ func (dl *diskLayer) StorageIterator(account common.Hash, seek common.Hash) (Sto
 	return &diskStorageIterator{
 		layer:   dl,
 		account: account,
-		it:      dl.diskdb.NewIterator(append(rawdb.SnapshotStoragePrefix, account.Bytes()...), pos),
+		it:      dl.diskdb.NewIterator(append(rawdb.SnapshotStoragePrefix, account.Bytes()...), pos, ethdb.SnapOption),
 	}, false
 }
 
