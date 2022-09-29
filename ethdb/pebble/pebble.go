@@ -37,7 +37,7 @@ const (
 
 func New(file string, caches int, namespace string, readonly bool) (*Database, error) {
 
-	c := pebble.NewCache(int64(caches) * GiB)
+	c := pebble.NewCache(int64(caches) * MiB * 1024)
 
 	opts := &pebble.Options{
 		BytesPerSync: 4 * MiB,
