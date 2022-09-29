@@ -44,6 +44,7 @@ func New(file string, caches int, namespace string, readonly bool) (*Database, e
 		MaxOpenFiles: 8 * 1024,
 		Cache:        c,
 	}
+	opts.Levels = make([]pebble.LevelOptions, 3)
 	opts.Levels[0].BlockSize = 2048
 	opts.Levels[0].Compression = pebble.ZstdCompression
 	opts.Levels[1].Compression = pebble.ZstdCompression
