@@ -26,8 +26,8 @@ import (
 
 	"github.com/Ankr-network/coqchain/common"
 	"github.com/Ankr-network/coqchain/ethdb"
-	"github.com/Ankr-network/coqchain/ethdb/leveldb"
 	"github.com/Ankr-network/coqchain/ethdb/memorydb"
+	"github.com/Ankr-network/coqchain/ethdb/pebble"
 	"github.com/Ankr-network/coqchain/log"
 	"github.com/olekukonko/tablewriter"
 )
@@ -244,7 +244,7 @@ func NewMemoryDatabaseWithCap(size int) ethdb.Database {
 // NewLevelDBDatabase creates a persistent key-value database without a freezer
 // moving immutable chain segments into cold storage.
 func NewLevelDBDatabase(file string, cache int, handles int, namespace string, readonly bool) (ethdb.Database, error) {
-	db, err := leveldb.New(file, cache, handles, namespace, readonly)
+	db, err := pebble.New(file, cache, namespace, readonly)
 	if err != nil {
 		return nil, err
 	}
@@ -254,7 +254,7 @@ func NewLevelDBDatabase(file string, cache int, handles int, namespace string, r
 // NewLevelDBDatabaseWithFreezer creates a persistent key-value database with a
 // freezer moving immutable chain segments into cold storage.
 func NewLevelDBDatabaseWithFreezer(file string, cache int, handles int, freezer string, namespace string, readonly bool) (ethdb.Database, error) {
-	kvdb, err := leveldb.New(file, cache, handles, namespace, readonly)
+	kvdb, err := pebble.New(file, cache, namespace, readonly)
 	if err != nil {
 		return nil, err
 	}

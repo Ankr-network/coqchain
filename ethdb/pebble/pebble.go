@@ -20,6 +20,7 @@ import (
 
 	"github.com/Ankr-network/coqchain/ethdb"
 	"github.com/cockroachdb/pebble"
+	"github.com/cockroachdb/pebble/bloom"
 )
 
 type Database struct {
@@ -34,15 +35,22 @@ const (
 	GiB = MiB * 1024
 )
 
-func New(file string, caches int64, namespace string, readonly bool) (*Database, error) {
+func New(file string, caches int, namespace string, readonly bool) (*Database, error) {
 
-	c := pebble.NewCache(caches * MiB)
+	c := pebble.NewCache(int64(caches) * GiB)
 
 	opts := &pebble.Options{
 		BytesPerSync: 4 * MiB,
 		MaxOpenFiles: 8 * 1024,
 		Cache:        c,
 	}
+	opts.Levels[0].BlockSize = 2048
+	opts.Levels[0].Compression = pebble.ZstdCompression
+	opts.Levels[1].Compression = pebble.ZstdCompression
+	opts.Levels[2].Compression = pebble.ZstdCompression
+
+	opts.Filters = make(map[string]pebble.FilterPolicy)
+	opts.Filters["query"] = bloom.FilterPolicy(10)
 
 	kv, err := pebble.Open(file, opts)
 	if err != nil {
