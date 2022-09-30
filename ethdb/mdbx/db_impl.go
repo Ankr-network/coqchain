@@ -16,34 +16,31 @@ package mdbx
 
 import (
 	"context"
-	"path/filepath"
 	"time"
 
 	"github.com/Ankr-network/coqchain/ethdb"
 	"github.com/ledgerwatch/erigon-lib/kv"
 	"github.com/ledgerwatch/erigon-lib/kv/mdbx"
+	"github.com/ledgerwatch/log/v3"
 )
 
 type DbImpl struct {
-	chaindb Database
+	chaindb kv.RwDB
 	dir     string
+	ctx     context.Context
 }
 
 func NewMDBXDB(path string) *DbImpl {
-	db := &DbImpl{dir: filepath.Join(path, "chaindb")}
-	chaindb, err := mdbx.NewMDBX(nil).Label(kv.ChainDB).WithTableCfg(func(defaultBuckets kv.TableCfg) kv.TableCfg {
-		return kv.ChaindataTablesCfg
+	db := &DbImpl{dir: path}
+	chaindb := mdbx.NewMDBX(log.New()).WithTableCfg(func(defaultBuckets kv.TableCfg) kv.TableCfg {
+		return kv.TableCfg{
+			ethdb.StorageStateFmt: {Flags: kv.DupSort},
+		}
 	}).
-		SyncPeriod(10 * time.Second).Path(db.dir).Open()
-	if err != nil {
-		panic(err)
-	}
-	chainRw, err := chaindb.BeginRw(context.Background())
-	if err != nil {
-		panic(err)
-	}
+		SyncPeriod(10 * time.Second).Path(db.dir).MustOpen()
 
-	db.chaindb = WrapIntoTxDB(chainRw)
+	db.chaindb = chaindb
+	db.ctx = context.Background()
 
 	return db
 }
@@ -54,22 +51,46 @@ func (d *DbImpl) Path() string {
 
 // Has retrieves if a key is present in the key-value data store.
 func (d *DbImpl) Has(key []byte, opts *ethdb.Option) (bool, error) {
-	return d.chaindb.Has(opts.Name, key)
+	if err := d.chaindb.View(d.ctx, func(tx kv.Tx) error {
+		_, err := tx.GetOne(opts.Name, key)
+		return err
+	}); err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
 // Get retrieves the given key if it's present in the key-value data store.
 func (d *DbImpl) Get(key []byte, opts *ethdb.Option) ([]byte, error) {
-	return d.chaindb.Get(opts.Name, key)
+	var (
+		val []byte
+		err error
+	)
+	d.chaindb.View(d.ctx, func(tx kv.Tx) error {
+		val, err = tx.GetOne(opts.Name, key)
+		return nil
+	})
+	return val, err
 }
 
 // Put inserts the given value into the key-value data store.
 func (d *DbImpl) Put(key []byte, value []byte, opts *ethdb.Option) error {
-	return d.chaindb.Put(opts.Name, key, value)
+	var err error
+	d.chaindb.Update(d.ctx, func(tx kv.RwTx) error {
+		err = tx.Put(opts.Name, key, value)
+		return nil
+	})
+	return err
 }
 
 // Delete removes the key from the key-value data store.
 func (d *DbImpl) Delete(key []byte, opts *ethdb.Option) error {
-	return d.chaindb.Delete(opts.Name, key)
+	var err error
+	d.chaindb.Update(d.ctx, func(tx kv.RwTx) error {
+		err = tx.Delete(opts.Name, key)
+		return nil
+	})
+	return err
 }
 
 // Sync flushes all in-memory ancient store data to disk.
@@ -112,7 +133,5 @@ func (d *DbImpl) Compact(start []byte, limit []byte, opts *ethdb.Option) error {
 }
 
 func (d *DbImpl) Close() error {
-	d.chaindb.RwKV().Close()
-	d.chaindb.Close()
 	return nil
 }

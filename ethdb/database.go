@@ -19,23 +19,25 @@ package ethdb
 
 import (
 	"io"
-
-	"github.com/ledgerwatch/erigon-lib/kv"
 )
 
 type Option struct {
 	Name string
 }
 
+const (
+	StorageStateFmt = "state"
+)
+
 var (
-	GlobalDataOption = &Option{Name: kv.StorageKeys}
-	SnapOption       = &Option{Name: kv.StorageHistoryKeys}
-	AncientOption    = &Option{Name: kv.StorageKeys}
-	HeaderHashOption = &Option{Name: kv.StorageKeys}
-	PreimageOption   = &Option{Name: kv.StorageKeys}
-	BlockTxOption    = &Option{Name: kv.HashedStorage}
-	StateOption      = &Option{Name: kv.PlainState}
-	JournalOption    = &Option{Name: kv.StorageKeys}
+	GlobalDataOption = &Option{Name: StorageStateFmt}
+	SnapOption       = &Option{Name: StorageStateFmt}
+	AncientOption    = &Option{Name: StorageStateFmt}
+	HeaderHashOption = &Option{Name: StorageStateFmt}
+	PreimageOption   = &Option{Name: StorageStateFmt}
+	BlockTxOption    = &Option{Name: StorageStateFmt}
+	StateOption      = &Option{Name: StorageStateFmt}
+	JournalOption    = &Option{Name: StorageStateFmt}
 )
 
 // KeyValueReader wraps the Has and Get method of a backing data store.

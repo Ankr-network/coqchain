@@ -15,10 +15,7 @@
 package mdbx
 
 import (
-	"context"
-
 	"github.com/Ankr-network/coqchain/ethdb"
-	"github.com/ledgerwatch/erigon-lib/kv"
 )
 
 type DbIter struct {
@@ -33,30 +30,29 @@ type DbIter struct {
 // Next moves the iterator to the next key/value pair. It returns whether the
 // iterator is exhausted.
 func (i *DbIter) Next() bool {
-	if err := i.db.chaindb.RwKV().View(context.Background(), func(tx kv.Tx) error {
-		if i.err != nil {
-			return i.err
-		}
-		c, err := tx.Cursor(i.opts.Name)
-		if err != nil {
-			return err
-		}
-		if i.nextKey == nil {
-			k, v, err := c.Seek(i.prefix)
-			if err != nil {
-				return err
-			}
-			i.key, i.val = k, v
-			i.nextKey, _, i.err = c.Next()
-		} else {
-			i.key, i.val, err = c.Seek(i.nextKey)
-			if err != nil {
-				return err
-			}
-		}
-		return nil
-	}); err != nil {
+	if i.err != nil {
 		return false
+	}
+	kvtx, err := i.db.chaindb.BeginRw(i.db.ctx)
+	if err != nil {
+		return false
+	}
+	c, err := kvtx.RwCursor(i.opts.Name)
+	if err != nil {
+		return false
+	}
+	if i.nextKey == nil {
+		k, v, err := c.Seek(i.prefix)
+		if err != nil {
+			return false
+		}
+		i.key, i.val = k, v
+		i.nextKey, _, i.err = c.Next()
+	} else {
+		i.key, i.val, err = c.Seek(i.nextKey)
+		if err != nil {
+			return false
+		}
 	}
 	return true
 }
