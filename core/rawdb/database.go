@@ -26,7 +26,7 @@ import (
 
 	"github.com/Ankr-network/coqchain/common"
 	"github.com/Ankr-network/coqchain/ethdb"
-	"github.com/Ankr-network/coqchain/ethdb/mdbx"
+	"github.com/Ankr-network/coqchain/ethdb/cdb"
 	"github.com/Ankr-network/coqchain/ethdb/memorydb"
 	"github.com/Ankr-network/coqchain/log"
 	"github.com/olekukonko/tablewriter"
@@ -244,14 +244,20 @@ func NewMemoryDatabaseWithCap(size int) ethdb.Database {
 // NewLevelDBDatabase creates a persistent key-value database without a freezer
 // moving immutable chain segments into cold storage.
 func NewLevelDBDatabase(file string, cache int, handles int, namespace string, readonly bool) (ethdb.Database, error) {
-	db := mdbx.NewMDBXDB(file)
+	db, err := cdb.NewMDB(file, nil)
+	if err != nil {
+		return nil, err
+	}
 	return NewDatabase(db), nil
 }
 
 // NewLevelDBDatabaseWithFreezer creates a persistent key-value database with a
 // freezer moving immutable chain segments into cold storage.
 func NewLevelDBDatabaseWithFreezer(file string, cache int, handles int, freezer string, namespace string, readonly bool) (ethdb.Database, error) {
-	kvdb := mdbx.NewMDBXDB(file)
+	kvdb, err := cdb.NewMDB(file, nil)
+	if err != nil {
+		return nil, err
+	}
 	frdb, err := NewDatabaseWithFreezer(kvdb, freezer, namespace, readonly)
 	if err != nil {
 		kvdb.Close()

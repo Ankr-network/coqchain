@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package mdbx
+package cdb
 
 import (
 	"github.com/Ankr-network/coqchain/common"
@@ -27,7 +27,7 @@ type keyvalue struct {
 }
 
 type DbBatch struct {
-	db     *DbImpl
+	db     *MDB
 	writes []keyvalue
 	size   int
 }

@@ -12,16 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package mdbx
+package cdb
 
 import (
 	"github.com/Ankr-network/coqchain/ethdb"
+	"github.com/torquem-ch/mdbx-go/mdbx"
 )
 
 type DbIter struct {
-	db       *DbImpl
-	prefix   []byte
-	nextKey  []byte
+	db       *MDB
+	curkey   []byte
 	key, val []byte
 	err      error
 	opts     *ethdb.Option
@@ -30,29 +30,25 @@ type DbIter struct {
 // Next moves the iterator to the next key/value pair. It returns whether the
 // iterator is exhausted.
 func (i *DbIter) Next() bool {
-	if i.err != nil {
-		return false
-	}
-	kvtx, err := i.db.chaindb.BeginRw(i.db.ctx)
+	err := i.db.env.View(func(txn *mdbx.Txn) error {
+		c, err := txn.OpenCursor(i.db.buckets[i.opts.Name])
+		if err != nil {
+			return err
+		}
+		defer c.Close()
+		key, val, err := c.Get(i.curkey, nil, mdbx.Next)
+		if err != nil {
+			i.key = nil
+			i.val = nil
+			return err
+		}
+		i.curkey = key
+		i.key = key
+		i.val = val
+		return nil
+	})
 	if err != nil {
 		return false
-	}
-	c, err := kvtx.RwCursor(i.opts.Name)
-	if err != nil {
-		return false
-	}
-	if i.nextKey == nil {
-		k, v, err := c.Seek(i.prefix)
-		if err != nil {
-			return false
-		}
-		i.key, i.val = k, v
-		i.nextKey, _, i.err = c.Next()
-	} else {
-		i.key, i.val, err = c.Seek(i.nextKey)
-		if err != nil {
-			return false
-		}
 	}
 	return true
 }
@@ -80,5 +76,5 @@ func (i *DbIter) Value() []byte {
 // Release releases associated resources. Release should always succeed and can
 // be called multiple times without causing error.
 func (i *DbIter) Release() {
-	i.key, i.val, i.err, i.prefix = nil, nil, nil, nil
+	i.key, i.val, i.err, i.curkey = nil, nil, nil, nil
 }

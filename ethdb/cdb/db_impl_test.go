@@ -1,4 +1,4 @@
-package mdbx
+package cdb
 
 import (
 	"os"
@@ -10,9 +10,13 @@ import (
 
 const testdb = "testdb"
 
-func openTestDb() *DbImpl {
+func openTestDb() *MDB {
 	os.RemoveAll("testdb")
-	return NewMDBXDB(testdb)
+	db, err := NewMDB(testdb, nil)
+	if err != nil {
+		panic(err)
+	}
+	return db
 }
 func TestMdbxPut(t *testing.T) {
 	db := openTestDb()

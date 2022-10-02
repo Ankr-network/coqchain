@@ -19,10 +19,13 @@ package ethdb
 
 import (
 	"io"
+
+	"github.com/torquem-ch/mdbx-go/mdbx"
 )
 
 type Option struct {
-	Name string
+	Name  string
+	Flags uint
 }
 
 const (
@@ -30,14 +33,14 @@ const (
 )
 
 var (
-	GlobalDataOption = &Option{Name: StorageStateFmt}
-	SnapOption       = &Option{Name: StorageStateFmt}
-	AncientOption    = &Option{Name: StorageStateFmt}
-	HeaderHashOption = &Option{Name: StorageStateFmt}
-	PreimageOption   = &Option{Name: StorageStateFmt}
-	BlockTxOption    = &Option{Name: StorageStateFmt}
-	StateOption      = &Option{Name: StorageStateFmt}
-	JournalOption    = &Option{Name: StorageStateFmt}
+	GlobalDataOption = &Option{Name: StorageStateFmt, Flags: mdbx.Upsert}
+	SnapOption       = &Option{Name: StorageStateFmt, Flags: mdbx.Upsert}
+	AncientOption    = &Option{Name: StorageStateFmt, Flags: mdbx.Upsert}
+	HeaderHashOption = &Option{Name: StorageStateFmt, Flags: mdbx.Upsert}
+	PreimageOption   = &Option{Name: StorageStateFmt, Flags: mdbx.Upsert}
+	BlockTxOption    = &Option{Name: StorageStateFmt, Flags: mdbx.Upsert}
+	StateOption      = &Option{Name: StorageStateFmt, Flags: mdbx.Upsert}
+	JournalOption    = &Option{Name: StorageStateFmt, Flags: mdbx.Upsert}
 )
 
 // KeyValueReader wraps the Has and Get method of a backing data store.

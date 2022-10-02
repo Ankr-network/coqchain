@@ -34,7 +34,7 @@ import (
 	"github.com/Ankr-network/coqchain/core/types"
 	"github.com/Ankr-network/coqchain/crypto"
 	"github.com/Ankr-network/coqchain/ethdb"
-	"github.com/Ankr-network/coqchain/ethdb/mdbx"
+	"github.com/Ankr-network/coqchain/ethdb/cdb"
 	"github.com/Ankr-network/coqchain/ethdb/memorydb"
 	"github.com/Ankr-network/coqchain/rlp"
 	"github.com/davecgh/go-spew/spew"
@@ -502,7 +502,7 @@ func benchGet(b *testing.B, commit bool) {
 	b.StopTimer()
 
 	if commit {
-		ldb := trie.db.diskdb.(*mdbx.DbImpl)
+		ldb := trie.db.diskdb.(*cdb.DbImpl)
 		ldb.Close()
 		os.RemoveAll(ldb.Path())
 	}
@@ -1061,7 +1061,7 @@ func tempDB() (string, *Database) {
 		panic(fmt.Sprintf("can't create temporary directory: %v", err))
 	}
 
-	diskdb := mdbx.NewMDBXDB(dir)
+	diskdb := cdb.NewMDBXDB(dir)
 	return dir, NewDatabase(diskdb)
 }
 
