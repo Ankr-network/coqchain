@@ -41,12 +41,12 @@ const (
 var (
 	GlobalDataOption = &Option{Name: GlobalData}
 	SnapOption       = &Option{Name: BlockTxData}
-	AncientOption    = &Option{Name: AncientData}
-	HeaderHashOption = &Option{Name: HeaderHashData}
-	PreimageOption   = &Option{Name: PreimageData}
+	AncientOption    = &Option{Name: BlockTxData}
+	HeaderHashOption = &Option{Name: BlockTxData}
+	PreimageOption   = &Option{Name: BlockTxData}
 	BlockTxOption    = &Option{Name: BlockTxData}
-	StateOption      = &Option{Name: StateData}
-	JournalOption    = &Option{Name: JournalData}
+	StateOption      = &Option{Name: BlockTxData}
+	JournalOption    = &Option{Name: BlockTxData}
 	Buckets          = []string{
 		GlobalData, StateData, StateData,
 		SnapData, AncientData, HeaderHashData,
