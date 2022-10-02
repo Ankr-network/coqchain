@@ -3,5 +3,5 @@ package cdb
 import "errors"
 
 var (
-	ErrNotFound = errors.New("MDBX_NOTFOUND")
+	ErrNotFound = errors.New("No matching key/data pair found")
 )

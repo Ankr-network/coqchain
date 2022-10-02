@@ -1,28 +1,26 @@
 package cdb
 
 import (
+	"bytes"
 	"errors"
 	"os"
+	"sync"
 
 	"github.com/Ankr-network/coqchain/ethdb"
-	"github.com/Ankr-network/coqchain/log"
 	"github.com/c2h5oh/datasize"
-	"github.com/go-stack/stack"
 	"github.com/torquem-ch/mdbx-go/mdbx"
 )
 
 type MDB struct {
-	path    string
-	opts    *Option
-	env     *mdbx.Env
-	buckets map[string]mdbx.DBI
+	mu   sync.RWMutex
+	path string
+	opts *Option
+	env  *mdbx.Env
 }
 
 func NewMDB(path string, opts *Option) (*MDB, error) {
 	var err error
-	m := &MDB{
-		buckets: make(map[string]mdbx.DBI, 32),
-	}
+	m := &MDB{}
 
 	m.env, err = mdbx.NewEnv()
 	if err != nil {
@@ -56,29 +54,21 @@ func NewMDB(path string, opts *Option) (*MDB, error) {
 	if opts.SyncPeriod != 0 {
 		m.env.SetSyncPeriod(opts.SyncPeriod)
 	}
-	os.MkdirAll(path, 0744)
+	os.MkdirAll(path, 0755)
 	err = m.env.Open(path, opts.Flags, 0664)
 	if err != nil {
 		return nil, err
 	}
-	// init bucket
-	var dbi mdbx.DBI
-	m.buckets[ethdb.StateData] = dbi
-	err = m.env.Update(func(txn *mdbx.Txn) error {
-		var dbi mdbx.DBI
-		for bucketName := range m.buckets {
-			dbi, err = txn.CreateDBI(bucketName)
-			if err != nil {
-				log.Error("NewMDB", "err", err, "trace", stack.Trace().String())
-				return err
-			}
-			m.buckets[bucketName] = dbi
-		}
-		return nil
-	})
 	if err != nil {
 		return nil, err
 	}
+	// init dbi
+	m.env.Update(func(txn *mdbx.Txn) error {
+		for _, v := range ethdb.Buckets {
+			txn.OpenDBI(v, mdbx.Create|mdbx.DupSort, nil, nil)
+		}
+		return nil
+	})
 
 	return m, nil
 }
@@ -91,8 +81,13 @@ func (m *MDB) Has(key []byte, opts *ethdb.Option) (bool, error) {
 	)
 
 	err = m.env.View(func(txn *mdbx.Txn) error {
-		_, err = txn.Get(m.buckets[opts.Name], key)
+		dbi, _ := txn.OpenDBI(opts.Name, mdbx.Create|mdbx.DupSort, nil, nil)
+		_, err = txn.Get(dbi, key)
 		if err != nil {
+			if mdbx.IsNotFound(err) {
+				rs = false
+				return nil
+			}
 			return err
 		}
 		rs = true
@@ -110,8 +105,12 @@ func (m *MDB) Get(key []byte, opts *ethdb.Option) ([]byte, error) {
 	)
 
 	err = m.env.View(func(txn *mdbx.Txn) error {
-		rs, err = txn.Get(m.buckets[opts.Name], key)
-		if err != nil && errors.Is(err, ErrNotFound) {
+		dbi, _ := txn.OpenDBI(opts.Name, mdbx.Create|mdbx.DupSort, nil, nil)
+		rs, err = txn.Get(dbi, key)
+		if err != nil {
+			if mdbx.IsNotFound(err) {
+				return nil
+			}
 			return err
 		}
 		return nil
@@ -122,9 +121,11 @@ func (m *MDB) Get(key []byte, opts *ethdb.Option) ([]byte, error) {
 
 // Put inserts the given value into the key-value data store.
 func (m *MDB) Put(key []byte, value []byte, opts *ethdb.Option) error {
+
 	var err error
 	err = m.env.Update(func(txn *mdbx.Txn) error {
-		err = txn.Put(m.buckets[opts.Name], key, value, opts.Flags)
+		dbi, _ := txn.OpenDBI(opts.Name, mdbx.Create|mdbx.DupSort, nil, nil)
+		err = txn.Put(dbi, key, value, opts.Flags)
 		if err != nil {
 			return err
 		}
@@ -135,9 +136,11 @@ func (m *MDB) Put(key []byte, value []byte, opts *ethdb.Option) error {
 
 // Delete removes the key from the key-value data store.
 func (m *MDB) Delete(key []byte, opts *ethdb.Option) error {
+
 	var err error
 	err = m.env.Update(func(txn *mdbx.Txn) error {
-		err = txn.Del(m.buckets[opts.Name], key, nil)
+		dbi, _ := txn.OpenDBI(opts.Name, mdbx.Create|mdbx.DupSort, nil, nil)
+		err = txn.Del(dbi, key, nil)
 		if err != nil && errors.Is(err, ErrNotFound) {
 			return err
 		}
@@ -163,6 +166,19 @@ func (m *MDB) NewBatch() ethdb.Batch {
 // no need for the caller to prepend the prefix to the start
 func (m *MDB) NewIterator(prefix []byte, start []byte, opts *ethdb.Option) ethdb.Iterator {
 	return &DbIter{
+		first: true,
+		prefix: func() []byte {
+			if bytes.Equal(prefix, []byte("")) {
+				return nil
+			}
+			return prefix
+		}(),
+		start: func() []byte {
+			if bytes.Equal(start, []byte("")) {
+				return nil
+			}
+			return start
+		}(),
 		curkey: append(prefix, start...),
 		db:     m,
 		opts:   opts,
@@ -186,11 +202,6 @@ func (m *MDB) Compact(start []byte, limit []byte, opts *ethdb.Option) error {
 }
 
 func (m *MDB) Close() error {
-	for dbiName := range m.buckets {
-		m.env.CloseDBI(m.buckets[dbiName])
-	}
-	println("close mdb start")
 	m.env.Close()
-	println("close mdb end")
 	return nil
 }

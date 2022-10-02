@@ -15,37 +15,65 @@
 package cdb
 
 import (
+	"bytes"
+
 	"github.com/Ankr-network/coqchain/ethdb"
 	"github.com/torquem-ch/mdbx-go/mdbx"
 )
 
 type DbIter struct {
-	db       *MDB
-	curkey   []byte
-	key, val []byte
-	err      error
-	opts     *ethdb.Option
+	db                    *MDB
+	first                 bool
+	curkey, prefix, start []byte
+	key, val              []byte
+	err                   error
+	opts                  *ethdb.Option
 }
 
 // Next moves the iterator to the next key/value pair. It returns whether the
 // iterator is exhausted.
 func (i *DbIter) Next() bool {
 	err := i.db.env.View(func(txn *mdbx.Txn) error {
-		c, err := txn.OpenCursor(i.db.buckets[i.opts.Name])
+		var (
+			key, val []byte
+			err      error
+		)
+
+		dbi, _ := txn.OpenDBI(i.opts.Name, mdbx.Create|mdbx.DupSort, nil, nil)
+		c, err := txn.OpenCursor(dbi)
 		if err != nil {
 			return err
 		}
 		defer c.Close()
-		key, val, err := c.Get(i.curkey, nil, mdbx.Next)
-		if err != nil {
+		switch {
+		case i.first && i.prefix == nil && i.start == nil:
+			i.first = false
+			key, val, err = c.Get(nil, nil, mdbx.First)
+		case i.first && i.start != nil:
+			i.first = false
+			i.curkey = append(i.prefix, i.start...)
+			key, val, err = c.Get(i.curkey, nil, mdbx.Set)
+			if key == nil {
+				key, val, err = c.Get(i.curkey, nil, mdbx.Last)
+			}
+		case i.first && (i.prefix != nil && i.start == nil):
+			i.first = false
+			i.curkey = append(i.prefix, i.start...)
+			key, val, err = c.Get(i.curkey, nil, mdbx.First)
+		case !i.first:
+			key, val, err = c.Get(i.curkey, nil, mdbx.Set)
+		}
+		if key != nil && bytes.HasPrefix(key, i.prefix) {
+			i.key = key
+			i.val = val
+			i.curkey, _, _ = c.Get(key, nil, mdbx.Next)
+			return nil
+		} else {
 			i.key = nil
 			i.val = nil
-			return err
+			return ErrNotFound
 		}
-		i.curkey = key
-		i.key = key
-		i.val = val
-		return nil
+
 	})
 	if err != nil {
 		return false
@@ -76,5 +104,6 @@ func (i *DbIter) Value() []byte {
 // Release releases associated resources. Release should always succeed and can
 // be called multiple times without causing error.
 func (i *DbIter) Release() {
+	i.first = true
 	i.key, i.val, i.err, i.curkey = nil, nil, nil, nil
 }
