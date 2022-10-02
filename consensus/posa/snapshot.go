@@ -88,7 +88,7 @@ func newSnapshot(config *params.PosaConfig, sigcache *lru.ARCCache, number uint6
 
 // loadSnapshot loads an existing snapshot from the database.
 func loadSnapshot(config *params.PosaConfig, sigcache *lru.ARCCache, db ethdb.Database, hash common.Hash) (*Snapshot, error) {
-	blob, err := db.Get(append([]byte("posa-"), hash[:]...), ethdb.SnapOption)
+	blob, err := db.Get(append([]byte("posa-"), hash[:]...), ethdb.BlockTxOption)
 	if err != nil {
 		return nil, err
 	}

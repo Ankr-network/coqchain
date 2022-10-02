@@ -40,7 +40,7 @@ func ReadCanonicalHash(db ethdb.Reader, number uint64) common.Hash {
 		data, _ = reader.Ancient(freezerHashTable, number)
 		if len(data) == 0 {
 			// Get it by hash from leveldb
-			data, _ = db.Get(headerHashKey(number), ethdb.AncientOption)
+			data, _ = db.Get(headerHashKey(number), ethdb.BlockTxOption)
 		}
 		return nil
 	})
@@ -49,14 +49,14 @@ func ReadCanonicalHash(db ethdb.Reader, number uint64) common.Hash {
 
 // WriteCanonicalHash stores the hash assigned to a canonical block number.
 func WriteCanonicalHash(db ethdb.KeyValueWriter, hash common.Hash, number uint64) {
-	if err := db.Put(headerHashKey(number), hash.Bytes(), ethdb.HeaderHashOption); err != nil {
+	if err := db.Put(headerHashKey(number), hash.Bytes(), ethdb.BlockTxOption); err != nil {
 		log.Crit("Failed to store number to hash mapping", "err", err)
 	}
 }
 
 // DeleteCanonicalHash removes the number to hash canonical mapping.
 func DeleteCanonicalHash(db ethdb.KeyValueWriter, number uint64) {
-	if err := db.Delete(headerHashKey(number), ethdb.HeaderHashOption); err != nil {
+	if err := db.Delete(headerHashKey(number), ethdb.BlockTxOption); err != nil {
 		log.Crit("Failed to delete number to hash mapping", "err", err)
 	}
 }
@@ -67,7 +67,7 @@ func ReadAllHashes(db ethdb.Iteratee, number uint64) []common.Hash {
 	prefix := headerKeyPrefix(number)
 
 	hashes := make([]common.Hash, 0, 1)
-	it := db.NewIterator(prefix, nil, ethdb.HeaderHashOption)
+	it := db.NewIterator(prefix, nil, ethdb.BlockTxOption)
 	defer it.Release()
 
 	for it.Next() {
@@ -91,7 +91,7 @@ func ReadAllHashesInRange(db ethdb.Iteratee, first, last uint64) []*NumberHash {
 		start     = encodeBlockNumber(first)
 		keyLength = len(headerPrefix) + 8 + 32
 		hashes    = make([]*NumberHash, 0, 1+last-first)
-		it        = db.NewIterator(headerPrefix, start, ethdb.HeaderHashOption)
+		it        = db.NewIterator(headerPrefix, start, ethdb.BlockTxOption)
 	)
 	defer it.Release()
 	for it.Next() {
@@ -123,7 +123,7 @@ func ReadAllCanonicalHashes(db ethdb.Iteratee, from uint64, to uint64, limit int
 	)
 	// Construct the key prefix of start point.
 	start, end := headerHashKey(from), headerHashKey(to)
-	it := db.NewIterator(nil, start, ethdb.HeaderHashOption)
+	it := db.NewIterator(nil, start, ethdb.BlockTxOption)
 	defer it.Release()
 
 	for it.Next() {
@@ -144,7 +144,7 @@ func ReadAllCanonicalHashes(db ethdb.Iteratee, from uint64, to uint64, limit int
 
 // ReadHeaderNumber returns the header number assigned to a hash.
 func ReadHeaderNumber(db ethdb.KeyValueReader, hash common.Hash) *uint64 {
-	data, _ := db.Get(headerNumberKey(hash), ethdb.HeaderHashOption)
+	data, _ := db.Get(headerNumberKey(hash), ethdb.BlockTxOption)
 	if len(data) != 8 {
 		return nil
 	}
@@ -156,21 +156,21 @@ func ReadHeaderNumber(db ethdb.KeyValueReader, hash common.Hash) *uint64 {
 func WriteHeaderNumber(db ethdb.KeyValueWriter, hash common.Hash, number uint64) {
 	key := headerNumberKey(hash)
 	enc := encodeBlockNumber(number)
-	if err := db.Put(key, enc, ethdb.HeaderHashOption); err != nil {
+	if err := db.Put(key, enc, ethdb.BlockTxOption); err != nil {
 		log.Crit("Failed to store hash to number mapping", "err", err)
 	}
 }
 
 // DeleteHeaderNumber removes hash->number mapping.
 func DeleteHeaderNumber(db ethdb.KeyValueWriter, hash common.Hash) {
-	if err := db.Delete(headerNumberKey(hash), ethdb.HeaderHashOption); err != nil {
+	if err := db.Delete(headerNumberKey(hash), ethdb.BlockTxOption); err != nil {
 		log.Crit("Failed to delete hash to number mapping", "err", err)
 	}
 }
 
 // ReadHeadHeaderHash retrieves the hash of the current canonical head header.
 func ReadHeadHeaderHash(db ethdb.KeyValueReader) common.Hash {
-	data, _ := db.Get(headHeaderKey, ethdb.HeaderHashOption)
+	data, _ := db.Get(headHeaderKey, ethdb.GlobalDataOption)
 	if len(data) == 0 {
 		return common.Hash{}
 	}
@@ -179,14 +179,14 @@ func ReadHeadHeaderHash(db ethdb.KeyValueReader) common.Hash {
 
 // WriteHeadHeaderHash stores the hash of the current canonical head header.
 func WriteHeadHeaderHash(db ethdb.KeyValueWriter, hash common.Hash) {
-	if err := db.Put(headHeaderKey, hash.Bytes(), ethdb.HeaderHashOption); err != nil {
+	if err := db.Put(headHeaderKey, hash.Bytes(), ethdb.GlobalDataOption); err != nil {
 		log.Crit("Failed to store last header's hash", "err", err)
 	}
 }
 
 // ReadHeadBlockHash retrieves the hash of the current canonical head block.
 func ReadHeadBlockHash(db ethdb.KeyValueReader) common.Hash {
-	data, _ := db.Get(headBlockKey, ethdb.HeaderHashOption)
+	data, _ := db.Get(headBlockKey, ethdb.GlobalDataOption)
 	if len(data) == 0 {
 		return common.Hash{}
 	}
@@ -195,14 +195,14 @@ func ReadHeadBlockHash(db ethdb.KeyValueReader) common.Hash {
 
 // WriteHeadBlockHash stores the head block's hash.
 func WriteHeadBlockHash(db ethdb.KeyValueWriter, hash common.Hash) {
-	if err := db.Put(headBlockKey, hash.Bytes(), ethdb.HeaderHashOption); err != nil {
+	if err := db.Put(headBlockKey, hash.Bytes(), ethdb.GlobalDataOption); err != nil {
 		log.Crit("Failed to store last block's hash", "err", err)
 	}
 }
 
 // ReadHeadFastBlockHash retrieves the hash of the current fast-sync head block.
 func ReadHeadFastBlockHash(db ethdb.KeyValueReader) common.Hash {
-	data, _ := db.Get(headFastBlockKey, ethdb.HeaderHashOption)
+	data, _ := db.Get(headFastBlockKey, ethdb.GlobalDataOption)
 	if len(data) == 0 {
 		return common.Hash{}
 	}
@@ -211,7 +211,7 @@ func ReadHeadFastBlockHash(db ethdb.KeyValueReader) common.Hash {
 
 // WriteHeadFastBlockHash stores the hash of the current fast-sync head block.
 func WriteHeadFastBlockHash(db ethdb.KeyValueWriter, hash common.Hash) {
-	if err := db.Put(headFastBlockKey, hash.Bytes(), ethdb.HeaderHashOption); err != nil {
+	if err := db.Put(headFastBlockKey, hash.Bytes(), ethdb.GlobalDataOption); err != nil {
 		log.Crit("Failed to store last fast block's hash", "err", err)
 	}
 }

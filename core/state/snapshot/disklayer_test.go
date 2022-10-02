@@ -25,7 +25,7 @@ import (
 	"github.com/Ankr-network/coqchain/common"
 	"github.com/Ankr-network/coqchain/core/rawdb"
 	"github.com/Ankr-network/coqchain/ethdb"
-	"github.com/Ankr-network/coqchain/ethdb/cdb"
+	"github.com/Ankr-network/coqchain/ethdb/boltdb"
 	"github.com/Ankr-network/coqchain/ethdb/memorydb"
 	"github.com/Ankr-network/coqchain/rlp"
 	"github.com/VictoriaMetrics/fastcache"
@@ -524,7 +524,7 @@ func TestDiskSeek(t *testing.T) {
 		t.Fatal(err)
 	} else {
 		defer os.RemoveAll(dir)
-		diskdb, err := cdb.NewMDB(dir, nil)
+		diskdb, err := boltdb.NewBoltDB(dir)
 		if err != nil {
 			t.Fatal(err)
 		}

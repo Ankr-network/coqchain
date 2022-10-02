@@ -63,7 +63,7 @@ func NewMDB(path string, opts *Option) (*MDB, error) {
 	}
 	// init bucket
 	var dbi mdbx.DBI
-	m.buckets[ethdb.StorageStateFmt] = dbi
+	m.buckets[ethdb.StateData] = dbi
 	err = m.env.Update(func(txn *mdbx.Txn) error {
 		var dbi mdbx.DBI
 		for bucketName := range m.buckets {

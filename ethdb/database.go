@@ -19,8 +19,6 @@ package ethdb
 
 import (
 	"io"
-
-	"github.com/torquem-ch/mdbx-go/mdbx"
 )
 
 type Option struct {
@@ -29,18 +27,31 @@ type Option struct {
 }
 
 const (
-	StorageStateFmt = "state"
+	GlobalData     = "global"
+	StorageData    = "storage"
+	StateData      = "state"
+	SnapData       = "snap"
+	AncientData    = "Ancient"
+	HeaderHashData = "header"
+	PreimageData   = "preimage"
+	BlockTxData    = "blocktx"
+	JournalData    = "journal"
 )
 
 var (
-	GlobalDataOption = &Option{Name: StorageStateFmt, Flags: mdbx.Upsert}
-	SnapOption       = &Option{Name: StorageStateFmt, Flags: mdbx.Upsert}
-	AncientOption    = &Option{Name: StorageStateFmt, Flags: mdbx.Upsert}
-	HeaderHashOption = &Option{Name: StorageStateFmt, Flags: mdbx.Upsert}
-	PreimageOption   = &Option{Name: StorageStateFmt, Flags: mdbx.Upsert}
-	BlockTxOption    = &Option{Name: StorageStateFmt, Flags: mdbx.Upsert}
-	StateOption      = &Option{Name: StorageStateFmt, Flags: mdbx.Upsert}
-	JournalOption    = &Option{Name: StorageStateFmt, Flags: mdbx.Upsert}
+	GlobalDataOption = &Option{Name: GlobalData}
+	SnapOption       = &Option{Name: BlockTxData}
+	AncientOption    = &Option{Name: AncientData}
+	HeaderHashOption = &Option{Name: HeaderHashData}
+	PreimageOption   = &Option{Name: PreimageData}
+	BlockTxOption    = &Option{Name: BlockTxData}
+	StateOption      = &Option{Name: StateData}
+	JournalOption    = &Option{Name: JournalData}
+	Buckets          = []string{
+		GlobalData, StateData, StateData,
+		SnapData, AncientData, HeaderHashData,
+		PreimageData, BlockTxData, JournalData,
+	}
 )
 
 // KeyValueReader wraps the Has and Get method of a backing data store.
