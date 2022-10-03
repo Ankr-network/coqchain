@@ -1,6 +1,7 @@
 package boltdb
 
 import (
+	"bytes"
 	"os"
 	"path/filepath"
 	"syscall"
@@ -10,8 +11,13 @@ import (
 	"go.etcd.io/bbolt"
 )
 
+var (
+	defaultBucket = "defdata"
+)
+
 type BoltDB struct {
 	path string
+	file string
 	db   *bbolt.DB
 }
 
@@ -19,7 +25,7 @@ func NewBoltDB(path string) (*BoltDB, error) {
 
 	os.MkdirAll(path, 0755)
 
-	d := &BoltDB{path: filepath.Join(path, "blockchain.dat")}
+	d := &BoltDB{path: path, file: filepath.Join(path, "blockchain.dat")}
 
 	opt := &bbolt.Options{
 		Timeout:         0,
@@ -31,15 +37,15 @@ func NewBoltDB(path string) (*BoltDB, error) {
 		FreelistType:    bbolt.FreelistMapType,
 	}
 
-	db, err := bbolt.Open(d.path, 0664, opt)
+	db, err := bbolt.Open(d.file, 0664, opt)
 	if err != nil {
 		return nil, err
 	}
 
 	// init bucket
 	db.Update(func(tx *bbolt.Tx) error {
-		for _, v := range ethdb.Buckets {
-			tx.CreateBucketIfNotExists(utils.S2B(v))
+		for _, bucketName := range ethdb.Buckets {
+			tx.CreateBucketIfNotExists([]byte(bucketName))
 		}
 		return nil
 	})
@@ -64,6 +70,7 @@ func (d *BoltDB) Has(key []byte, opts *ethdb.Option) (bool, error) {
 		val := b.Get(key)
 		if val == nil {
 			rs = false
+			return nil
 		}
 		rs = true
 		return nil
@@ -122,12 +129,25 @@ func (d *BoltDB) NewBatch() ethdb.Batch {
 // Note: This method assumes that the prefix is NOT part of the start, so there's
 // no need for the caller to prepend the prefix to the start
 func (d *BoltDB) NewIterator(prefix []byte, start []byte, opts *ethdb.Option) ethdb.Iterator {
-	curkey := append(prefix, start...)
+	pre := func() []byte {
+		if bytes.Equal([]byte(""), prefix) {
+			return nil
+		}
+		return prefix
+	}()
+	stx := func() []byte {
+		if bytes.Equal([]byte(""), start) {
+			return nil
+		}
+		return start
+	}()
 	return &Iter{
-		prefix:  curkey,
-		nextkey: curkey,
-		opts:    opts,
-		db:      d,
+		opts:   opts,
+		prefix: pre,
+		start:  stx,
+		curkey: append(pre, stx...),
+		db:     d,
+		first:  true,
 	}
 }
 

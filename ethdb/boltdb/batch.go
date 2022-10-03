@@ -10,8 +10,8 @@ import (
 type keyvalue struct {
 	key    []byte
 	value  []byte
-	opts   *ethdb.Option
 	delete bool
+	opts   *ethdb.Option
 }
 
 type Batch struct {
@@ -22,14 +22,14 @@ type Batch struct {
 
 // Put inserts the given value into the key-value data store.
 func (b *Batch) Put(key []byte, value []byte, opts *ethdb.Option) error {
-	b.writes = append(b.writes, keyvalue{common.CopyBytes(key), common.CopyBytes(value), opts, false})
+	b.writes = append(b.writes, keyvalue{common.CopyBytes(key), common.CopyBytes(value), false, opts})
 	b.size += len(key) + len(value)
 	return nil
 }
 
 // Delete removes the key from the key-value data store.
 func (b *Batch) Delete(key []byte, opts *ethdb.Option) error {
-	b.writes = append(b.writes, keyvalue{common.CopyBytes(key), nil, opts, true})
+	b.writes = append(b.writes, keyvalue{common.CopyBytes(key), nil, true, opts})
 	b.size += len(key)
 	return nil
 }
@@ -46,7 +46,7 @@ func (b *Batch) Write() error {
 		for _, keyvalue := range b.writes {
 			bt := tx.Bucket(utils.S2B(keyvalue.opts.Name))
 			if keyvalue.delete {
-				if err = b.db.Delete(keyvalue.key, keyvalue.opts); err != nil {
+				if err = bt.Delete(keyvalue.key); err != nil {
 					return err
 				}
 				continue

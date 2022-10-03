@@ -799,18 +799,6 @@ func (c *Posa) Seal(chain consensus.ChainHeaderReader, block *types.Block, resul
 				}
 			}
 
-			// compare last signers with current signers
-			if number%c.config.Epoch == 0 {
-				if len(c.lastSigners) == 0 {
-					for _, signer := range snap.signers() {
-						c.lastSigners = append(c.lastSigners, signer)
-					}
-				} else {
-					notExistSigners := cmp(c.lastSigners, snap.signers())
-					log.Warn("Seal", "height", number, "not", notExistSigners)
-				}
-			}
-
 		default:
 			log.Warn("Sealing result is not read by miner", "sealhash", SealHash(header))
 		}

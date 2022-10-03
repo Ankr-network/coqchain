@@ -121,14 +121,14 @@ func IterateStorageSnapshots(db ethdb.Iteratee, accountHash common.Hash) ethdb.I
 // ReadSnapshotJournal retrieves the serialized in-memory diff layers saved at
 // the last shutdown. The blob is expected to be max a few 10s of megabytes.
 func ReadSnapshotJournal(db ethdb.KeyValueReader) []byte {
-	data, _ := db.Get(snapshotJournalKey, ethdb.JournalOption)
+	data, _ := db.Get(snapshotJournalKey, ethdb.StateOption)
 	return data
 }
 
 // WriteSnapshotJournal stores the serialized in-memory diff layers to save at
 // shutdown. The blob is expected to be max a few 10s of megabytes.
 func WriteSnapshotJournal(db ethdb.KeyValueWriter, journal []byte) {
-	if err := db.Put(snapshotJournalKey, journal, ethdb.JournalOption); err != nil {
+	if err := db.Put(snapshotJournalKey, journal, ethdb.StateOption); err != nil {
 		log.Crit("Failed to store snapshot journal", "err", err)
 	}
 }
@@ -136,7 +136,7 @@ func WriteSnapshotJournal(db ethdb.KeyValueWriter, journal []byte) {
 // DeleteSnapshotJournal deletes the serialized in-memory diff layers saved at
 // the last shutdown
 func DeleteSnapshotJournal(db ethdb.KeyValueWriter) {
-	if err := db.Delete(snapshotJournalKey, ethdb.JournalOption); err != nil {
+	if err := db.Delete(snapshotJournalKey, ethdb.StateOption); err != nil {
 		log.Crit("Failed to remove snapshot journal", "err", err)
 	}
 }
