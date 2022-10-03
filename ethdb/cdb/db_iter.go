@@ -39,7 +39,7 @@ func (i *DbIter) Next() bool {
 			err      error
 		)
 
-		dbi, _ := txn.OpenDBI(i.opts.Name, mdbx.Create|mdbx.DupSort, nil, nil)
+		dbi, _ := txn.OpenDBI(i.opts.Name, mdbx.Create, nil, nil)
 		c, err := txn.OpenCursor(dbi)
 		if err != nil {
 			return err

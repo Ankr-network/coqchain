@@ -65,7 +65,7 @@ func NewMDB(path string, opts *Option) (*MDB, error) {
 	// init dbi
 	m.env.Update(func(txn *mdbx.Txn) error {
 		for _, v := range ethdb.Buckets {
-			txn.OpenDBI(v, mdbx.Create|mdbx.DupSort, nil, nil)
+			txn.OpenDBI(v, mdbx.Create, nil, nil)
 		}
 		return nil
 	})
@@ -81,7 +81,7 @@ func (m *MDB) Has(key []byte, opts *ethdb.Option) (bool, error) {
 	)
 
 	err = m.env.View(func(txn *mdbx.Txn) error {
-		dbi, _ := txn.OpenDBI(opts.Name, mdbx.Create|mdbx.DupSort, nil, nil)
+		dbi, _ := txn.OpenDBI(opts.Name, mdbx.Create, nil, nil)
 		_, err = txn.Get(dbi, key)
 		if err != nil {
 			if mdbx.IsNotFound(err) {
@@ -105,7 +105,7 @@ func (m *MDB) Get(key []byte, opts *ethdb.Option) ([]byte, error) {
 	)
 
 	err = m.env.View(func(txn *mdbx.Txn) error {
-		dbi, _ := txn.OpenDBI(opts.Name, mdbx.Create|mdbx.DupSort, nil, nil)
+		dbi, _ := txn.OpenDBI(opts.Name, mdbx.Create, nil, nil)
 		rs, err = txn.Get(dbi, key)
 		if err != nil {
 			if mdbx.IsNotFound(err) {
@@ -124,7 +124,7 @@ func (m *MDB) Put(key []byte, value []byte, opts *ethdb.Option) error {
 
 	var err error
 	err = m.env.Update(func(txn *mdbx.Txn) error {
-		dbi, _ := txn.OpenDBI(opts.Name, mdbx.Create|mdbx.DupSort, nil, nil)
+		dbi, _ := txn.OpenDBI(opts.Name, mdbx.Create, nil, nil)
 		err = txn.Put(dbi, key, value, opts.Flags)
 		if err != nil {
 			return err
@@ -139,7 +139,7 @@ func (m *MDB) Delete(key []byte, opts *ethdb.Option) error {
 
 	var err error
 	err = m.env.Update(func(txn *mdbx.Txn) error {
-		dbi, _ := txn.OpenDBI(opts.Name, mdbx.Create|mdbx.DupSort, nil, nil)
+		dbi, _ := txn.OpenDBI(opts.Name, mdbx.Create, nil, nil)
 		err = txn.Del(dbi, key, nil)
 		if err != nil && errors.Is(err, ErrNotFound) {
 			return err

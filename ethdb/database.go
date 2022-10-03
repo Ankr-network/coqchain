@@ -39,7 +39,7 @@ const (
 )
 
 var (
-	GlobalDataOption = &Option{Name: GlobalData}
+	GlobalDataOption = &Option{Name: BlockTxData}
 	SnapOption       = &Option{Name: BlockTxData}
 	AncientOption    = &Option{Name: BlockTxData}
 	HeaderHashOption = &Option{Name: BlockTxData}
