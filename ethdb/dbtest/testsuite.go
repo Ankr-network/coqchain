@@ -253,7 +253,6 @@ func TestDatabaseSuite(t *testing.T, New func() ethdb.KeyValueStore) {
 		} else if has {
 			t.Error("db contains element before batch write")
 		}
-
 		if err := b.Write(); err != nil {
 			t.Fatal(err)
 		}
@@ -264,7 +263,6 @@ func TestDatabaseSuite(t *testing.T, New func() ethdb.KeyValueStore) {
 				t.Errorf("got: %s; want: %s", got, want)
 			}
 		}
-
 		b.Reset()
 
 		// Mix writes and deletes in batch

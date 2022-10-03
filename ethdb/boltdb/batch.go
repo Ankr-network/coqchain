@@ -45,7 +45,7 @@ func (b *Batch) Write() error {
 		for _, keyvalue := range b.writes {
 			bt := tx.Bucket(utils.S2B(defaultBucket))
 			if keyvalue.delete {
-				if err = b.db.Delete(keyvalue.key); err != nil {
+				if err = bt.Delete(keyvalue.key); err != nil {
 					return err
 				}
 				continue

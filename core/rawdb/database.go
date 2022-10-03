@@ -380,8 +380,6 @@ func InspectDatabase(db ethdb.Database, keyPrefix, keyStart []byte) error {
 			bloomBits.Add(size)
 		case bytes.HasPrefix(key, BloomBitsIndexPrefix):
 			bloomBits.Add(size)
-		case bytes.HasPrefix(key, []byte("clique-")) && len(key) == 7+common.HashLength:
-			cliqueSnaps.Add(size)
 		case bytes.HasPrefix(key, []byte("posa-")) && len(key) == 7+common.HashLength:
 			posaSnaps.Add(size)
 		case bytes.HasPrefix(key, []byte("cht-")) ||

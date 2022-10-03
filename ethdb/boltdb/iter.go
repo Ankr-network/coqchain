@@ -8,33 +8,51 @@ import (
 )
 
 type Iter struct {
-	db              *BoltDB
-	prefix, nextkey []byte
-	key, val        []byte
-	err             error
+	db            *BoltDB
+	prefix, start []byte
+	curkey        []byte
+	key, val      []byte
+	err           error
+	first         bool
 }
 
 // Next moves the iterator to the next key/value pair. It returns whether the
 // iterator is exhausted.
 func (i *Iter) Next() bool {
-	var err error
-	err = i.db.db.View(func(tx *bbolt.Tx) error {
-		if !bytes.HasPrefix(i.nextkey, i.prefix) {
-			return ErrNotFound
+	var (
+		key, val []byte
+		nextkey  []byte
+		rs       bool
+	)
+	i.db.db.View(func(tx *bbolt.Tx) error {
+		if !i.first && i.curkey == nil {
+			rs = false
+			i.key = nil
+			i.val = nil
+			return nil
 		}
+		i.first = false
 		c := tx.Bucket(utils.S2B(defaultBucket)).Cursor()
-		i.key, i.val = c.Seek(i.nextkey)
-		if i.key != nil && bytes.HasPrefix(i.key, i.prefix) {
-			i.nextkey, _ = c.Next()
+		key, val = c.Seek(i.curkey)
+		if key != nil && bytes.HasPrefix(key, i.prefix) {
+			i.key = make([]byte, len(key))
+			copy(i.key, key)
+			i.val = make([]byte, len(val))
+			copy(i.val, val)
+			nextkey, _ = c.Next()
+			if nextkey != nil {
+				i.curkey = make([]byte, len(nextkey))
+				copy(i.curkey, nextkey)
+			} else {
+				i.curkey = nil
+			}
+			rs = true
 		} else {
-			return ErrNotFound
+			rs = false
 		}
 		return nil
 	})
-	if err != nil {
-		return false
-	}
-	return true
+	return rs
 }
 
 // Error returns any accumulated error. Exhausting all the key/value pairs
@@ -60,5 +78,5 @@ func (i *Iter) Value() []byte {
 // Release releases associated resources. Release should always succeed and can
 // be called multiple times without causing error.
 func (i *Iter) Release() {
-	i.key, i.val, i.nextkey, i.err, i.prefix = nil, nil, nil, nil, nil
+	i.key, i.val, i.curkey, i.err, i.prefix = nil, nil, nil, nil, nil
 }
