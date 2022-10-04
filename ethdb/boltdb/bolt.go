@@ -7,6 +7,7 @@ import (
 	"syscall"
 
 	"github.com/Ankr-network/coqchain/ethdb"
+	"github.com/Ankr-network/coqchain/log"
 	"github.com/Ankr-network/coqchain/utils"
 	"github.com/boltdb/bolt"
 )
@@ -43,7 +44,12 @@ func NewBoltDB(path string) (*BoltDB, error) {
 	// init bucket
 	db.Update(func(tx *bolt.Tx) error {
 		for _, bucketName := range ethdb.Buckets {
-			tx.CreateBucketIfNotExists([]byte(bucketName))
+			b, err := tx.CreateBucketIfNotExists([]byte(bucketName))
+			if err != nil {
+				log.Error("create bolt database", "name", bucketName, "err", err)
+				continue
+			}
+			b.FillPercent = 0.9
 		}
 		return nil
 	})
