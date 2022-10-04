@@ -8,7 +8,7 @@ import (
 
 	"github.com/Ankr-network/coqchain/ethdb"
 	"github.com/Ankr-network/coqchain/utils"
-	"go.etcd.io/bbolt"
+	"github.com/boltdb/bolt"
 )
 
 var (
@@ -18,7 +18,7 @@ var (
 type BoltDB struct {
 	path string
 	file string
-	db   *bbolt.DB
+	db   *bolt.DB
 }
 
 func NewBoltDB(path string) (*BoltDB, error) {
@@ -27,23 +27,21 @@ func NewBoltDB(path string) (*BoltDB, error) {
 
 	d := &BoltDB{path: path, file: filepath.Join(path, "blockchain.dat")}
 
-	opt := &bbolt.Options{
+	opt := &bolt.Options{
 		Timeout:         0,
 		NoGrowSync:      false,
-		NoSync:          false,
 		MmapFlags:       syscall.MAP_POPULATE,
-		PageSize:        1 << 16,
 		InitialMmapSize: 1 << 31,
-		FreelistType:    bbolt.FreelistMapType,
 	}
 
-	db, err := bbolt.Open(d.file, 0664, opt)
+	db, err := bolt.Open(d.file, 0664, opt)
 	if err != nil {
 		return nil, err
 	}
+	db.MaxBatchSize = 10240
 
 	// init bucket
-	db.Update(func(tx *bbolt.Tx) error {
+	db.Update(func(tx *bolt.Tx) error {
 		for _, bucketName := range ethdb.Buckets {
 			tx.CreateBucketIfNotExists([]byte(bucketName))
 		}
@@ -65,7 +63,7 @@ func (d *BoltDB) Has(key []byte, opts *ethdb.Option) (bool, error) {
 		err error
 		rs  bool
 	)
-	err = d.db.View(func(tx *bbolt.Tx) error {
+	err = d.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket(utils.S2B(opts.Name))
 		val := b.Get(key)
 		if val == nil {
@@ -83,7 +81,7 @@ func (d *BoltDB) Get(key []byte, opts *ethdb.Option) ([]byte, error) {
 	var (
 		rs []byte
 	)
-	d.db.View(func(tx *bbolt.Tx) error {
+	d.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket(utils.S2B(opts.Name))
 		rs = b.Get(key)
 		return nil
@@ -97,7 +95,7 @@ func (d *BoltDB) Get(key []byte, opts *ethdb.Option) ([]byte, error) {
 // Put inserts the given value into the key-value data store.
 func (d *BoltDB) Put(key []byte, value []byte, opts *ethdb.Option) error {
 	var err error
-	err = d.db.Update(func(tx *bbolt.Tx) error {
+	err = d.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket(utils.S2B(opts.Name))
 		return b.Put(key, value)
 	})
@@ -107,7 +105,7 @@ func (d *BoltDB) Put(key []byte, value []byte, opts *ethdb.Option) error {
 // Delete removes the key from the key-value data store.
 func (d *BoltDB) Delete(key []byte, opts *ethdb.Option) error {
 	var err error
-	err = d.db.Update(func(tx *bbolt.Tx) error {
+	err = d.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket(utils.S2B(opts.Name))
 		return b.Delete(key)
 	})

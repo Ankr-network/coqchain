@@ -5,7 +5,7 @@ import (
 
 	"github.com/Ankr-network/coqchain/ethdb"
 	"github.com/Ankr-network/coqchain/utils"
-	"go.etcd.io/bbolt"
+	"github.com/boltdb/bolt"
 )
 
 type Iter struct {
@@ -26,7 +26,7 @@ func (i *Iter) Next() bool {
 		nextkey  []byte
 		rs       bool
 	)
-	i.db.db.View(func(tx *bbolt.Tx) error {
+	i.db.db.View(func(tx *bolt.Tx) error {
 		if !i.first && i.curkey == nil {
 			rs = false
 			i.key = nil

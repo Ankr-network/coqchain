@@ -28,14 +28,11 @@ type Option struct {
 
 const (
 	GlobalData     = "global"
-	StorageData    = "storage"
 	StateData      = "state"
-	SnapData       = "snap"
 	AncientData    = "Ancient"
 	HeaderHashData = "header"
 	PreimageData   = "preimage"
 	BlockTxData    = "blocktx"
-	JournalData    = "journal"
 )
 
 var (
@@ -48,7 +45,7 @@ var (
 	StateOption      = &Option{Name: StateData}
 	Buckets          = []string{
 		GlobalData, StateData, StateData,
-		SnapData, AncientData, HeaderHashData,
+		AncientData, HeaderHashData,
 		PreimageData, BlockTxData,
 	}
 )

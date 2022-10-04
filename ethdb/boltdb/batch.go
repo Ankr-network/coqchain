@@ -4,7 +4,7 @@ import (
 	"github.com/Ankr-network/coqchain/common"
 	"github.com/Ankr-network/coqchain/ethdb"
 	"github.com/Ankr-network/coqchain/utils"
-	"go.etcd.io/bbolt"
+	"github.com/boltdb/bolt"
 )
 
 type keyvalue struct {
@@ -42,7 +42,7 @@ func (b *Batch) ValueSize() int {
 // Write flushes any accumulated data to disk.
 func (b *Batch) Write() error {
 	var err error
-	err = b.db.db.Batch(func(tx *bbolt.Tx) error {
+	err = b.db.db.Batch(func(tx *bolt.Tx) error {
 		for _, keyvalue := range b.writes {
 			bt := tx.Bucket(utils.S2B(keyvalue.opts.Name))
 			if keyvalue.delete {
