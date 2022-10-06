@@ -17,6 +17,7 @@
 package keystore
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"math/rand"
@@ -27,10 +28,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cespare/cp"
-	"github.com/davecgh/go-spew/spew"
 	"github.com/Ankr-network/coqchain/accounts"
 	"github.com/Ankr-network/coqchain/common"
+	"github.com/cespare/cp"
+	"github.com/davecgh/go-spew/spew"
 )
 
 var (
@@ -286,7 +287,7 @@ func TestCacheFind(t *testing.T) {
 	}
 	for i, test := range tests {
 		a, err := cache.find(test.Query)
-		if !reflect.DeepEqual(err, test.WantError) {
+		if !errors.As(err, test.WantError) {
 			t.Errorf("test %d: error mismatch for query %v\ngot %q\nwant %q", i, test.Query, err, test.WantError)
 			continue
 		}
