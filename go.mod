@@ -3,6 +3,7 @@ module github.com/Ankr-network/coqchain
 go 1.15
 
 require (
+	github.com/Ankr-network/bolt v0.0.0-20221006081951-75ebd221a475
 	github.com/Azure/azure-pipeline-go v0.2.2 // indirect
 	github.com/Azure/azure-storage-blob-go v0.7.0
 	github.com/Azure/go-autorest/autorest/adal v0.8.0 // indirect
@@ -54,7 +55,6 @@ require (
 	github.com/rs/cors v1.7.0
 	github.com/shirou/gopsutil v3.21.4-0.20210419000835-c7a38de76ee5+incompatible
 	github.com/stretchr/testify v1.8.0
-	github.com/sunvim/bolt v0.0.0-20221006072919-4e33c10c3819
 	github.com/sunvim/utils v0.0.6
 	github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7
 	github.com/tklauser/go-sysconf v0.3.5 // indirect

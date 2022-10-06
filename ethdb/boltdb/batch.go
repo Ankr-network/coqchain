@@ -1,10 +1,10 @@
 package boltdb
 
 import (
+	"github.com/Ankr-network/bolt"
 	"github.com/Ankr-network/coqchain/common"
 	"github.com/Ankr-network/coqchain/ethdb"
 	"github.com/Ankr-network/coqchain/utils"
-	"github.com/sunvim/bolt"
 )
 
 type keyvalue struct {
