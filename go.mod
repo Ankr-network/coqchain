@@ -3,7 +3,7 @@ module github.com/Ankr-network/coqchain
 go 1.15
 
 require (
-	github.com/Ankr-network/bolt v0.0.0-20221006081951-75ebd221a475
+	github.com/Ankr-network/bolt v0.0.0-20221007090257-d036588e155d
 	github.com/Azure/azure-pipeline-go v0.2.2 // indirect
 	github.com/Azure/azure-storage-blob-go v0.7.0
 	github.com/Azure/go-autorest/autorest/adal v0.8.0 // indirect
