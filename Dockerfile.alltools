@@ -4,7 +4,7 @@ ARG VERSION=""
 ARG BUILDNUM=""
 ARG DEBIAN_FRONTEND=noninteractive
 # Build Geth in a stock Go builder container
-FROM golang:1.17 as builder
+FROM golang:1.19 as builder
 RUN apt-get update && apt-get install -y  apt-utils gcc musl-dev  git libzstd-dev
 
 ADD . /coqchain
