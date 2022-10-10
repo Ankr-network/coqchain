@@ -6,10 +6,10 @@ import (
 	"path/filepath"
 	"syscall"
 
-	"github.com/Ankr-network/bolt"
 	"github.com/Ankr-network/coqchain/ethdb"
 	"github.com/Ankr-network/coqchain/log"
 	"github.com/Ankr-network/coqchain/utils"
+	"github.com/boltdb/bolt"
 )
 
 var (

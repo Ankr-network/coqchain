@@ -5,7 +5,7 @@ import (
 
 	"github.com/Ankr-network/coqchain/ethdb"
 	"github.com/Ankr-network/coqchain/utils"
-	"github.com/Ankr-network/bolt"
+	"github.com/boltdb/bolt"
 )
 
 type Iter struct {

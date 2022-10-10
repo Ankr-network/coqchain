@@ -3,13 +3,13 @@ module github.com/Ankr-network/coqchain
 go 1.15
 
 require (
-	github.com/Ankr-network/bolt v0.0.0-20221007090257-d036588e155d
 	github.com/Azure/azure-pipeline-go v0.2.2 // indirect
 	github.com/Azure/azure-storage-blob-go v0.7.0
 	github.com/Azure/go-autorest/autorest/adal v0.8.0 // indirect
 	github.com/StackExchange/wmi v0.0.0-20180116203802-5d049714c4a6 // indirect
 	github.com/VictoriaMetrics/fastcache v1.6.0
 	github.com/bluele/gcache v0.0.2
+	github.com/boltdb/bolt v1.3.1
 	github.com/btcsuite/btcd v0.20.1-beta
 	github.com/c2h5oh/datasize v0.0.0-20220606134207-859f65c6625b
 	github.com/cespare/cp v0.1.0
