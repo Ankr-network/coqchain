@@ -63,7 +63,6 @@ import (
 	"github.com/Ankr-network/coqchain/p2p/nat"
 	"github.com/Ankr-network/coqchain/p2p/netutil"
 	"github.com/Ankr-network/coqchain/params"
-	"github.com/Ankr-network/coqchain/utils/share"
 	gopsutil "github.com/shirou/gopsutil/mem"
 	"gopkg.in/urfave/cli.v1"
 )
@@ -126,16 +125,6 @@ var (
 		Name:  "networkid",
 		Usage: "Explicitly set network id (integer)(For testnets: use --ropsten, --rinkeby, --goerli instead)",
 		Value: ethconfig.Defaults.NetworkId,
-	}
-
-	PruneFlag = cli.BoolFlag{
-		Name:  "prune",
-		Usage: "will auto prune state data, keep recent 1024 block state data",
-	}
-	PruneSizeFlag = cli.Uint64Flag{
-		Name:  share.PruneSize,
-		Usage: "keep block with specified value",
-		Value: 1,
 	}
 
 	DeveloperFlag = cli.BoolFlag{
