@@ -45,7 +45,7 @@ func balance() {
 	addr := common.HexToAddress(contractAddress)
 	instance, _ := staker.NewStaker(addr, client)
 
-	rs, err := instance.BalanceOf(&bind.CallOpts{}, taddr)
+	rs, err := instance.Balances(&bind.CallOpts{}, taddr)
 	if err != nil {
 		log.Println("get epoch failed: ", err)
 		return
@@ -111,7 +111,7 @@ func depost() {
 	addr := common.HexToAddress(contractAddress)
 	instance, err := staker.NewStaker(addr, client)
 
-	tx, err := instance.Deposit(auth)
+	tx, err := instance.Stake(auth)
 	if err != nil {
 		log.Printf("deposit err: %v \n", err)
 		return

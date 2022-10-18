@@ -28,6 +28,7 @@ import (
 	"github.com/Ankr-network/coqchain/crypto"
 	"github.com/Ankr-network/coqchain/params"
 	"github.com/Ankr-network/coqchain/utils/extdb"
+	"github.com/Ankr-network/coqchain/utils/staker"
 )
 
 // StateProcessor is a basic Processor, which takes care of transitioning
@@ -82,6 +83,8 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 		receipts = append(receipts, receipt)
 		allLogs = append(allLogs, receipt.Logs...)
 	}
+
+	staker.Vote(statedb, block.Header())
 
 	// Finalize the block, applying any consensus engine specific extras (e.g. block rewards)
 	p.engine.Finalize(p.bc, header, statedb, block.Transactions(), block.Uncles())

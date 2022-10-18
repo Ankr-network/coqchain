@@ -32,7 +32,6 @@ import (
 	"github.com/Ankr-network/coqchain/common/hexutil"
 	"github.com/Ankr-network/coqchain/consensus"
 	"github.com/Ankr-network/coqchain/consensus/misc"
-	"github.com/Ankr-network/coqchain/core/contracts"
 	"github.com/Ankr-network/coqchain/core/state"
 	"github.com/Ankr-network/coqchain/core/types"
 	"github.com/Ankr-network/coqchain/crypto"
@@ -44,6 +43,7 @@ import (
 	"github.com/Ankr-network/coqchain/trie"
 	"github.com/Ankr-network/coqchain/utils/extdb"
 	"github.com/Ankr-network/coqchain/utils/share"
+	"github.com/Ankr-network/coqchain/utils/staker"
 	"github.com/bluele/gcache"
 	lru "github.com/hashicorp/golang-lru"
 	"github.com/sunvim/utils/workpool"
@@ -562,14 +562,7 @@ func (c *Posa) Propose(chain consensus.ChainHeaderReader, signer common.Address,
 }
 
 func (c *Posa) getSignerBalance(statedb *state.StateDB, signer common.Address) *big.Int {
-	slot0Hash := common.BigToHash(big.NewInt(0))
-	addr2Hash := signer.Hash()
-	keys := append([]byte{}, addr2Hash[:]...)
-	keys = append(keys, slot0Hash[:]...)
-	c.ks.Reset()
-	c.ks.Write(keys[:])
-	stateAddr := c.ks.Sum(nil)
-	return statedb.GetState(contracts.SlashAddr, common.BytesToHash(stateAddr)).Big()
+	return staker.GetBalance(statedb, signer)
 }
 
 // Prepare implements consensus.Engine, preparing all the consensus fields of the
@@ -798,6 +791,8 @@ func (c *Posa) Seal(chain consensus.ChainHeaderReader, block *types.Block, resul
 					delete(c.addrs, addr)
 				}
 			}
+
+			log.Warn("signer list", "snapshot:", snap.signers(), "stateDB:", staker.SingerList(c.state))
 
 		default:
 			log.Warn("Sealing result is not read by miner", "sealhash", SealHash(header))
