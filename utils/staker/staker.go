@@ -87,7 +87,7 @@ func Constructor(statedb *state.StateDB, validatorList []common.Address, config 
 					slotAddrBig,
 					big.NewInt(signerCnt),
 				),
-			), common.BytesToHash(common.RightPadBytes(addr.Bytes(), 32)))
+			), common.BytesToHash(addr.Bytes()))
 
 			// Keccak256(k.p)
 			statedb.SetState(contracts.SlashAddr, crypto.Keccak256Hash(
@@ -191,8 +191,8 @@ func processLastVote(statedb *state.StateDB, blockNum *big.Int) {
 
 	if cycle.Cmp(big.NewInt(0)) > 0 {
 		lastCycle := big.NewInt(0).Sub(cycle, big.NewInt(1))
-		LastEpochProposalVotees := getEpochProposalVoteesNumByCycle(statedb, lastCycle)
 
+		LastEpochProposalVotees := getEpochProposalVoteesNumByCycle(statedb, lastCycle)
 		if LastEpochProposalVotees.Cmp(big.NewInt(0)) > 0 &&
 			!checkEpochVoted(statedb, lastCycle) {
 
@@ -213,6 +213,7 @@ func processLastVote(statedb *state.StateDB, blockNum *big.Int) {
 						agreeNum.Add(agreeNum, big.NewInt(1))
 					}
 				})
+
 				if agreeNum.Cmp(signersMedian) > 0 {
 					if proposalVoteType == voteTypeJoin {
 						proposalJoinHandle(statedb, proposalVotee)
@@ -252,12 +253,17 @@ func checkEpochVoted(statedb *state.StateDB, cycle *big.Int) bool {
 	).Big().Text(10) == "1"
 }
 
-func setEpochVoted(statedb *state.StateDB, number *big.Int, res bool) {
+func setEpochVoted(statedb *state.StateDB, cycle *big.Int, res bool) {
 	value := common.Hash{}
 	if res {
 		value = common.BytesToHash([]byte{1})
 	}
-	statedb.SetState(contracts.SlashAddr, common.BytesToHash([]byte{epochSlot}), value)
+	statedb.SetState(contracts.SlashAddr,
+		crypto.Keccak256Hash(
+			common.BigToHash(cycle).Bytes(),
+			common.BytesToHash([]byte{epochVotedSlot}).Bytes(),
+		),
+		value)
 }
 
 func setBalance(statedb *state.StateDB, address common.Address, amount *big.Int) {
@@ -277,12 +283,12 @@ func singerListNum(statedb *state.StateDB) *big.Int {
 
 func SingerList(statedb *state.StateDB) []common.Address {
 	index := crypto.Keccak256Hash(
-		common.LeftPadBytes([]byte{signersListSlot}, 32),
+		common.BytesToHash([]byte{signersListSlot}).Bytes(),
 	).Big()
 	listNum := singerListNum(statedb)
 	list := make([]common.Address, listNum.Uint64())
 	for i := big.NewInt(0); i.Cmp(listNum) < 0; i.Add(i, big.NewInt(1)) {
-		list[i.Int64()] = common.BytesToAddress(statedb.GetState(contracts.SlashAddr, common.BigToHash(index.Add(index, big.NewInt(1)))).Bytes())
+		list[i.Int64()] = common.BytesToAddress(statedb.GetState(contracts.SlashAddr, common.BigToHash(big.NewInt(0).Add(index, i))).Bytes())
 	}
 	return list
 }
@@ -303,14 +309,14 @@ func removeSigner(statedb *state.StateDB, address common.Address) {
 
 		indexes := statedb.GetState(contracts.SlashAddr, common.BytesToHash(common.LeftPadBytes([]byte{signersListSlot}, 32))).Big()
 
-		listSlot := common.BytesToHash(crypto.Keccak256(common.LeftPadBytes([]byte{signersListSlot}, 32))).Big()
+		listSlot := crypto.Keccak256Hash(common.LeftPadBytes([]byte{signersListSlot}, 32)).Big()
 		var exist bool
 		for i := big.NewInt(0); indexes.Cmp(i) > 0; i.Add(i, big.NewInt(1)) {
 			if common.BytesToAddress(
 				statedb.GetState(contracts.SlashAddr, common.BigToHash(big.NewInt(0).Add(listSlot, i))).Bytes(),
 			) == address {
 				exist = true
-				statedb.SetState(contracts.SlashAddr, common.BigToHash(big.NewInt(0).Add(listSlot, i)), common.Hash{})
+				statedb.SetState(contracts.SlashAddr, common.BigToHash(big.NewInt(0).Add(listSlot, i)), statedb.GetState(contracts.SlashAddr, common.BigToHash(big.NewInt(0).Add(listSlot, big.NewInt(0).Sub(indexes, big.NewInt(1))))))
 				break
 			}
 		}
@@ -550,9 +556,11 @@ func epochProposalsHandle(statedb *state.StateDB, cycle *big.Int, votee common.A
 		vote := common.BytesToAddress(
 			statedb.GetState(
 				contracts.SlashAddr,
-				crypto.Keccak256Hash(big.NewInt(0).Add(epochProposalsVoteeListKey, i).Bytes()),
+				common.BigToHash(big.NewInt(0).Add(
+					crypto.Keccak256Hash(common.BigToHash(epochProposalsVoteeListKey).Bytes()).Big(),
+					i,
+				)),
 			).Bytes())
-
 		callback(
 			vote,
 			voteRes(statedb.GetState(

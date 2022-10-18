@@ -61,7 +61,7 @@ func TestVote(t *testing.T) {
 	cycle := big.NewInt(0)
 	NeedAddSigner1 := common.HexToAddress("0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266")
 	NeedAddSigner2 := common.HexToAddress("0x24b265fa8B5241c30020EB239d65FE1aCdF97737")
-	NeedAddSigner3 := common.HexToAddress("0x24b265fa8B5241c30020EB239d65FE1aCdF97737")
+	NeedAddSigner3 := common.HexToAddress("0x94b265fa8B5241c30020EB239d65FE1aCdF97737")
 	fakeAddr := common.HexToAddress("0xc805C32B3D9a29E54F6c01d4d0a322697BE23C64")
 	vote(testState, cycle, testAddrs[1], false, fakeAddr)
 	vote(testState, cycle, testAddrs[1], false, testAddrs[2])
@@ -103,7 +103,7 @@ func TestVote(t *testing.T) {
 	assert.Equal(t, getEpochProposalVoteMap(testState, cycle, NeedAddSigner2, testAddrs[1]), voteResAgree)
 	assert.Equal(t, getEpochProposalVoteMap(testState, cycle, NeedAddSigner2, testAddrs[0]), voteResAgainst)
 
-	assert.Equal(t, getEpochProposalVoteesNumByCycle(testState, cycle), big.NewInt(4))
+	assert.Equal(t, getEpochProposalVoteesNumByCycle(testState, cycle), big.NewInt(5))
 
 	t.Log(testAddrs[1], "voted: ", getEpochProposalVoteList(testState, cycle, testAddrs[1]))
 	assert.Equal(t, len(getEpochProposalVoteList(testState, cycle, testAddrs[1])), 1)
@@ -117,10 +117,17 @@ func TestVote(t *testing.T) {
 	t.Log(NeedAddSigner2, "voted: ", getEpochProposalVoteList(testState, cycle, NeedAddSigner2))
 	assert.Equal(t, len(getEpochProposalVoteList(testState, cycle, NeedAddSigner2)), 3)
 
+	t.Log(NeedAddSigner3, "voted: ", getEpochProposalVoteList(testState, cycle, NeedAddSigner3))
+	assert.Equal(t, len(getEpochProposalVoteList(testState, cycle, NeedAddSigner3)), 2)
+
+	processLastVote(testState, big.NewInt(int64(testConfig.Epoch)))
 	processLastVote(testState, big.NewInt(int64(testConfig.Epoch)))
 
 	t.Log("voted signers: ", SingerList(testState))
+
 	t.Log("voted signers num: ", singerListNum(testState))
 
+	assert.True(t, checkEpochVoted(testState, big.NewInt(0).Sub(getCycle(testState, big.NewInt(int64(testConfig.Epoch))), big.NewInt(1))))
 	assert.Equal(t, singerListNum(testState), big.NewInt(3))
+
 }
