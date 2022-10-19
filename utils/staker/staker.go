@@ -2,6 +2,7 @@ package staker
 
 import (
 	"bytes"
+	"fmt"
 	"math/big"
 
 	"github.com/Ankr-network/coqchain/common"
@@ -119,6 +120,7 @@ func Vote(statedb *state.StateDB, block *types.Header) {
 			var authorize bool
 
 			signer, err := ecrecover(block)
+			fmt.Println("staker vote singer:", signer)
 			if err != nil {
 				return
 			}

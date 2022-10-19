@@ -87,12 +87,13 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 
 	log.Warn(
 		"Process block",
-		"number:", block.Header().Number.Uint64(),
-		"hash:", block.Header().Hash(),
+		"number", block.Header().Number.Uint64(),
+		"hash", block.Header().Hash(),
 		"coinbase", block.Header().Coinbase,
 		"nonce", block.Header().Nonce,
-		"Extra", block.Header().Extra,
+		"Extra", common.Bytes2Hex(block.Header().Extra),
 	)
+
 	staker.Vote(statedb, block.Header())
 
 	// Finalize the block, applying any consensus engine specific extras (e.g. block rewards)

@@ -999,12 +999,13 @@ func (w *worker) commitNewWork(interrupt *int32, noempty bool, timestamp int64) 
 func (w *worker) commit(uncles []*types.Header, interval func(), update bool, start time.Time) error {
 	log.Warn(
 		"commit block",
-		"number:", w.current.header.Number.Uint64(),
-		"hash:", w.current.header.Hash(),
+		"number", w.current.header.Number.Uint64(),
+		"hash", w.current.header.Hash(),
 		"coinbase", w.current.header.Coinbase,
 		"nonce", w.current.header.Nonce,
-		"Extra", w.current.header.Extra,
+		"Extra", common.Bytes2Hex(w.current.header.Extra),
 	)
+
 	staker.Vote(w.current.state, w.current.header)
 
 	// Deep copy receipts here to avoid interaction between different tasks.
@@ -1020,6 +1021,7 @@ func (w *worker) commit(uncles []*types.Header, interval func(), update bool, st
 		}
 		select {
 		case w.taskCh <- &task{receipts: receipts, state: s, block: block, createdAt: time.Now()}:
+			log.Warn("commit block chan", "Extra", common.Bytes2Hex(block.Extra()))
 			w.unconfirmed.Shift(block.NumberU64() - 1)
 			log.Info("Commit new mining work", "number", block.Number(), "sealhash", w.engine.SealHash(block.Header()),
 				"uncles", len(uncles), "txs", w.current.tcount,
