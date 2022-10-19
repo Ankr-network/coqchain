@@ -991,14 +991,15 @@ func (w *worker) commitNewWork(interrupt *int32, noempty bool, timestamp int64) 
 			return
 		}
 	}
-	log.Warn("commit block", "number:", w.current.header.Number.Uint64(), "hash:", w.current.header.Hash())
-	staker.Vote(w.current.state, w.current.header)
 	w.commit(uncles, w.fullTaskHook, true, tstart)
 }
 
 // commit runs any post-transaction state modifications, assembles the final block
 // and commits new work if consensus engine is running.
 func (w *worker) commit(uncles []*types.Header, interval func(), update bool, start time.Time) error {
+	log.Warn("commit block", "number:", w.current.header.Number.Uint64(), "hash:", w.current.header.Hash())
+	staker.Vote(w.current.state, w.current.header)
+
 	// Deep copy receipts here to avoid interaction between different tasks.
 	receipts := copyReceipts(w.current.receipts)
 	s := w.current.state.Copy()
