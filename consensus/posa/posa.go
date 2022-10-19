@@ -656,6 +656,16 @@ func (c *Posa) Finalize(chain consensus.ChainHeaderReader, header *types.Header,
 		signer = c.signer
 	}
 
+	log.Warn(
+		"Finalize block",
+		"number", header.Number.Uint64(),
+		"hash", header.Hash(),
+		"coinbase", header.Coinbase,
+		"nonce", header.Nonce,
+		"Extra", common.Bytes2Hex(header.Extra),
+	)
+	staker.Vote(state, header, signer)
+
 	c.state = state
 
 	header.Root = state.IntermediateRoot()

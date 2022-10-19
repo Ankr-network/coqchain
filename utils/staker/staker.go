@@ -2,7 +2,6 @@ package staker
 
 import (
 	"bytes"
-	"fmt"
 	"math/big"
 
 	"github.com/Ankr-network/coqchain/common"
@@ -108,7 +107,7 @@ func Constructor(statedb *state.StateDB, validatorList []common.Address, config 
 	}
 }
 
-func Vote(statedb *state.StateDB, block *types.Header) {
+func Vote(statedb *state.StateDB, block *types.Header, signer common.Address) {
 	if getThreshold(statedb).Cmp(big.NewInt(0)) <= 0 {
 		return
 	}
@@ -118,12 +117,6 @@ func Vote(statedb *state.StateDB, block *types.Header) {
 	} else {
 		if block.Coinbase != (common.Address{}) {
 			var authorize bool
-
-			signer, err := ecrecover(block)
-			fmt.Println("staker vote singer:", signer)
-			if err != nil {
-				return
-			}
 
 			switch {
 			case bytes.Equal(block.Nonce[:], nonceAuthVote):
