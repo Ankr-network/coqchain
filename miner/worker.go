@@ -1005,7 +1005,8 @@ func (w *worker) commit(uncles []*types.Header, interval func(), update bool, st
 		"nonce", w.current.header.Nonce,
 		"Extra", common.Bytes2Hex(w.current.header.Extra),
 	)
-
+	signer, _ := w.engine.Author(w.current.header)
+	log.Warn("commit block signer", signer)
 	staker.Vote(w.current.state, w.current.header)
 
 	// Deep copy receipts here to avoid interaction between different tasks.
@@ -1021,7 +1022,6 @@ func (w *worker) commit(uncles []*types.Header, interval func(), update bool, st
 		}
 		select {
 		case w.taskCh <- &task{receipts: receipts, state: s, block: block, createdAt: time.Now()}:
-			log.Warn("commit block chan", "Extra", common.Bytes2Hex(block.Extra()))
 			w.unconfirmed.Shift(block.NumberU64() - 1)
 			log.Info("Commit new mining work", "number", block.Number(), "sealhash", w.engine.SealHash(block.Header()),
 				"uncles", len(uncles), "txs", w.current.tcount,
