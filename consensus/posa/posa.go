@@ -659,6 +659,7 @@ func (c *Posa) Finalize(chain consensus.ChainHeaderReader, header *types.Header,
 	c.state = state
 
 	header.Root = state.IntermediateRoot()
+	log.Warn("stateroot,", "blockNo", header.Number.Uint64(), "stateRoot ", header.Root)
 	header.UncleHash = types.CalcUncleHash(nil)
 	c.recentSigners.SetWithExpire(signer, struct{}{}, time.Second*time.Duration(c.config.Period*c.config.Epoch))
 
