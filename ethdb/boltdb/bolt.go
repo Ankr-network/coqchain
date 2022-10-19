@@ -9,7 +9,7 @@ import (
 	"github.com/Ankr-network/coqchain/ethdb"
 	"github.com/Ankr-network/coqchain/log"
 	"github.com/Ankr-network/coqchain/utils"
-	"github.com/boltdb/bolt"
+	bolt "go.etcd.io/bbolt"
 )
 
 var (
@@ -33,6 +33,8 @@ func NewBoltDB(path string) (*BoltDB, error) {
 		NoGrowSync:      false,
 		MmapFlags:       syscall.MAP_POPULATE,
 		InitialMmapSize: 1 << 31,
+		FreelistType:    bolt.FreelistMapType,
+		Mlock:           true,
 	}
 
 	db, err := bolt.Open(d.file, 0664, opt)

@@ -4,7 +4,7 @@ import (
 	"github.com/Ankr-network/coqchain/common"
 	"github.com/Ankr-network/coqchain/ethdb"
 	"github.com/Ankr-network/coqchain/utils"
-	"github.com/boltdb/bolt"
+	bolt "go.etcd.io/bbolt"
 )
 
 type keyvalue struct {
