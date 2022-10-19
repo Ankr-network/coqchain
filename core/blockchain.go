@@ -44,6 +44,7 @@ import (
 	"github.com/Ankr-network/coqchain/metrics"
 	"github.com/Ankr-network/coqchain/params"
 	"github.com/Ankr-network/coqchain/trie"
+	"github.com/Ankr-network/coqchain/utils/staker"
 	lru "github.com/hashicorp/golang-lru"
 )
 
@@ -1631,8 +1632,9 @@ func (bc *BlockChain) insertChain(chain types.Blocks, verifySeals bool) (int, er
 
 		// Validate the state using the default validator
 		substart = time.Now()
+		staker.Vote(statedb, block.Header())
 		if err := bc.validator.ValidateState(block, statedb, receipts, usedGas); err != nil {
-			log.Warn("1612 ValidateState")
+			log.Warn("1635 ValidateState", "err", err.Error())
 			bc.reportBlock(block, receipts, err)
 			atomic.StoreUint32(&followupInterrupt, 1)
 			return it.index, err

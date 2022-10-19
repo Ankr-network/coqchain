@@ -24,7 +24,6 @@ import (
 	"github.com/Ankr-network/coqchain/core/types"
 	"github.com/Ankr-network/coqchain/params"
 	"github.com/Ankr-network/coqchain/trie"
-	"github.com/Ankr-network/coqchain/utils/staker"
 )
 
 // BlockValidator is responsible for validating block headers, uncles and
@@ -95,7 +94,6 @@ func (v *BlockValidator) ValidateState(block *types.Block, statedb *state.StateD
 	if receiptSha != header.ReceiptHash {
 		return fmt.Errorf("invalid receipt root hash (remote: %x local: %x)", header.ReceiptHash, receiptSha)
 	}
-	staker.Vote(statedb, block.Header())
 	// Validate the state root against the received state root and throw
 	// an error if they don't match.
 	if root := statedb.IntermediateRoot(); header.Root != root {
