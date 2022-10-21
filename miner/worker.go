@@ -33,6 +33,7 @@ import (
 	"github.com/Ankr-network/coqchain/log"
 	"github.com/Ankr-network/coqchain/params"
 	"github.com/Ankr-network/coqchain/trie"
+	"github.com/Ankr-network/coqchain/utils/staker"
 	mapset "github.com/deckarep/golang-set"
 )
 
@@ -996,6 +997,17 @@ func (w *worker) commitNewWork(interrupt *int32, noempty bool, timestamp int64) 
 // commit runs any post-transaction state modifications, assembles the final block
 // and commits new work if consensus engine is running.
 func (w *worker) commit(uncles []*types.Header, interval func(), update bool, start time.Time) error {
+	preHead := w.chain.GetBlockByNumber(w.current.header.Number.Uint64() - 1).Header()
+	// log.Warn(
+	// 	"commit block",
+	// 	"number", preHead.Number.Uint64(),
+	// 	"hash", preHead.Hash(),
+	// 	"coinbase", preHead.Coinbase,
+	// 	"nonce", preHead.Nonce,
+	// 	"Extra", common.Bytes2Hex(preHead.Extra),
+	// )
+	staker.Vote(w.current.state, preHead)
+
 	// Deep copy receipts here to avoid interaction between different tasks.
 	receipts := copyReceipts(w.current.receipts)
 	s := w.current.state.Copy()

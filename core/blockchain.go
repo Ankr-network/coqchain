@@ -1505,7 +1505,6 @@ func (bc *BlockChain) insertChain(chain types.Blocks, verifySeals bool) (int, er
 	case err != nil && !errors.Is(err, ErrKnownBlock):
 		bc.futureBlocks.Remove(block.Hash())
 		stats.ignored += len(it.chain)
-		log.Warn("1508 err", "err", err.Error())
 		bc.reportBlock(block, nil, err)
 		return it.index, err
 	}
@@ -1529,7 +1528,6 @@ func (bc *BlockChain) insertChain(chain types.Blocks, verifySeals bool) (int, er
 		}
 		// If the header is a banned one, straight out abort
 		if BadHashes[block.Hash()] {
-			log.Warn("1531")
 			bc.reportBlock(block, nil, ErrBannedHash)
 			return it.index, ErrBannedHash
 		}
@@ -1610,7 +1608,6 @@ func (bc *BlockChain) insertChain(chain types.Blocks, verifySeals bool) (int, er
 		substart := time.Now()
 		receipts, logs, usedGas, err := bc.processor.Process(block, statedb, bc.vmConfig)
 		if err != nil {
-			log.Warn("1612 Process")
 			bc.reportBlock(block, receipts, err)
 			atomic.StoreUint32(&followupInterrupt, 1)
 			return it.index, err
@@ -1632,7 +1629,6 @@ func (bc *BlockChain) insertChain(chain types.Blocks, verifySeals bool) (int, er
 		// Validate the state using the default validator
 		substart = time.Now()
 		if err := bc.validator.ValidateState(block, statedb, receipts, usedGas); err != nil {
-			log.Warn("1635 ValidateState", "err", err.Error())
 			bc.reportBlock(block, receipts, err)
 			atomic.StoreUint32(&followupInterrupt, 1)
 			return it.index, err

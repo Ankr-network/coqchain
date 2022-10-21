@@ -37,14 +37,6 @@ func TestCheck(t *testing.T) {
 
 	assert.Equal(t, getFineRatio(testState), big.NewInt(10))
 
-	assert.Equal(t, getCycle(testState, big.NewInt(1)), big.NewInt(0))
-
-	assert.Equal(t, checkEpochVoted(testState, big.NewInt(0)), false)
-
-	// setEpochVoted()
-
-	assert.True(t, checkBalanceGreaterThreshold(testState, testAddrs[0]))
-
 	for i := range testAddrs {
 		assert.Equal(t, GetBalance(testState, testAddrs[i]), testConfig.SealerBalanceThreshold)
 		assert.True(t, signersContain(testState, testAddrs[i]))
@@ -54,80 +46,117 @@ func TestCheck(t *testing.T) {
 
 	assert.Equal(t, singerListNum(testState), big.NewInt(int64(len(testAddrs))))
 
+	addSigner(testState, common.HexToAddress("0xE0804972d5535a5764dfdbD432ebE58F0419C594"))
+	assert.True(t, signersContain(testState, common.HexToAddress("0xE0804972d5535a5764dfdbD432ebE58F0419C594")))
+	removeSigner(testState, common.HexToAddress("0xE0804972d5535a5764dfdbD432ebE58F0419C594"))
+	assert.False(t, signersContain(testState, common.HexToAddress("0xE0804972d5535a5764dfdbD432ebE58F0419C594")))
+	removeSigner(testState, testAddrs[1])
+
 	t.Log(SingerList(testState))
+
+	hash := common.HexToHash("0x000000000000000000000001ab8483f64d9c6d1ecf9b849ae677dd3315835cb2")
+	p := toVoteInfo(hash)
+	t.Log(p.vote)
+	t.Log(p.authorize)
+
+	assert.True(t, p.toHash() == hash)
+
 }
 
 func TestVote(t *testing.T) {
-	cycle := big.NewInt(0)
 	NeedAddSigner1 := common.HexToAddress("0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266")
 	NeedAddSigner2 := common.HexToAddress("0x24b265fa8B5241c30020EB239d65FE1aCdF97737")
 	NeedAddSigner3 := common.HexToAddress("0x94b265fa8B5241c30020EB239d65FE1aCdF97737")
 	fakeAddr := common.HexToAddress("0xc805C32B3D9a29E54F6c01d4d0a322697BE23C64")
-	vote(testState, cycle, testAddrs[1], false, fakeAddr)
-	vote(testState, cycle, testAddrs[1], false, testAddrs[2])
 
-	vote(testState, cycle, testAddrs[0], false, testAddrs[2])
-	vote(testState, cycle, testAddrs[0], false, testAddrs[1])
-	vote(testState, cycle, testAddrs[0], true, testAddrs[0])
+	testVote(testState, big.NewInt(1), testAddrs[1], false, fakeAddr)
+	assert.Equal(t, getProposalVoteInfo(testState, testAddrs[1], big.NewInt(0)), common.Hash{})
+	testVote(testState, big.NewInt(1), testAddrs[1], false, testAddrs[2])
+	assert.Equal(t, getProposalVoteInfo(testState, testAddrs[1], big.NewInt(0)), (&voteInfo{vote: testAddrs[2]}).toHash())
 
-	vote(testState, cycle, NeedAddSigner1, true, fakeAddr)
-	vote(testState, cycle, NeedAddSigner1, true, testAddrs[1])
-	vote(testState, cycle, NeedAddSigner1, false, testAddrs[0])
+	assert.True(t, getVoteNum(testState, testAddrs[1]).Cmp(big.NewInt(1)) == 0)
 
-	vote(testState, cycle, NeedAddSigner2, true, testAddrs[2])
-	vote(testState, cycle, NeedAddSigner2, true, testAddrs[1])
-	vote(testState, cycle, NeedAddSigner2, false, testAddrs[0])
+	testVote(testState, big.NewInt(1), testAddrs[0], false, testAddrs[2])
+	assert.Equal(t, getProposalVoteInfo(testState, testAddrs[0], big.NewInt(0)), (&voteInfo{vote: testAddrs[2]}).toHash())
+	testVote(testState, big.NewInt(1), testAddrs[0], false, testAddrs[1])
+	assert.Equal(t, getProposalVoteInfo(testState, testAddrs[0], big.NewInt(1)), common.Hash{})
+	testVote(testState, big.NewInt(1), testAddrs[0], true, testAddrs[0])
+	assert.Equal(t, getProposalVoteInfo(testState, testAddrs[0], big.NewInt(0)), common.Hash{})
+
+	testVote(testState, big.NewInt(1), NeedAddSigner1, true, fakeAddr)
+	assert.Equal(t, getProposalVoteInfo(testState, NeedAddSigner1, big.NewInt(0)), common.Hash{})
+	testVote(testState, big.NewInt(1), NeedAddSigner1, true, testAddrs[1])
+	assert.Equal(t, getProposalVoteInfo(testState, NeedAddSigner1, big.NewInt(0)), common.Hash{})
+	testVote(testState, big.NewInt(1), NeedAddSigner1, false, testAddrs[0])
+	assert.Equal(t, getProposalVoteInfo(testState, NeedAddSigner1, big.NewInt(1)), common.Hash{})
+
+	testVote(testState, big.NewInt(1), NeedAddSigner2, true, testAddrs[2])
+	assert.Equal(t, getProposalVoteInfo(testState, NeedAddSigner2, big.NewInt(0)), common.Hash{})
+	testVote(testState, big.NewInt(1), NeedAddSigner2, true, testAddrs[1])
+	assert.Equal(t, getProposalVoteInfo(testState, NeedAddSigner2, big.NewInt(1)), common.Hash{})
+	testVote(testState, big.NewInt(1), NeedAddSigner2, false, testAddrs[0])
+	assert.Equal(t, getProposalVoteInfo(testState, NeedAddSigner2, big.NewInt(2)), common.Hash{})
 
 	setBalance(testState, NeedAddSigner3, testConfig.SealerBalanceThreshold)
-	vote(testState, cycle, NeedAddSigner3, true, testAddrs[1])
-	vote(testState, cycle, NeedAddSigner3, false, fakeAddr)
-	vote(testState, cycle, NeedAddSigner3, true, testAddrs[2])
+	testVote(testState, big.NewInt(1), NeedAddSigner3, true, testAddrs[1])
 
-	assert.Equal(t, getEpochProposalVoteType(testState, cycle, testAddrs[1]), voteTypeExit)
-	assert.Equal(t, getEpochProposalVoteType(testState, cycle, testAddrs[0]), voteTypeExit)
-	assert.Equal(t, getEpochProposalVoteType(testState, cycle, NeedAddSigner1), voteTypeJoin)
-	assert.Equal(t, getEpochProposalVoteType(testState, cycle, NeedAddSigner2), voteTypeJoin)
-
-	assert.Equal(t, getEpochProposalVoteMap(testState, cycle, testAddrs[1], fakeAddr), voteResUnknow)
-	assert.Equal(t, getEpochProposalVoteMap(testState, cycle, testAddrs[1], testAddrs[2]), voteResAgree)
-
-	assert.Equal(t, getEpochProposalVoteMap(testState, cycle, testAddrs[0], testAddrs[2]), voteResAgree)
-	assert.Equal(t, getEpochProposalVoteMap(testState, cycle, testAddrs[0], testAddrs[1]), voteResAgree)
-	assert.Equal(t, getEpochProposalVoteMap(testState, cycle, testAddrs[0], testAddrs[0]), voteResAgainst)
-
-	assert.Equal(t, getEpochProposalVoteMap(testState, cycle, NeedAddSigner1, fakeAddr), voteResUnknow)
-	assert.Equal(t, getEpochProposalVoteMap(testState, cycle, NeedAddSigner1, testAddrs[1]), voteResAgree)
-	assert.Equal(t, getEpochProposalVoteMap(testState, cycle, NeedAddSigner1, testAddrs[0]), voteResAgainst)
-
-	assert.Equal(t, getEpochProposalVoteMap(testState, cycle, NeedAddSigner2, testAddrs[2]), voteResAgree)
-	assert.Equal(t, getEpochProposalVoteMap(testState, cycle, NeedAddSigner2, testAddrs[1]), voteResAgree)
-	assert.Equal(t, getEpochProposalVoteMap(testState, cycle, NeedAddSigner2, testAddrs[0]), voteResAgainst)
-
-	assert.Equal(t, getEpochProposalVoteesNumByCycle(testState, cycle), big.NewInt(5))
-
-	t.Log(testAddrs[1], "voted: ", getEpochProposalVoteList(testState, cycle, testAddrs[1]))
-	assert.Equal(t, len(getEpochProposalVoteList(testState, cycle, testAddrs[1])), 1)
-
-	t.Log(testAddrs[0], "voted: ", getEpochProposalVoteList(testState, cycle, testAddrs[0]))
-	assert.Equal(t, len(getEpochProposalVoteList(testState, cycle, testAddrs[0])), 3)
-
-	t.Log(NeedAddSigner1, "voted: ", getEpochProposalVoteList(testState, cycle, NeedAddSigner1))
-	assert.Equal(t, len(getEpochProposalVoteList(testState, cycle, NeedAddSigner1)), 2)
-
-	t.Log(NeedAddSigner2, "voted: ", getEpochProposalVoteList(testState, cycle, NeedAddSigner2))
-	assert.Equal(t, len(getEpochProposalVoteList(testState, cycle, NeedAddSigner2)), 3)
-
-	t.Log(NeedAddSigner3, "voted: ", getEpochProposalVoteList(testState, cycle, NeedAddSigner3))
-	assert.Equal(t, len(getEpochProposalVoteList(testState, cycle, NeedAddSigner3)), 2)
-
-	processLastVote(testState, big.NewInt(int64(testConfig.Epoch)))
-	processLastVote(testState, big.NewInt(int64(testConfig.Epoch)))
+	assert.Equal(t, getProposalVoteInfo(testState, NeedAddSigner3, big.NewInt(0)), (&voteInfo{vote: testAddrs[1], authorize: true}).toHash())
+	testVote(testState, big.NewInt(1), NeedAddSigner3, false, fakeAddr)
+	assert.Equal(t, getProposalVoteInfo(testState, NeedAddSigner3, big.NewInt(1)), common.Hash{})
+	testVote(testState, big.NewInt(1), NeedAddSigner3, true, testAddrs[2])
+	assert.Equal(t, getProposalVoteInfo(testState, NeedAddSigner3, big.NewInt(0)), common.Hash{})
 
 	t.Log("voted signers: ", SingerList(testState))
 
 	t.Log("voted signers num: ", singerListNum(testState))
 
-	assert.True(t, checkEpochVoted(testState, big.NewInt(0).Sub(getCycle(testState, big.NewInt(int64(testConfig.Epoch))), big.NewInt(1))))
-	assert.Equal(t, singerListNum(testState), big.NewInt(3))
+	t.Log("testAddrs[0]", GetBalance(testState, testAddrs[0]))
+	t.Log("testAddrs[1]", GetBalance(testState, testAddrs[1]))
+	t.Log("testAddrs[2]", GetBalance(testState, testAddrs[2]))
 
+	t.Log("NeedAddSigner1", GetBalance(testState, NeedAddSigner1))
+	t.Log("NeedAddSigner2", GetBalance(testState, NeedAddSigner2))
+	t.Log("NeedAddSigner3", GetBalance(testState, NeedAddSigner3))
+
+	cleanAllVotee(testState)
+
+	assert.True(t, len(voteeList(testState)) == 0)
+	assert.True(t, voteeListNum(testState).Cmp(big.NewInt(0)) == 0)
+
+	assert.True(t, getVoteNum(testState, testAddrs[0]).Cmp(big.NewInt(0)) == 0)
+	assert.True(t, getVoteNum(testState, testAddrs[1]).Cmp(big.NewInt(0)) == 0)
+	assert.True(t, getVoteNum(testState, testAddrs[2]).Cmp(big.NewInt(0)) == 0)
+	assert.True(t, getVoteNum(testState, NeedAddSigner1).Cmp(big.NewInt(0)) == 0)
+	assert.True(t, getVoteNum(testState, NeedAddSigner2).Cmp(big.NewInt(0)) == 0)
+	assert.True(t, getVoteNum(testState, NeedAddSigner3).Cmp(big.NewInt(0)) == 0)
+
+	assert.Equal(t, getProposalVoteInfo(testState, testAddrs[0], big.NewInt(0)), common.Hash{})
+	assert.Equal(t, getProposalVoteInfo(testState, testAddrs[1], big.NewInt(0)), common.Hash{})
+	assert.Equal(t, getProposalVoteInfo(testState, testAddrs[2], big.NewInt(0)), common.Hash{})
+	assert.Equal(t, getProposalVoteInfo(testState, NeedAddSigner1, big.NewInt(0)), common.Hash{})
+	assert.Equal(t, getProposalVoteInfo(testState, NeedAddSigner2, big.NewInt(0)), common.Hash{})
+	assert.Equal(t, getProposalVoteInfo(testState, NeedAddSigner3, big.NewInt(0)), common.Hash{})
+
+}
+
+func testVote(statedb *state.StateDB, blockNo *big.Int, votee common.Address, authorize bool, signer common.Address) {
+	if getThreshold(statedb).Cmp(big.NewInt(0)) <= 0 {
+		return
+	}
+	epoch := getEpoch(statedb)
+	if big.NewInt(0).Mod(blockNo, epoch) == big.NewInt(0) {
+		cleanAllVotee(statedb)
+	} else {
+		if votee != (common.Address{}) {
+
+			if signersContain(statedb, signer) {
+				existVotee := signersContain(statedb, votee)
+				if (existVotee && !authorize) || (!existVotee && authorize) && GetBalance(statedb, votee).Cmp(getThreshold(statedb)) >= 0 {
+					vote(statedb, votee, authorize, signer)
+					checkProposal(statedb)
+				}
+			}
+			return
+		}
+	}
 }
