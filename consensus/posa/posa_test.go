@@ -17,6 +17,7 @@
 package posa
 
 import (
+	"fmt"
 	"math/big"
 	"testing"
 
@@ -27,6 +28,7 @@ import (
 	"github.com/Ankr-network/coqchain/core/vm"
 	"github.com/Ankr-network/coqchain/crypto"
 	"github.com/Ankr-network/coqchain/params"
+	"github.com/Ankr-network/coqchain/utils/extdb"
 )
 
 // This test case is a repro of an annoying bug that took us forever to catch.
@@ -44,14 +46,21 @@ func TestReimportMirroredState(t *testing.T) {
 		engine = New(params.AllPosaProtocolChanges.Posa, db)
 		signer = new(types.HomesteadSigner)
 	)
+
+	extdb.InitAddrMgr("")
+	// extdb.AddZeroFeeAddress(common.HexToAddress("0x0000000000000000000000000000000000000000"))
+
 	genspec := &core.Genesis{
 		ExtraData: make([]byte, extraVanity+common.AddressLength+extraSeal),
+		BaseFee:   big.NewInt(0),
 		Alloc: map[common.Address]core.GenesisAccount{
-			addr: {Balance: big.NewInt(1)},
+			addr: {Balance: big.NewInt(1e+18)},
 		},
 	}
 	copy(genspec.ExtraData[extraVanity:], addr[:])
 	genesis := genspec.MustCommit(db)
+
+	fmt.Printf("origin root: %s \n", genesis.Root().Hex())
 
 	// Generate a batch of blocks, each properly signed
 	chain, _ := core.NewBlockChain(db, nil, params.AllPosaProtocolChanges, engine, vm.Config{}, nil, nil)
@@ -65,13 +74,14 @@ func TestReimportMirroredState(t *testing.T) {
 		// We want to simulate an empty middle block, having the same state as the
 		// first one. The last is needs a state change again to force a reorg.
 		if i != 1 {
-			tx, err := types.SignTx(types.NewTransaction(block.TxNonce(addr), common.Address{0x00}, new(big.Int), params.TxGas, nil, nil), signer, key)
+			tx, err := types.SignTx(types.NewTransaction(block.TxNonce(addr), common.Address{0x00}, big.NewInt(1), params.TxGas, nil, nil), signer, key)
 			if err != nil {
 				panic(err)
 			}
 			block.AddTxWithChain(chain, tx)
 		}
 	})
+	fmt.Printf("blocks len: %d \n", len(blocks))
 	for i, block := range blocks {
 		header := block.Header()
 		if i > 0 {
@@ -86,10 +96,16 @@ func TestReimportMirroredState(t *testing.T) {
 	}
 	// Insert the first two blocks and make sure the chain is valid
 	db = rawdb.NewMemoryDatabase()
-	genspec.MustCommit(db)
+
+	genesisBlock := genspec.MustCommit(db)
+	fmt.Printf("genesis root: %s \n", genesisBlock.Root().Hex())
 
 	chain, _ = core.NewBlockChain(db, nil, params.AllPosaProtocolChanges, engine, vm.Config{}, nil, nil)
 	defer chain.Stop()
+
+	// fmt.Printf("chain 0# root: %s \n", chain.Genesis().Root().Hex())
+	// fmt.Printf("block 1# root: %s basefee: %d \n", blocks[0].Header().Root.Hex(), blocks[0].Header().BaseFee)
+	// fmt.Printf("block 2# root: %s \n", blocks[1].Header().Root.Hex())
 
 	if _, err := chain.InsertChain(blocks[:2]); err != nil {
 		t.Fatalf("failed to insert initial blocks: %v", err)

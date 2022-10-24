@@ -34,9 +34,10 @@ var TrustedCheckpoints = map[common.Hash]*TrustedCheckpoint{}
 var CheckpointOracles = map[common.Hash]*CheckpointOracleConfig{}
 var (
 	AllPosaProtocolChanges = &ChainConfig{big.NewInt(1337),
-		&PosaConfig{Period: 3, Epoch: 3000, SealerBalanceThreshold: big.NewInt(0)}}
+		&PosaConfig{Period: 3, Epoch: 3000, SealerBalanceThreshold: big.NewInt(0)}, nil}
+	AllCliqueProtocolChanges = &ChainConfig{big.NewInt(1337), nil, &CliqueConfig{Period: 0, Epoch: 30000}}
 
-	TestChainConfig = &ChainConfig{big.NewInt(1), &PosaConfig{Period: 3, Epoch: 30000, SealerBalanceThreshold: big.NewInt(0)}}
+	TestChainConfig = &ChainConfig{big.NewInt(1), &PosaConfig{Period: 3, Epoch: 30000, SealerBalanceThreshold: big.NewInt(0)}, nil}
 
 	TestRules = TestChainConfig.Rules(new(big.Int))
 )
@@ -95,8 +96,19 @@ type CheckpointOracleConfig struct {
 // that any network, identified by its genesis block, can have its own
 // set of configuration options.
 type ChainConfig struct {
-	ChainID *big.Int    `json:"chainId"` // chainId identifies the current chain and is used for replay protection
-	Posa    *PosaConfig `json:"posa,omitempty"`
+	ChainID *big.Int      `json:"chainId"` // chainId identifies the current chain and is used for replay protection
+	Posa    *PosaConfig   `json:"posa,omitempty"`
+	Clique  *CliqueConfig `json:"clique,omitempty"`
+}
+
+type CliqueConfig struct {
+	Period uint64 `json:"period"` // Number of seconds between blocks to enforce
+	Epoch  uint64 `json:"epoch"`  // Epoch length to reset votes and checkpoint
+}
+
+// String implements the stringer interface, returning the consensus engine details.
+func (c *CliqueConfig) String() string {
+	return "clique"
 }
 
 // EthashConfig is the consensus engine configs for proof-of-work based sealing.

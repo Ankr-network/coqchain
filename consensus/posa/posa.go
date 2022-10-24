@@ -21,6 +21,7 @@ package posa
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"io"
 	"math/big"
 	"math/rand"
@@ -626,7 +627,8 @@ func (c *Posa) Prepare(chain consensus.ChainHeaderReader, header *types.Header) 
 	}
 
 	// Set the correct difficulty
-	header.Difficulty = calcDifficulty(snap, c.signer)
+	// header.Difficulty = calcDifficulty(snap, c.signer)
+	header.Difficulty = diffInTurn
 
 	// Ensure the extra data has all its components
 	if len(header.Extra) < extraVanity {
@@ -665,7 +667,9 @@ func (c *Posa) Finalize(chain consensus.ChainHeaderReader, header *types.Header,
 
 	c.state = state
 
+	fmt.Printf("before root: %s \n", header.Root.Hex())
 	header.Root = state.IntermediateRoot()
+	fmt.Printf("after root: %s \n", header.Root.Hex())
 	header.UncleHash = types.CalcUncleHash(nil)
 	c.recentSigners.SetWithExpire(signer, struct{}{}, time.Second*time.Duration(c.config.Period*c.config.Epoch))
 
