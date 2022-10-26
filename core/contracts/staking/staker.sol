@@ -2,30 +2,42 @@
 pragma solidity ^0.8.13;
 
 contract Staker {
+    uint256 public epoch;
+    uint256 public threshold;
+    uint256 public fineRatio; // 10 = 10%
 
-	mapping(address => uint256) public balances;
+    address[] signers;
+    mapping(address => uint256) public balances;
 
-    constructor() payable {}
-
-    // Function to deposit Ether into this contract.
-    // Call this function along with some Ether.
-    // The balance of this contract will be automatically updated.
-    function deposit() public payable {
-		require(msg.value != 0,"wrong value");
-		balances[msg.sender] += msg.value;
-	}
-
-    function withdraw(address payable _to, uint _amount) public{
-
-		// _amount should be less or equal _to balance
-		require(balances[_to] >= _amount, "withdraw amount should be less or equal your balance");
-
-        (bool success, ) = _to.call{value: _amount}("");
-        require(success, "Failed to send");
-
+    struct VoteInfo {
+        address vote;
+        bool authorize;
     }
-	
-	function balanceOf(address addr) view public returns (uint) {
-	     return balances[addr];	
-	}
+
+    mapping(address => VoteInfo[]) public proposalVotes;
+
+    function stake() external payable {
+        require(msg.value > 0, "invalid amount");
+        balances[msg.sender] += msg.value;
+    }
+
+    function withdraw(uint256 _amount) external {
+        require(!signerContains(msg.sender), "staking, unable to withdraw");
+        require(balances[msg.sender] >= _amount, "insufficient amount");
+        balances[msg.sender] -= _amount;
+        payable(msg.sender).transfer(_amount);
+    }
+
+    function signerList() external view returns (address[] memory) {
+        return signers;
+    }
+
+    function signerContains(address _signer) public view returns (bool) {
+        for (uint256 i = 0; i < signers.length; i++) {
+            if (signers[i] == _signer) {
+                return true;
+            }
+        }
+        return false;
+    }
 }

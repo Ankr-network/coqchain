@@ -23,6 +23,7 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"sort"
 	"strings"
 
 	"github.com/Ankr-network/coqchain/common"
@@ -38,6 +39,7 @@ import (
 	"github.com/Ankr-network/coqchain/params"
 	"github.com/Ankr-network/coqchain/rlp"
 	"github.com/Ankr-network/coqchain/trie"
+	"github.com/Ankr-network/coqchain/utils/staker"
 )
 
 //go:generate gencodec -type Genesis -field-override genesisSpecMarshaling -out gen_genesis.go
@@ -278,8 +280,6 @@ func initSystemContract(statedb *state.StateDB, g *Genesis) {
 	statedb.SetCode(contracts.SlashContract.Address, sc)
 	statedb.SetNonce(contracts.SlashContract.Address, 0)
 
-	threshold := g.Config.Posa.SealerBalanceThreshold
-
 	for addr, account := range g.Alloc {
 		statedb.AddBalance(addr, account.Balance)
 		statedb.SetCode(addr, account.Code)
@@ -289,25 +289,16 @@ func initSystemContract(statedb *state.StateDB, g *Genesis) {
 		}
 	}
 
-	if threshold.Uint64() > 0 {
-		var signerCnt int64 = 0
-		slot0Hash := common.BigToHash(big.NewInt(0))
-		ks := crypto.NewKeccakState()
-		for addr, account := range g.Alloc {
-			if account.Balance.Cmp(threshold) > 0 {
-				statedb.SubBalance(addr, threshold)
-				addr2Hash := addr.Hash()
-				keys := append([]byte{}, addr2Hash[:]...)
-				keys = append(keys, slot0Hash[:]...)
-				ks.Reset()
-				ks.Write(keys[:])
-				stateAddr := ks.Sum(nil)
-				statedb.SetState(contracts.SlashAddr, common.BytesToHash(stateAddr), common.BigToHash(threshold))
-				signerCnt++
-			}
-		}
-		statedb.AddBalance(contracts.SlashAddr, big.NewInt(0).Mul(big.NewInt(signerCnt), threshold))
+	count := (len(g.ExtraData) - 32 - 65) / common.AddressLength
+	var validatorList Addrs = make([]common.Address, count)
+
+	for i := 0; i < count; i++ {
+		copy(validatorList[i][:], g.ExtraData[32+i*common.AddressLength:])
 	}
+
+	sort.Sort(validatorList)
+
+	staker.Constructor(statedb, validatorList, g.Config.Posa)
 }
 
 // ToBlock creates the genesis block and writes state of a genesis specification
