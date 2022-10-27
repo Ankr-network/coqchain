@@ -36,6 +36,7 @@ import (
 	"github.com/Ankr-network/coqchain/event"
 	"github.com/Ankr-network/coqchain/params"
 	"github.com/Ankr-network/coqchain/trie"
+	"github.com/Ankr-network/coqchain/utils/extdb"
 )
 
 var (
@@ -218,6 +219,8 @@ func (c *testChain) State() (*state.StateDB, error) {
 // state reset and tests whether the pending state is in sync with the
 // block head event that initiated the resetState().
 func TestStateChangeDuringTransactionPoolReset(t *testing.T) {
+	extdb.InitAddrMgr("")
+
 	t.Parallel()
 
 	var (
@@ -272,6 +275,7 @@ func testSetNonce(pool *TxPool, addr common.Address, nonce uint64) {
 }
 
 func TestInvalidTransactions(t *testing.T) {
+	extdb.InitAddrMgr("")
 	t.Parallel()
 
 	pool, key := setupTxPool()
@@ -309,6 +313,7 @@ func TestInvalidTransactions(t *testing.T) {
 }
 
 func TestTransactionQueue(t *testing.T) {
+	extdb.InitAddrMgr("")
 	t.Parallel()
 
 	pool, key := setupTxPool()
@@ -340,6 +345,7 @@ func TestTransactionQueue(t *testing.T) {
 }
 
 func TestTransactionQueue2(t *testing.T) {
+	extdb.InitAddrMgr("")
 	t.Parallel()
 
 	pool, key := setupTxPool()
@@ -366,6 +372,7 @@ func TestTransactionQueue2(t *testing.T) {
 }
 
 func TestTransactionNegativeValue(t *testing.T) {
+	extdb.InitAddrMgr("")
 	t.Parallel()
 
 	pool, key := setupTxPool()
@@ -380,6 +387,7 @@ func TestTransactionNegativeValue(t *testing.T) {
 }
 
 func TestTransactionTipAboveFeeCap(t *testing.T) {
+	extdb.InitAddrMgr("")
 	t.Parallel()
 
 	pool, key := setupTxPoolWithConfig(eip1559Config)
@@ -393,6 +401,7 @@ func TestTransactionTipAboveFeeCap(t *testing.T) {
 }
 
 func TestTransactionVeryHighValues(t *testing.T) {
+	extdb.InitAddrMgr("")
 	t.Parallel()
 
 	pool, key := setupTxPoolWithConfig(eip1559Config)
@@ -413,6 +422,7 @@ func TestTransactionVeryHighValues(t *testing.T) {
 }
 
 func TestTransactionChainFork(t *testing.T) {
+	extdb.InitAddrMgr("")
 	t.Parallel()
 
 	pool, key := setupTxPool()
@@ -442,6 +452,7 @@ func TestTransactionChainFork(t *testing.T) {
 }
 
 func TestTransactionDoubleNonce(t *testing.T) {
+	extdb.InitAddrMgr("")
 	t.Parallel()
 
 	pool, key := setupTxPool()
@@ -493,6 +504,7 @@ func TestTransactionDoubleNonce(t *testing.T) {
 }
 
 func TestTransactionMissingNonce(t *testing.T) {
+	extdb.InitAddrMgr("")
 	t.Parallel()
 
 	pool, key := setupTxPool()
@@ -516,6 +528,7 @@ func TestTransactionMissingNonce(t *testing.T) {
 }
 
 func TestTransactionNonceRecovery(t *testing.T) {
+	extdb.InitAddrMgr("")
 	t.Parallel()
 
 	const n = 10
@@ -542,6 +555,7 @@ func TestTransactionNonceRecovery(t *testing.T) {
 // Tests that if an account runs out of funds, any pending and queued transactions
 // are dropped.
 func TestTransactionDropping(t *testing.T) {
+	extdb.InitAddrMgr("")
 	t.Parallel()
 
 	// Create a test account and fund it
@@ -646,6 +660,7 @@ func TestTransactionDropping(t *testing.T) {
 // of fund), all consecutive (still valid, but not executable) transactions are
 // postponed back into the future queue to prevent broadcasting them.
 func TestTransactionPostponing(t *testing.T) {
+	extdb.InitAddrMgr("")
 	t.Parallel()
 
 	// Create the pool to test the postponing with
@@ -760,6 +775,8 @@ func TestTransactionPostponing(t *testing.T) {
 // transactions from an origin account, filling the nonce gap moves all queued
 // ones into the pending pool.
 func TestTransactionGapFilling(t *testing.T) {
+	extdb.InitAddrMgr("")
+
 	t.Parallel()
 
 	// Create a test account and fund it
@@ -814,6 +831,8 @@ func TestTransactionGapFilling(t *testing.T) {
 // Tests that if the transaction count belonging to a single account goes above
 // some threshold, the higher transactions are dropped to prevent DOS attacks.
 func TestTransactionQueueAccountLimiting(t *testing.T) {
+	extdb.InitAddrMgr("")
+
 	t.Parallel()
 
 	// Create a test account and fund it
@@ -859,6 +878,8 @@ func TestTransactionQueueGlobalLimitingNoLocals(t *testing.T) {
 }
 
 func testTransactionQueueGlobalLimiting(t *testing.T, nolocals bool) {
+	extdb.InitAddrMgr("")
+
 	t.Parallel()
 
 	// Create the pool to test the limit enforcement with
@@ -949,6 +970,8 @@ func TestTransactionQueueTimeLimitingNoLocals(t *testing.T) {
 }
 
 func testTransactionQueueTimeLimiting(t *testing.T, nolocals bool) {
+	extdb.InitAddrMgr("")
+
 	// Reduce the eviction interval to a testable amount
 	defer func(old time.Duration) { evictionInterval = old }(evictionInterval)
 	evictionInterval = time.Millisecond * 100
@@ -1095,6 +1118,8 @@ func testTransactionQueueTimeLimiting(t *testing.T, nolocals bool) {
 // above some threshold, as long as the transactions are executable, they are
 // accepted.
 func TestTransactionPendingLimiting(t *testing.T) {
+	extdb.InitAddrMgr("")
+
 	t.Parallel()
 
 	// Create a test account and fund it
@@ -1136,6 +1161,8 @@ func TestTransactionPendingLimiting(t *testing.T) {
 // some hard threshold, the higher transactions are dropped to prevent DOS
 // attacks.
 func TestTransactionPendingGlobalLimiting(t *testing.T) {
+	extdb.InitAddrMgr("")
+
 	t.Parallel()
 
 	// Create the pool to test the limit enforcement with
@@ -1184,6 +1211,8 @@ func TestTransactionPendingGlobalLimiting(t *testing.T) {
 // This test verifies every transaction having allowed size
 // is added to the pool, and longer transactions are rejected.
 func TestTransactionAllowedTxSize(t *testing.T) {
+	extdb.InitAddrMgr("")
+
 	t.Parallel()
 
 	// Create a test account and fund it
@@ -1238,6 +1267,8 @@ func TestTransactionAllowedTxSize(t *testing.T) {
 
 // Tests that if transactions start being capped, transactions are also removed from 'all'
 func TestTransactionCapClearsFromAll(t *testing.T) {
+	extdb.InitAddrMgr("")
+
 	t.Parallel()
 
 	// Create the pool to test the limit enforcement with
@@ -1272,6 +1303,8 @@ func TestTransactionCapClearsFromAll(t *testing.T) {
 // some hard threshold, if they are under the minimum guaranteed slot count then
 // the transactions are still kept.
 func TestTransactionPendingMinimumAllowance(t *testing.T) {
+	extdb.InitAddrMgr("")
+
 	t.Parallel()
 
 	// Create the pool to test the limit enforcement with
@@ -1320,6 +1353,8 @@ func TestTransactionPendingMinimumAllowance(t *testing.T) {
 //
 // Note, local transactions are never allowed to be dropped.
 func TestTransactionPoolRepricing(t *testing.T) {
+	extdb.InitAddrMgr("")
+
 	t.Parallel()
 
 	// Create the pool to test the pricing enforcement with
@@ -1444,6 +1479,8 @@ func TestTransactionPoolRepricing(t *testing.T) {
 //
 // Note, local transactions are never allowed to be dropped.
 func TestTransactionPoolRepricingDynamicFee(t *testing.T) {
+	extdb.InitAddrMgr("")
+
 	t.Parallel()
 
 	// Create the pool to test the pricing enforcement with
@@ -1568,6 +1605,8 @@ func TestTransactionPoolRepricingDynamicFee(t *testing.T) {
 // Tests that setting the transaction pool gas price to a higher value does not
 // remove local transactions (legacy & dynamic fee).
 func TestTransactionPoolRepricingKeepsLocals(t *testing.T) {
+	extdb.InitAddrMgr("")
+
 	t.Parallel()
 
 	// Create the pool to test the pricing enforcement with
@@ -1641,6 +1680,8 @@ func TestTransactionPoolRepricingKeepsLocals(t *testing.T) {
 //
 // Note, local transactions are never allowed to be dropped.
 func TestTransactionPoolUnderpricing(t *testing.T) {
+	extdb.InitAddrMgr("")
+
 	t.Parallel()
 
 	// Create the pool to test the pricing enforcement with
@@ -1747,6 +1788,8 @@ func TestTransactionPoolUnderpricing(t *testing.T) {
 // without producing instability by creating gaps that start jumping transactions
 // back and forth between queued/pending.
 func TestTransactionPoolStableUnderpricing(t *testing.T) {
+	extdb.InitAddrMgr("")
+
 	t.Parallel()
 
 	// Create the pool to test the pricing enforcement with
@@ -1816,6 +1859,8 @@ func TestTransactionPoolStableUnderpricing(t *testing.T) {
 //
 // Note, local transactions are never allowed to be dropped.
 func TestTransactionPoolUnderpricingDynamicFee(t *testing.T) {
+	extdb.InitAddrMgr("")
+
 	t.Parallel()
 
 	pool, _ := setupTxPoolWithConfig(eip1559Config)
@@ -1923,6 +1968,8 @@ func TestTransactionPoolUnderpricingDynamicFee(t *testing.T) {
 // Tests whether highest fee cap transaction is retained after a batch of high effective
 // tip transactions are added and vice versa
 func TestDualHeapEviction(t *testing.T) {
+	extdb.InitAddrMgr("")
+
 	t.Parallel()
 
 	pool, _ := setupTxPoolWithConfig(eip1559Config)
@@ -1979,6 +2026,8 @@ func TestDualHeapEviction(t *testing.T) {
 
 // Tests that the pool rejects duplicate transactions.
 func TestTransactionDeduplication(t *testing.T) {
+	extdb.InitAddrMgr("")
+
 	t.Parallel()
 
 	// Create the pool to test the pricing enforcement with
@@ -2045,6 +2094,8 @@ func TestTransactionDeduplication(t *testing.T) {
 // Tests that the pool rejects replacement transactions that don't meet the minimum
 // price bump required.
 func TestTransactionReplacement(t *testing.T) {
+	extdb.InitAddrMgr("")
+
 	t.Parallel()
 
 	// Create the pool to test the pricing enforcement with
@@ -2125,6 +2176,8 @@ func TestTransactionReplacement(t *testing.T) {
 // Tests that the pool rejects replacement dynamic fee transactions that don't
 // meet the minimum price bump required.
 func TestTransactionReplacementDynamicFee(t *testing.T) {
+	extdb.InitAddrMgr("")
+
 	t.Parallel()
 
 	// Create the pool to test the pricing enforcement with
@@ -2238,6 +2291,8 @@ func TestTransactionJournaling(t *testing.T)         { testTransactionJournaling
 func TestTransactionJournalingNoLocals(t *testing.T) { testTransactionJournaling(t, true) }
 
 func testTransactionJournaling(t *testing.T, nolocals bool) {
+	extdb.InitAddrMgr("")
+
 	t.Parallel()
 
 	// Create a temporary file for the journal
@@ -2348,6 +2403,8 @@ func testTransactionJournaling(t *testing.T, nolocals bool) {
 // TestTransactionStatusCheck tests that the pool can correctly retrieve the
 // pending status of individual transactions.
 func TestTransactionStatusCheck(t *testing.T) {
+	extdb.InitAddrMgr("")
+
 	t.Parallel()
 
 	// Create the pool to test the status retrievals with
@@ -2403,6 +2460,8 @@ func TestTransactionStatusCheck(t *testing.T) {
 
 // Test the transaction slots consumption is computed correctly
 func TestTransactionSlotCount(t *testing.T) {
+	extdb.InitAddrMgr("")
+
 	t.Parallel()
 
 	key, _ := crypto.GenerateKey()
@@ -2426,6 +2485,8 @@ func BenchmarkPendingDemotion1000(b *testing.B)  { benchmarkPendingDemotion(b, 1
 func BenchmarkPendingDemotion10000(b *testing.B) { benchmarkPendingDemotion(b, 10000) }
 
 func benchmarkPendingDemotion(b *testing.B, size int) {
+	extdb.InitAddrMgr("")
+
 	// Add a batch of transactions to a pool one by one
 	pool, key := setupTxPool()
 	defer pool.Stop()
@@ -2451,6 +2512,8 @@ func BenchmarkFuturePromotion1000(b *testing.B)  { benchmarkFuturePromotion(b, 1
 func BenchmarkFuturePromotion10000(b *testing.B) { benchmarkFuturePromotion(b, 10000) }
 
 func benchmarkFuturePromotion(b *testing.B, size int) {
+	extdb.InitAddrMgr("")
+
 	// Add a batch of transactions to a pool one by one
 	pool, key := setupTxPool()
 	defer pool.Stop()
@@ -2479,6 +2542,8 @@ func BenchmarkPoolBatchLocalInsert1000(b *testing.B)  { benchmarkPoolBatchInsert
 func BenchmarkPoolBatchLocalInsert10000(b *testing.B) { benchmarkPoolBatchInsert(b, 10000, true) }
 
 func benchmarkPoolBatchInsert(b *testing.B, size int, local bool) {
+	extdb.InitAddrMgr("")
+
 	// Generate a batch of transactions to enqueue into the pool
 	pool, key := setupTxPool()
 	defer pool.Stop()
@@ -2505,6 +2570,8 @@ func benchmarkPoolBatchInsert(b *testing.B, size int, local bool) {
 }
 
 func BenchmarkInsertRemoteWithAllLocals(b *testing.B) {
+	extdb.InitAddrMgr("")
+
 	// Allocate keys for testing
 	key, _ := crypto.GenerateKey()
 	account := crypto.PubkeyToAddress(key.PublicKey)
@@ -2541,6 +2608,8 @@ func BenchmarkInsertRemoteWithAllLocals(b *testing.B) {
 
 // Benchmarks the speed of batch transaction insertion in case of multiple accounts.
 func BenchmarkPoolMultiAccountBatchInsert(b *testing.B) {
+	extdb.InitAddrMgr("")
+
 	// Generate a batch of transactions to enqueue into the pool
 	pool, _ := setupTxPool()
 	defer pool.Stop()

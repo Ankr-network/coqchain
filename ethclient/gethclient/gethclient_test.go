@@ -35,6 +35,7 @@ import (
 	"github.com/Ankr-network/coqchain/node"
 	"github.com/Ankr-network/coqchain/params"
 	"github.com/Ankr-network/coqchain/rpc"
+	"github.com/Ankr-network/coqchain/utils/extdb"
 )
 
 var (
@@ -70,7 +71,7 @@ func newTestBackend(t *testing.T) (*node.Node, []*types.Block) {
 
 func generateTestChain() (*core.Genesis, []*types.Block) {
 	db := rawdb.NewMemoryDatabase()
-	config := params.AllPosaProtocolChanges
+	config := params.AllEthashProtocolChanges
 	genesis := &core.Genesis{
 		Config:    config,
 		Alloc:     core.GenesisAlloc{testAddr: {Balance: testBalance}},
@@ -89,6 +90,8 @@ func generateTestChain() (*core.Genesis, []*types.Block) {
 }
 
 func TestGethClient(t *testing.T) {
+	extdb.InitAddrMgr("")
+
 	backend, _ := newTestBackend(t)
 	client, err := backend.Attach()
 	if err != nil {
@@ -141,7 +144,7 @@ func testAccessList(t *testing.T, client *rpc.Client) {
 		From:     testAddr,
 		To:       &common.Address{},
 		Gas:      21000,
-		GasPrice: big.NewInt(765625000),
+		GasPrice: big.NewInt(2000000000),
 		Value:    big.NewInt(1),
 	}
 	al, gas, vmErr, err := ec.CreateAccessList(context.Background(), msg)
@@ -162,7 +165,7 @@ func testAccessList(t *testing.T, client *rpc.Client) {
 		From:     testAddr,
 		To:       nil,
 		Gas:      100000,
-		GasPrice: big.NewInt(1000000000),
+		GasPrice: big.NewInt(2000000000),
 		Value:    big.NewInt(1),
 		Data:     common.FromHex("0x608060806080608155fd"),
 	}

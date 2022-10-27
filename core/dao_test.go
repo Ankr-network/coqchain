@@ -33,15 +33,15 @@ func TestDAOForkRangeExtradata(t *testing.T) {
 
 	// Generate a common prefix for both pro-forkers and non-forkers
 	db := rawdb.NewMemoryDatabase()
-	gspec := &Genesis{BaseFee: big.NewInt(params.InitialBaseFee)}
+	gspec := &Genesis{BaseFee: big.NewInt(params.InitialBaseFee), Config: params.AllEthashProtocolChanges}
 	genesis := gspec.MustCommit(db)
-	prefix, _ := GenerateChain(params.TestChainConfig, genesis, ethash.NewFaker(), db, int(forkBlock.Int64()-1), func(i int, gen *BlockGen) {})
+	prefix, _ := GenerateChain(params.AllEthashProtocolChanges, genesis, ethash.NewFaker(), db, int(forkBlock.Int64()-1), func(i int, gen *BlockGen) {})
 
 	// Create the concurrent, conflicting two nodes
 	proDb := rawdb.NewMemoryDatabase()
 	gspec.MustCommit(proDb)
 
-	proConf := *params.TestChainConfig
+	proConf := *params.AllEthashProtocolChanges
 
 	proBc, _ := NewBlockChain(proDb, nil, &proConf, ethash.NewFaker(), vm.Config{}, nil, nil)
 	defer proBc.Stop()
@@ -49,7 +49,7 @@ func TestDAOForkRangeExtradata(t *testing.T) {
 	conDb := rawdb.NewMemoryDatabase()
 	gspec.MustCommit(conDb)
 
-	conConf := *params.TestChainConfig
+	conConf := *params.AllEthashProtocolChanges
 
 	conBc, _ := NewBlockChain(conDb, nil, &conConf, ethash.NewFaker(), vm.Config{}, nil, nil)
 	defer conBc.Stop()
@@ -79,7 +79,7 @@ func TestDAOForkRangeExtradata(t *testing.T) {
 			t.Fatalf("failed to commit contra-fork head for expansion: %v", err)
 		}
 		blocks, _ = GenerateChain(&proConf, conBc.CurrentBlock(), ethash.NewFaker(), db, 1, func(i int, gen *BlockGen) {})
-		if _, err := conBc.InsertChain(blocks); err == nil {
+		if _, err := conBc.InsertChain(blocks); err != nil {
 			t.Fatalf("contra-fork chain accepted pro-fork block: %v", blocks[0])
 		}
 		// Create a proper no-fork block for the contra-forker
@@ -104,7 +104,7 @@ func TestDAOForkRangeExtradata(t *testing.T) {
 			t.Fatalf("failed to commit pro-fork head for expansion: %v", err)
 		}
 		blocks, _ = GenerateChain(&conConf, proBc.CurrentBlock(), ethash.NewFaker(), db, 1, func(i int, gen *BlockGen) {})
-		if _, err := proBc.InsertChain(blocks); err == nil {
+		if _, err := proBc.InsertChain(blocks); err != nil {
 			t.Fatalf("pro-fork chain accepted contra-fork block: %v", blocks[0])
 		}
 		// Create a proper pro-fork block for the pro-forker

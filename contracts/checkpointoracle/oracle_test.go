@@ -34,6 +34,7 @@ import (
 	"github.com/Ankr-network/coqchain/core"
 	"github.com/Ankr-network/coqchain/crypto"
 	"github.com/Ankr-network/coqchain/params"
+	"github.com/Ankr-network/coqchain/utils/extdb"
 )
 
 var (
@@ -165,6 +166,9 @@ func (a Accounts) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a Accounts) Less(i, j int) bool { return bytes.Compare(a[i].addr.Bytes(), a[j].addr.Bytes()) < 0 }
 
 func TestCheckpointRegister(t *testing.T) {
+
+	extdb.InitAddrMgr("")
+
 	// Initialize test accounts
 	var accounts Accounts
 	for i := 0; i < 3; i++ {

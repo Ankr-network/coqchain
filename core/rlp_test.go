@@ -28,6 +28,7 @@ import (
 	"github.com/Ankr-network/coqchain/crypto"
 	"github.com/Ankr-network/coqchain/params"
 	"github.com/Ankr-network/coqchain/rlp"
+	"github.com/Ankr-network/coqchain/utils/extdb"
 	"golang.org/x/crypto/sha3"
 )
 
@@ -42,7 +43,7 @@ func getBlock(transactions int, uncles int, dataSize int) *types.Block {
 		address = crypto.PubkeyToAddress(key.PublicKey)
 		funds   = big.NewInt(1_000_000_000_000_000_000)
 		gspec   = &Genesis{
-			Config: params.TestChainConfig,
+			Config: params.AllEthashProtocolChanges,
 			Alloc:  GenesisAlloc{address: {Balance: funds}},
 		}
 		genesis = gspec.MustCommit(db)
@@ -70,6 +71,7 @@ func getBlock(transactions int, uncles int, dataSize int) *types.Block {
 // TestRlpIterator tests that individual transactions can be picked out
 // from blocks without full unmarshalling/marshalling
 func TestRlpIterator(t *testing.T) {
+	extdb.InitAddrMgr("")
 	for _, tt := range []struct {
 		txs      int
 		uncles   int
@@ -140,6 +142,9 @@ func testRlpIterator(t *testing.T, txs, uncles, datasize int) {
 // BenchmarkHashing compares the speeds of hashing a rlp raw data directly
 // without the unmarshalling/marshalling step
 func BenchmarkHashing(b *testing.B) {
+
+	extdb.InitAddrMgr("")
+
 	// Make a pretty fat block
 	var (
 		bodyRlp  []byte

@@ -44,7 +44,6 @@ import (
 	// Force-load the tracer engines to trigger registration
 	_ "github.com/Ankr-network/coqchain/eth/tracers/js"
 	_ "github.com/Ankr-network/coqchain/eth/tracers/native"
-
 	"gopkg.in/urfave/cli.v1"
 )
 
@@ -299,7 +298,8 @@ func geth(ctx *cli.Context) error {
 		return fmt.Errorf("invalid command: %q", args[0])
 	}
 
-	extdb.InitAddrMgr(ctx)
+	// extdb.InitAddrMgr(ctx)
+	extdb.InitAddrMgr(ctx.GlobalString("datadir"))
 	defer extdb.Close()
 
 	prepare(ctx)

@@ -32,6 +32,7 @@ import (
 	"github.com/Ankr-network/coqchain/crypto"
 	"github.com/Ankr-network/coqchain/ethdb"
 	"github.com/Ankr-network/coqchain/params"
+	"github.com/Ankr-network/coqchain/utils/extdb"
 )
 
 func BenchmarkInsertChain_empty_memdb(b *testing.B) {
@@ -173,6 +174,9 @@ func genUncles(i int, gen *BlockGen) {
 }
 
 func benchInsertChain(b *testing.B, disk bool, gen func(int, *BlockGen)) {
+
+	extdb.InitAddrMgr("")
+
 	// Create the database in memory or in a temporary directory.
 	var db ethdb.Database
 	if !disk {
@@ -193,7 +197,7 @@ func benchInsertChain(b *testing.B, disk bool, gen func(int, *BlockGen)) {
 	// Generate a chain of b.N blocks using the supplied block
 	// generator function.
 	gspec := Genesis{
-		Config: params.TestChainConfig,
+		Config: params.AllEthashProtocolChanges,
 		Alloc:  GenesisAlloc{benchRootAddr: {Balance: benchRootFunds}},
 	}
 	genesis := gspec.MustCommit(db)
@@ -316,7 +320,7 @@ func benchReadChain(b *testing.B, full bool, count uint64) {
 		if err != nil {
 			b.Fatalf("error opening database at %v: %v", dir, err)
 		}
-		chain, err := NewBlockChain(db, &cacheConfig, params.TestChainConfig, ethash.NewFaker(), vm.Config{}, nil, nil)
+		chain, err := NewBlockChain(db, &cacheConfig, params.AllEthashProtocolChanges, ethash.NewFaker(), vm.Config{}, nil, nil)
 		if err != nil {
 			b.Fatalf("error creating chain: %v", err)
 		}

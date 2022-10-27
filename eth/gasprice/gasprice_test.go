@@ -32,6 +32,7 @@ import (
 	"github.com/Ankr-network/coqchain/event"
 	"github.com/Ankr-network/coqchain/params"
 	"github.com/Ankr-network/coqchain/rpc"
+	"github.com/Ankr-network/coqchain/utils/extdb"
 )
 
 const testHead = 32
@@ -99,7 +100,7 @@ func newTestBackend(t *testing.T, londonBlock *big.Int, pending bool) *testBacke
 	var (
 		key, _ = crypto.HexToECDSA("b71c71a67e1177ad4e901695e1b4b9ee17ae16c6668d313eac2f96dbcda3f291")
 		addr   = crypto.PubkeyToAddress(key.PublicKey)
-		config = *params.TestChainConfig // needs copy because it is modified below
+		config = *params.AllEthashProtocolChanges // needs copy because it is modified below
 		gspec  = &core.Genesis{
 			Config: &config,
 			Alloc:  core.GenesisAlloc{addr: {Balance: big.NewInt(math.MaxInt64)}},
@@ -159,6 +160,8 @@ func (b *testBackend) GetBlockByNumber(number uint64) *types.Block {
 }
 
 func TestSuggestTipCap(t *testing.T) {
+	extdb.InitAddrMgr("")
+
 	config := Config{
 		Blocks:     3,
 		Percentile: 60,

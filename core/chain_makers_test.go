@@ -26,6 +26,7 @@ import (
 	"github.com/Ankr-network/coqchain/core/vm"
 	"github.com/Ankr-network/coqchain/crypto"
 	"github.com/Ankr-network/coqchain/params"
+	"github.com/Ankr-network/coqchain/utils/extdb"
 )
 
 func ExampleGenerateChain() {
@@ -38,6 +39,8 @@ func ExampleGenerateChain() {
 		addr3   = crypto.PubkeyToAddress(key3.PublicKey)
 		db      = rawdb.NewMemoryDatabase()
 	)
+
+	extdb.InitAddrMgr("")
 
 	// Ensure that key1 has some funds in the genesis block.
 	gspec := &Genesis{

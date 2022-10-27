@@ -34,9 +34,11 @@ var TrustedCheckpoints = map[common.Hash]*TrustedCheckpoint{}
 var CheckpointOracles = map[common.Hash]*CheckpointOracleConfig{}
 var (
 	AllPosaProtocolChanges = &ChainConfig{big.NewInt(1337),
-		&PosaConfig{Period: 3, Epoch: 3000, SealerBalanceThreshold: big.NewInt(0)}}
+		&PosaConfig{Period: 3, Epoch: 3000, SealerBalanceThreshold: big.NewInt(0)}, nil}
 
-	TestChainConfig = &ChainConfig{big.NewInt(1), &PosaConfig{Period: 3, Epoch: 30000, SealerBalanceThreshold: big.NewInt(0)}}
+	TestChainConfig = &ChainConfig{big.NewInt(1), &PosaConfig{Period: 3, Epoch: 30000, SealerBalanceThreshold: big.NewInt(0)}, nil}
+
+	AllEthashProtocolChanges = &ChainConfig{big.NewInt(1337), nil, new(EthashConfig)}
 
 	TestRules = TestChainConfig.Rules(new(big.Int))
 )
@@ -95,8 +97,9 @@ type CheckpointOracleConfig struct {
 // that any network, identified by its genesis block, can have its own
 // set of configuration options.
 type ChainConfig struct {
-	ChainID *big.Int    `json:"chainId"` // chainId identifies the current chain and is used for replay protection
-	Posa    *PosaConfig `json:"posa,omitempty"`
+	ChainID *big.Int      `json:"chainId"` // chainId identifies the current chain and is used for replay protection
+	Posa    *PosaConfig   `json:"posa,omitempty"`
+	Ethash  *EthashConfig `json:"ethash,omitempty"`
 }
 
 // EthashConfig is the consensus engine configs for proof-of-work based sealing.
@@ -126,6 +129,8 @@ func (c *ChainConfig) String() string {
 	switch {
 	case c.Posa != nil:
 		engine = c.Posa
+	case c.Ethash != nil:
+		engine = c.Ethash
 	default:
 		engine = "unknown"
 	}

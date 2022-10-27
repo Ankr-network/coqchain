@@ -27,6 +27,7 @@ import (
 	"github.com/Ankr-network/coqchain/core/types"
 	"github.com/Ankr-network/coqchain/p2p/enode"
 	"github.com/Ankr-network/coqchain/params"
+	"github.com/Ankr-network/coqchain/utils/extdb"
 )
 
 // verifyImportEvent verifies that one single event arrive on an import channel.
@@ -67,6 +68,8 @@ func TestSequentialAnnouncementsLes2(t *testing.T) { testSequentialAnnouncements
 func TestSequentialAnnouncementsLes3(t *testing.T) { testSequentialAnnouncements(t, 3) }
 
 func testSequentialAnnouncements(t *testing.T, protocol int) {
+	extdb.InitAddrMgr("")
+
 	netconfig := testnetConfig{
 		blocks:    4,
 		protocol:  protocol,
@@ -105,6 +108,8 @@ func TestGappedAnnouncementsLes2(t *testing.T) { testGappedAnnouncements(t, 2) }
 func TestGappedAnnouncementsLes3(t *testing.T) { testGappedAnnouncements(t, 3) }
 
 func testGappedAnnouncements(t *testing.T, protocol int) {
+	extdb.InitAddrMgr("")
+
 	netconfig := testnetConfig{
 		blocks:    4,
 		protocol:  protocol,
@@ -152,6 +157,8 @@ func TestTrustedAnnouncementsLes2(t *testing.T) { testTrustedAnnouncement(t, 2) 
 func TestTrustedAnnouncementsLes3(t *testing.T) { testTrustedAnnouncement(t, 3) }
 
 func testTrustedAnnouncement(t *testing.T, protocol int) {
+	extdb.InitAddrMgr("")
+
 	var (
 		servers   []*testServer
 		teardowns []func()
@@ -228,6 +235,8 @@ func TestInvalidAnnouncesLES3(t *testing.T) { testInvalidAnnounces(t, lpv3) }
 func TestInvalidAnnouncesLES4(t *testing.T) { testInvalidAnnounces(t, lpv4) }
 
 func testInvalidAnnounces(t *testing.T, protocol int) {
+	extdb.InitAddrMgr("")
+
 	netconfig := testnetConfig{
 		blocks:    4,
 		protocol:  protocol,

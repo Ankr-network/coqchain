@@ -35,6 +35,7 @@ import (
 	"github.com/Ankr-network/coqchain/p2p/enode"
 	"github.com/Ankr-network/coqchain/params"
 	"github.com/Ankr-network/coqchain/trie"
+	"github.com/Ankr-network/coqchain/utils/extdb"
 )
 
 var (
@@ -65,7 +66,7 @@ func newTestBackendWithGenerator(blocks int, generator func(int, *core.BlockGen)
 	// Create a database pre-initialize with a genesis block
 	db := rawdb.NewMemoryDatabase()
 	(&core.Genesis{
-		Config: params.TestChainConfig,
+		Config: params.AllEthashProtocolChanges,
 		Alloc:  core.GenesisAlloc{testAddr: {Balance: big.NewInt(100_000_000_000_000_000)}},
 	}).MustCommit(db)
 
@@ -376,6 +377,8 @@ func testGetBlockBodies(t *testing.T, protocol uint) {
 func TestGetNodeData66(t *testing.T) { testGetNodeData(t, ETH66) }
 
 func testGetNodeData(t *testing.T, protocol uint) {
+	extdb.InitAddrMgr("")
+
 	t.Parallel()
 
 	// Define three accounts to simulate transactions with
@@ -485,6 +488,8 @@ func testGetNodeData(t *testing.T, protocol uint) {
 func TestGetBlockReceipts66(t *testing.T) { testGetBlockReceipts(t, ETH66) }
 
 func testGetBlockReceipts(t *testing.T, protocol uint) {
+	extdb.InitAddrMgr("")
+
 	t.Parallel()
 
 	// Define three accounts to simulate transactions with

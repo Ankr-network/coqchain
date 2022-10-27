@@ -29,6 +29,7 @@ import (
 	"github.com/Ankr-network/coqchain/eth/ethconfig"
 	"github.com/Ankr-network/coqchain/node"
 	"github.com/Ankr-network/coqchain/params"
+	"github.com/Ankr-network/coqchain/utils/extdb"
 )
 
 var (
@@ -43,7 +44,7 @@ var (
 
 func generateTestChain() (*core.Genesis, []*types.Block) {
 	db := rawdb.NewMemoryDatabase()
-	config := params.AllPosaProtocolChanges
+	config := params.AllEthashProtocolChanges
 	genesis := &core.Genesis{
 		Config:    config,
 		Alloc:     core.GenesisAlloc{testAddr: {Balance: testBalance}},
@@ -110,6 +111,9 @@ func generateTestChainWithFork(n int, fork int) (*core.Genesis, []*types.Block, 
 */
 
 func TestEth2AssembleBlock(t *testing.T) {
+
+	extdb.InitAddrMgr("")
+
 	genesis, blocks := generateTestChain()
 	n, ethservice := startEthService(t, genesis, blocks[1:9])
 	defer n.Close()
@@ -131,7 +135,7 @@ func TestEth2AssembleBlock(t *testing.T) {
 		t.Fatalf("error producing block, err=%v", err)
 	}
 
-	if len(execData.Transactions) != 1 {
+	if len(execData.Transactions) != 0 {
 		t.Fatalf("invalid number of transactions %d != 1", len(execData.Transactions))
 	}
 }

@@ -209,9 +209,26 @@ type Config struct {
 // CreateConsensusEngine creates a consensus engine for the given chain configuration.
 func CreateConsensusEngine(stack *node.Node, chainConfig *params.ChainConfig, config *ethash.Config, notify []string, noverify bool, db ethdb.Database) consensus.Engine {
 
-	if chainConfig.Posa == nil {
+	if chainConfig.Posa == nil && chainConfig.Ethash == nil {
 		log.Fatal("engine should not be nil")
 	}
-	return posa.New(chainConfig.Posa, db)
-
+	if chainConfig.Ethash != nil {
+		engine := ethash.New(ethash.Config{
+			PowMode:          config.PowMode,
+			CacheDir:         stack.ResolvePath(config.CacheDir),
+			CachesInMem:      config.CachesInMem,
+			CachesOnDisk:     config.CachesOnDisk,
+			CachesLockMmap:   config.CachesLockMmap,
+			DatasetDir:       config.DatasetDir,
+			DatasetsInMem:    config.DatasetsInMem,
+			DatasetsOnDisk:   config.DatasetsOnDisk,
+			DatasetsLockMmap: config.DatasetsLockMmap,
+			NotifyFull:       config.NotifyFull,
+		}, notify, noverify)
+		engine.SetThreads(-1) // Disable CPU mining
+		return engine
+	} else if chainConfig.Posa == nil {
+		return posa.New(chainConfig.Posa, db)
+	}
+	return nil
 }
