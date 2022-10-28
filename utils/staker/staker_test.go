@@ -22,15 +22,15 @@ var testAddrs = []common.Address{
 	common.HexToAddress("0xA319658456A578470A6b532F11A8f9f9608cf902"),
 }
 
-func TestMain(m *testing.M) {
+func testConstructor() {
 	db := rawdb.NewMemoryDatabase()
 	testState, _ = state.New(common.Hash{}, state.NewDatabase(db), nil)
 
 	Constructor(testState, testAddrs, testConfig)
-	m.Run()
 }
 
 func TestCheck(t *testing.T) {
+	testConstructor()
 	assert.Equal(t, getEpoch(testState), big.NewInt(int64(testConfig.Epoch)))
 
 	assert.Equal(t, getThreshold(testState), testConfig.SealerBalanceThreshold)
@@ -64,6 +64,7 @@ func TestCheck(t *testing.T) {
 }
 
 func TestVote(t *testing.T) {
+	testConstructor()
 	NeedAddSigner1 := common.HexToAddress("0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266")
 	NeedAddSigner2 := common.HexToAddress("0x24b265fa8B5241c30020EB239d65FE1aCdF97737")
 	NeedAddSigner3 := common.HexToAddress("0x94b265fa8B5241c30020EB239d65FE1aCdF97737")
