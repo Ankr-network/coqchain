@@ -214,7 +214,8 @@ func TestLastBlock(t *testing.T) {
 // Tests that given a starting canonical chain of a given size, it can be extended
 // with various length chains.
 func TestExtendCanonicalHeaders(t *testing.T) { testExtendCanonical(t, false) }
-func TestExtendCanonicalBlocks(t *testing.T)  { testExtendCanonical(t, true) }
+
+// func TestExtendCanonicalBlocks(t *testing.T)  { testExtendCanonical(t, true) }
 
 func testExtendCanonical(t *testing.T, full bool) {
 	length := 5
