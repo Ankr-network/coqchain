@@ -22,7 +22,6 @@ import (
 
 	"github.com/Ankr-network/coqchain/common"
 	"github.com/Ankr-network/coqchain/consensus"
-	"github.com/Ankr-network/coqchain/consensus/misc"
 	"github.com/Ankr-network/coqchain/core/state"
 	"github.com/Ankr-network/coqchain/core/types"
 	"github.com/Ankr-network/coqchain/core/vm"
@@ -259,7 +258,8 @@ func makeHeader(chain consensus.ChainReader, parent *types.Block, state *state.S
 		Number:   new(big.Int).Add(parent.Number(), common.Big1),
 		Time:     time,
 	}
-	header.BaseFee = misc.CalcBaseFee(chain.Config(), parent.Header())
+	header.BaseFee = big.NewInt(0)
+	// header.BaseFee = misc.CalcBaseFee(chain.Config(), parent.Header())
 
 	return header
 }

@@ -23,7 +23,6 @@ import (
 	"math/big"
 	"testing"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/Ankr-network/coqchain/consensus/ethash"
 	"github.com/Ankr-network/coqchain/core"
 	"github.com/Ankr-network/coqchain/core/rawdb"
@@ -31,6 +30,8 @@ import (
 	"github.com/Ankr-network/coqchain/core/vm"
 	"github.com/Ankr-network/coqchain/params"
 	"github.com/Ankr-network/coqchain/trie"
+	"github.com/Ankr-network/coqchain/utils/extdb"
+	"github.com/davecgh/go-spew/spew"
 )
 
 func TestNodeIterator(t *testing.T) {
@@ -40,12 +41,16 @@ func TestNodeIterator(t *testing.T) {
 		gspec   = core.Genesis{
 			Alloc:   core.GenesisAlloc{testBankAddress: {Balance: testBankFunds}},
 			BaseFee: big.NewInt(params.InitialBaseFee),
+			Config:  params.AllEthashProtocolChanges,
 		}
 		genesis = gspec.MustCommit(fulldb)
 	)
+
+	extdb.InitAddrMgr("")
+
 	gspec.MustCommit(lightdb)
-	blockchain, _ := core.NewBlockChain(fulldb, nil, params.TestChainConfig, ethash.NewFullFaker(), vm.Config{}, nil, nil)
-	gchain, _ := core.GenerateChain(params.TestChainConfig, genesis, ethash.NewFaker(), fulldb, 4, testChainGen)
+	blockchain, _ := core.NewBlockChain(fulldb, nil, params.AllEthashProtocolChanges, ethash.NewFullFaker(), vm.Config{}, nil, nil)
+	gchain, _ := core.GenerateChain(params.AllEthashProtocolChanges, genesis, ethash.NewFaker(), fulldb, 4, testChainGen)
 	if _, err := blockchain.InsertChain(gchain); err != nil {
 		panic(err)
 	}

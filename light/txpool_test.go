@@ -30,6 +30,7 @@ import (
 	"github.com/Ankr-network/coqchain/core/types"
 	"github.com/Ankr-network/coqchain/core/vm"
 	"github.com/Ankr-network/coqchain/params"
+	"github.com/Ankr-network/coqchain/utils/extdb"
 )
 
 type testTxRelay struct {
@@ -86,9 +87,11 @@ func TestTxPool(t *testing.T) {
 		gspec = core.Genesis{
 			Alloc:   core.GenesisAlloc{testBankAddress: {Balance: testBankFunds}},
 			BaseFee: big.NewInt(params.InitialBaseFee),
+			Config:  params.AllEthashProtocolChanges,
 		}
 		genesis = gspec.MustCommit(sdb)
 	)
+	extdb.InitAddrMgr("")
 	gspec.MustCommit(ldb)
 	// Assemble the test environment
 	blockchain, _ := core.NewBlockChain(sdb, nil, params.TestChainConfig, ethash.NewFullFaker(), vm.Config{}, nil, nil)

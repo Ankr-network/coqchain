@@ -32,6 +32,7 @@ import (
 	"github.com/Ankr-network/coqchain/crypto"
 	"github.com/Ankr-network/coqchain/params"
 	"github.com/Ankr-network/coqchain/trie"
+	"github.com/Ankr-network/coqchain/utils/extdb"
 )
 
 var (
@@ -319,6 +320,8 @@ func TestFullSequentialAnnouncements(t *testing.T)  { testSequentialAnnouncement
 func TestLightSequentialAnnouncements(t *testing.T) { testSequentialAnnouncements(t, true) }
 
 func testSequentialAnnouncements(t *testing.T, light bool) {
+	extdb.InitAddrMgr("")
+
 	// Create a chain of blocks to import
 	targetBlocks := 4 * hashLimit
 	hashes, blocks := makeChain(targetBlocks, 0, genesis)
@@ -356,6 +359,8 @@ func TestFullConcurrentAnnouncements(t *testing.T)  { testConcurrentAnnouncement
 func TestLightConcurrentAnnouncements(t *testing.T) { testConcurrentAnnouncements(t, true) }
 
 func testConcurrentAnnouncements(t *testing.T, light bool) {
+	extdb.InitAddrMgr("")
+
 	// Create a chain of blocks to import
 	targetBlocks := 4 * hashLimit
 	hashes, blocks := makeChain(targetBlocks, 0, genesis)
@@ -412,6 +417,8 @@ func TestFullOverlappingAnnouncements(t *testing.T)  { testOverlappingAnnounceme
 func TestLightOverlappingAnnouncements(t *testing.T) { testOverlappingAnnouncements(t, true) }
 
 func testOverlappingAnnouncements(t *testing.T, light bool) {
+	extdb.InitAddrMgr("")
+
 	// Create a chain of blocks to import
 	targetBlocks := 4 * hashLimit
 	hashes, blocks := makeChain(targetBlocks, 0, genesis)
@@ -458,6 +465,8 @@ func TestFullPendingDeduplication(t *testing.T)  { testPendingDeduplication(t, f
 func TestLightPendingDeduplication(t *testing.T) { testPendingDeduplication(t, true) }
 
 func testPendingDeduplication(t *testing.T, light bool) {
+	extdb.InitAddrMgr("")
+
 	// Create a hash and corresponding block
 	hashes, blocks := makeChain(1, 0, genesis)
 
@@ -506,6 +515,8 @@ func TestFullRandomArrivalImport(t *testing.T)  { testRandomArrivalImport(t, fal
 func TestLightRandomArrivalImport(t *testing.T) { testRandomArrivalImport(t, true) }
 
 func testRandomArrivalImport(t *testing.T, light bool) {
+	extdb.InitAddrMgr("")
+
 	// Create a chain of blocks to import, and choose one to delay
 	targetBlocks := maxQueueDist
 	hashes, blocks := makeChain(targetBlocks, 0, genesis)
@@ -545,6 +556,8 @@ func testRandomArrivalImport(t *testing.T, light bool) {
 // Tests that direct block enqueues (due to block propagation vs. hash announce)
 // are correctly schedule, filling and import queue gaps.
 func TestQueueGapFill(t *testing.T) {
+	extdb.InitAddrMgr("")
+
 	// Create a chain of blocks to import, and choose one to not announce at all
 	targetBlocks := maxQueueDist
 	hashes, blocks := makeChain(targetBlocks, 0, genesis)
@@ -573,6 +586,8 @@ func TestQueueGapFill(t *testing.T) {
 // Tests that blocks arriving from various sources (multiple propagations, hash
 // announces, etc) do not get scheduled for import multiple times.
 func TestImportDeduplication(t *testing.T) {
+	extdb.InitAddrMgr("")
+
 	// Create two blocks to import (one for duplication, the other for stalling)
 	hashes, blocks := makeChain(2, 0, genesis)
 
@@ -612,6 +627,8 @@ func TestImportDeduplication(t *testing.T) {
 // Tests that blocks with numbers much lower or higher than out current head get
 // discarded to prevent wasting resources on useless blocks from faulty peers.
 func TestDistantPropagationDiscarding(t *testing.T) {
+	extdb.InitAddrMgr("")
+
 	// Create a long chain to import and define the discard boundaries
 	hashes, blocks := makeChain(3*maxQueueDist, 0, genesis)
 	head := hashes[len(hashes)/2]
@@ -647,6 +664,8 @@ func TestFullDistantAnnouncementDiscarding(t *testing.T)  { testDistantAnnouncem
 func TestLightDistantAnnouncementDiscarding(t *testing.T) { testDistantAnnouncementDiscarding(t, true) }
 
 func testDistantAnnouncementDiscarding(t *testing.T, light bool) {
+	extdb.InitAddrMgr("")
+
 	// Create a long chain to import and define the discard boundaries
 	hashes, blocks := makeChain(3*maxQueueDist, 0, genesis)
 	head := hashes[len(hashes)/2]
@@ -690,6 +709,8 @@ func TestFullInvalidNumberAnnouncement(t *testing.T)  { testInvalidNumberAnnounc
 func TestLightInvalidNumberAnnouncement(t *testing.T) { testInvalidNumberAnnouncement(t, true) }
 
 func testInvalidNumberAnnouncement(t *testing.T, light bool) {
+	extdb.InitAddrMgr("")
+
 	// Create a single block to import and check numbers against
 	hashes, blocks := makeChain(1, 0, genesis)
 
@@ -757,6 +778,8 @@ func testInvalidNumberAnnouncement(t *testing.T, light bool) {
 // Tests that if a block is empty (i.e. header only), no body request should be
 // made, and instead the header should be assembled into a whole block in itself.
 func TestEmptyBlockShortCircuit(t *testing.T) {
+	extdb.InitAddrMgr("")
+
 	// Create a chain of blocks to import
 	hashes, blocks := makeChain(32, 0, genesis)
 
@@ -798,6 +821,8 @@ func TestEmptyBlockShortCircuit(t *testing.T) {
 // block announcements to a node, but that even in the face of such an attack,
 // the fetcher remains operational.
 func TestHashMemoryExhaustionAttack(t *testing.T) {
+	extdb.InitAddrMgr("")
+
 	// Create a tester with instrumented import hooks
 	tester := newTester(false)
 
@@ -845,6 +870,8 @@ func TestHashMemoryExhaustionAttack(t *testing.T) {
 // announces and retrievals) don't pile up indefinitely, exhausting available
 // system memory.
 func TestBlockMemoryExhaustionAttack(t *testing.T) {
+	extdb.InitAddrMgr("")
+
 	// Create a tester with instrumented import hooks
 	tester := newTester(false)
 

@@ -35,6 +35,7 @@ import (
 	"github.com/Ankr-network/coqchain/internal/jsre"
 	"github.com/Ankr-network/coqchain/miner"
 	"github.com/Ankr-network/coqchain/node"
+	"github.com/Ankr-network/coqchain/utils/extdb"
 )
 
 const (
@@ -99,7 +100,7 @@ func newTester(t *testing.T, confOverride func(*ethconfig.Config)) *tester {
 		t.Fatalf("failed to create node: %v", err)
 	}
 	ethConf := &ethconfig.Config{
-		Genesis: core.DeveloperGenesisBlock(15, 11_500_000, common.Address{}),
+		Genesis: core.DeveloperGenesisBlockEthash(15, 11_500_000, common.Address{}),
 		Miner: miner.Config{
 			Etherbase: common.HexToAddress(testAddress),
 		},
@@ -162,6 +163,8 @@ func (env *tester) Close(t *testing.T) {
 // the instance name, coinbase account, block number, data directory and supported
 // console modules.
 func TestWelcome(t *testing.T) {
+	extdb.InitAddrMgr("")
+
 	tester := newTester(t, nil)
 	defer tester.Close(t)
 
@@ -289,7 +292,7 @@ func TestPrettyError(t *testing.T) {
 	defer tester.Close(t)
 	tester.console.Evaluate("throw 'hello'")
 
-	want := jsre.ErrorColor("hello") + "\n\tat <eval>:1:7(1)\n\n"
+	want := jsre.ErrorColor("hello") + "\n\tat <eval>:1:1(1)\n\n"
 	if output := tester.output.String(); output != want {
 		t.Fatalf("pretty error mismatch: have %s, want %s", output, want)
 	}

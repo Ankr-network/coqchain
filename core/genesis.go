@@ -311,8 +311,16 @@ func (g *Genesis) ToBlock(db ethdb.Database) *types.Block {
 	if err != nil {
 		panic(err)
 	}
+	for addr, account := range g.Alloc {
+		statedb.AddBalance(addr, account.Balance)
+		statedb.SetCode(addr, account.Code)
+		statedb.SetNonce(addr, account.Nonce)
+		for key, value := range account.Storage {
+			statedb.SetState(addr, key, value)
+		}
+	}
 
-	initSystemContract(statedb, g)
+	// initSystemContract(statedb, g)
 	root := statedb.IntermediateRoot()
 	head := &types.Header{
 		Number:     new(big.Int).SetUint64(g.Number),
@@ -390,6 +398,7 @@ func GenesisBlockForTesting(db ethdb.Database, addr common.Address, balance *big
 	g := Genesis{
 		Alloc:   GenesisAlloc{addr: {Balance: balance}},
 		BaseFee: big.NewInt(params.InitialBaseFee),
+		Config:  params.AllEthashProtocolChanges,
 	}
 	return g.MustCommit(db)
 }
@@ -445,6 +454,33 @@ func DeveloperGenesisBlock(period uint64, gasLimit uint64, faucet common.Address
 			// 0x7c852118294e51e653712a81e05800f419141751be58f605c371e15141b007
 			common.HexToAddress("0x4915f56a21F1f2e651f8130c5a9257Cd429c6136"): {Balance: amt},
 			faucet: {Balance: amt},
+		},
+	}
+}
+
+// DeveloperGenesisBlock returns the 'geth --dev' genesis block.
+func DeveloperGenesisBlockEthash(period uint64, gasLimit uint64, faucet common.Address) *Genesis {
+	// Override the default period to the user requested one
+	config := *params.AllEthashProtocolChanges
+
+	// Assemble and return the genesis with the precompiles and faucet pre-funded
+	return &Genesis{
+		Config:     &config,
+		ExtraData:  append(append(make([]byte, 32), faucet[:]...), make([]byte, crypto.SignatureLength)...),
+		GasLimit:   gasLimit,
+		BaseFee:    big.NewInt(params.InitialBaseFee),
+		Difficulty: big.NewInt(1),
+		Alloc: map[common.Address]GenesisAccount{
+			common.BytesToAddress([]byte{1}): {Balance: big.NewInt(1)}, // ECRecover
+			common.BytesToAddress([]byte{2}): {Balance: big.NewInt(1)}, // SHA256
+			common.BytesToAddress([]byte{3}): {Balance: big.NewInt(1)}, // RIPEMD
+			common.BytesToAddress([]byte{4}): {Balance: big.NewInt(1)}, // Identity
+			common.BytesToAddress([]byte{5}): {Balance: big.NewInt(1)}, // ModExp
+			common.BytesToAddress([]byte{6}): {Balance: big.NewInt(1)}, // ECAdd
+			common.BytesToAddress([]byte{7}): {Balance: big.NewInt(1)}, // ECScalarMul
+			common.BytesToAddress([]byte{8}): {Balance: big.NewInt(1)}, // ECPairing
+			common.BytesToAddress([]byte{9}): {Balance: big.NewInt(1)}, // BLAKE2b
+			faucet:                           {Balance: new(big.Int).Sub(new(big.Int).Lsh(big.NewInt(1), 256), big.NewInt(9))},
 		},
 	}
 }

@@ -28,6 +28,7 @@ import (
 	"github.com/Ankr-network/coqchain/core/types"
 	"github.com/Ankr-network/coqchain/crypto"
 	"github.com/Ankr-network/coqchain/params"
+	"github.com/Ankr-network/coqchain/utils/extdb"
 )
 
 // Test chain parameters.
@@ -65,6 +66,8 @@ type testChain struct {
 
 // newTestChain creates a blockchain of the given length.
 func newTestChain(length int, genesis *types.Block) *testChain {
+	extdb.InitAddrMgr("")
+
 	tc := new(testChain).copy(length)
 	tc.genesis = genesis
 	tc.chain = append(tc.chain, genesis.Hash())

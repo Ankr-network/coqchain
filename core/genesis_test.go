@@ -17,15 +17,12 @@
 package core
 
 import (
-	"errors"
 	"math/big"
 	"reflect"
 	"testing"
 
 	"github.com/Ankr-network/coqchain/common"
-	"github.com/Ankr-network/coqchain/consensus/ethash"
 	"github.com/Ankr-network/coqchain/core/rawdb"
-	"github.com/Ankr-network/coqchain/core/vm"
 	"github.com/Ankr-network/coqchain/ethdb"
 	"github.com/Ankr-network/coqchain/params"
 	"github.com/davecgh/go-spew/spew"
@@ -33,16 +30,15 @@ import (
 
 func TestSetupGenesis(t *testing.T) {
 	var (
-		customghash = common.HexToHash("0x89c99d90b79719238d2645c7642f2c9295246e80775b38cfd162b696817fbd50")
+		customghash = common.HexToHash("0x3943aa6bee7a6c6c6c059347947e7b3580d8a98cd117f798ee20d6841d7ac8de")
 		customg     = Genesis{
-			Config: &params.ChainConfig{},
+			Config: params.AllEthashProtocolChanges,
 			Alloc: GenesisAlloc{
 				{1}: {Balance: big.NewInt(1), Storage: map[common.Hash]common.Hash{{1}: {1}}},
 			},
 		}
-		oldcustomg = customg
 	)
-	oldcustomg.Config = &params.ChainConfig{}
+
 	tests := []struct {
 		name       string
 		fn         func(ethdb.Database) (*params.ChainConfig, common.Hash, error)
@@ -50,14 +46,6 @@ func TestSetupGenesis(t *testing.T) {
 		wantHash   common.Hash
 		wantErr    error
 	}{
-		{
-			name: "genesis without ChainConfig",
-			fn: func(db ethdb.Database) (*params.ChainConfig, common.Hash, error) {
-				return SetupGenesisBlock(db, new(Genesis))
-			},
-			wantErr:    errGenesisNoConfig,
-			wantConfig: params.AllPosaProtocolChanges,
-		},
 		{
 			name: "custom block in DB, genesis == nil",
 			fn: func(db ethdb.Database) (*params.ChainConfig, common.Hash, error) {
@@ -67,47 +55,13 @@ func TestSetupGenesis(t *testing.T) {
 			wantHash:   customghash,
 			wantConfig: customg.Config,
 		},
-		{
-			name: "compatible config in DB",
-			fn: func(db ethdb.Database) (*params.ChainConfig, common.Hash, error) {
-				oldcustomg.MustCommit(db)
-				return SetupGenesisBlock(db, &customg)
-			},
-			wantHash:   customghash,
-			wantConfig: customg.Config,
-		},
-		{
-			name: "incompatible config in DB",
-			fn: func(db ethdb.Database) (*params.ChainConfig, common.Hash, error) {
-				// Commit the 'old' genesis block with Homestead transition at #2.
-				// Advance to block #4, past the homestead transition block of customg.
-				genesis := oldcustomg.MustCommit(db)
-
-				bc, _ := NewBlockChain(db, nil, oldcustomg.Config, ethash.NewFullFaker(), vm.Config{}, nil, nil)
-				defer bc.Stop()
-
-				blocks, _ := GenerateChain(oldcustomg.Config, genesis, ethash.NewFaker(), db, 4, nil)
-				bc.InsertChain(blocks)
-				bc.CurrentBlock()
-				// This should return a compatibility error.
-				return SetupGenesisBlock(db, &customg)
-			},
-			wantHash:   customghash,
-			wantConfig: customg.Config,
-			wantErr: &params.ConfigCompatError{
-				What:         "Homestead fork block",
-				StoredConfig: big.NewInt(2),
-				NewConfig:    big.NewInt(3),
-				RewindTo:     1,
-			},
-		},
 	}
 
 	for _, test := range tests {
 		db := rawdb.NewMemoryDatabase()
 		config, hash, err := test.fn(db)
 		// Check the return values.
-		if errors.Is(err, test.wantErr) {
+		if !reflect.DeepEqual(err, test.wantErr) {
 			spew := spew.ConfigState{DisablePointerAddresses: true, DisableCapacities: true}
 			t.Errorf("%s: returned error %#v, want %#v", test.name, spew.NewFormatter(err), spew.NewFormatter(test.wantErr))
 		}
@@ -129,7 +83,7 @@ func TestSetupGenesis(t *testing.T) {
 func TestGenesis_Commit(t *testing.T) {
 	genesis := &Genesis{
 		BaseFee: big.NewInt(params.InitialBaseFee),
-		Config:  params.TestChainConfig,
+		Config:  params.AllEthashProtocolChanges,
 		// difficulty is nil
 	}
 

@@ -747,8 +747,10 @@ var bindTests = []struct {
 			"github.com/Ankr-network/coqchain/common"
 			"github.com/Ankr-network/coqchain/core"
 			"github.com/Ankr-network/coqchain/crypto"
+			"github.com/Ankr-network/coqchain/utils/extdb"
 		`,
 		`
+			extdb.InitAddrMgr("")
 			// Generate a new random account and a funded simulator
 			key, _ := crypto.GenerateKey()
 			auth, _ := bind.NewKeyedTransactorWithChainID(key, big.NewInt(1337))

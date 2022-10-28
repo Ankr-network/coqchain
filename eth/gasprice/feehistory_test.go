@@ -23,9 +23,11 @@ import (
 	"testing"
 
 	"github.com/Ankr-network/coqchain/rpc"
+	"github.com/Ankr-network/coqchain/utils/extdb"
 )
 
 func TestFeeHistory(t *testing.T) {
+	extdb.InitAddrMgr("")
 	var cases = []struct {
 		pending             bool
 		maxHeader, maxBlock int

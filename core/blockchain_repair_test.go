@@ -1770,7 +1770,7 @@ func testRepair(t *testing.T, tt *rewindTest, snapshots bool) {
 
 	// Initialize a fresh chain
 	var (
-		genesis = (&Genesis{BaseFee: big.NewInt(params.InitialBaseFee)}).MustCommit(db)
+		genesis = (&Genesis{BaseFee: big.NewInt(params.InitialBaseFee), Config: params.AllEthashProtocolChanges}).MustCommit(db)
 		engine  = ethash.NewFullFaker()
 		config  = &CacheConfig{
 			TrieCleanLimit: 256,
@@ -1783,21 +1783,21 @@ func testRepair(t *testing.T, tt *rewindTest, snapshots bool) {
 		config.SnapshotLimit = 256
 		config.SnapshotWait = true
 	}
-	chain, err := NewBlockChain(db, config, params.AllPosaProtocolChanges, engine, vm.Config{}, nil, nil)
+	chain, err := NewBlockChain(db, config, params.AllEthashProtocolChanges, engine, vm.Config{}, nil, nil)
 	if err != nil {
 		t.Fatalf("Failed to create chain: %v", err)
 	}
 	// If sidechain blocks are needed, make a light chain and import it
 	var sideblocks types.Blocks
 	if tt.sidechainBlocks > 0 {
-		sideblocks, _ = GenerateChain(params.TestChainConfig, genesis, engine, rawdb.NewMemoryDatabase(), tt.sidechainBlocks, func(i int, b *BlockGen) {
+		sideblocks, _ = GenerateChain(params.AllEthashProtocolChanges, genesis, engine, rawdb.NewMemoryDatabase(), tt.sidechainBlocks, func(i int, b *BlockGen) {
 			b.SetCoinbase(common.Address{0x01})
 		})
 		if _, err := chain.InsertChain(sideblocks); err != nil {
 			t.Fatalf("Failed to import side chain: %v", err)
 		}
 	}
-	canonblocks, _ := GenerateChain(params.TestChainConfig, genesis, engine, rawdb.NewMemoryDatabase(), tt.canonicalBlocks, func(i int, b *BlockGen) {
+	canonblocks, _ := GenerateChain(params.AllEthashProtocolChanges, genesis, engine, rawdb.NewMemoryDatabase(), tt.canonicalBlocks, func(i int, b *BlockGen) {
 		b.SetCoinbase(common.Address{0x02})
 		b.SetDifficulty(big.NewInt(1000000))
 	})
@@ -1836,7 +1836,7 @@ func testRepair(t *testing.T, tt *rewindTest, snapshots bool) {
 	}
 	defer db.Close()
 
-	chain, err = NewBlockChain(db, nil, params.AllPosaProtocolChanges, engine, vm.Config{}, nil, nil)
+	chain, err = NewBlockChain(db, nil, params.AllEthashProtocolChanges, engine, vm.Config{}, nil, nil)
 	if err != nil {
 		t.Fatalf("Failed to recreate chain: %v", err)
 	}
@@ -1897,7 +1897,7 @@ func TestIssue23496(t *testing.T) {
 
 	// Initialize a fresh chain
 	var (
-		genesis = (&Genesis{BaseFee: big.NewInt(params.InitialBaseFee)}).MustCommit(db)
+		genesis = (&Genesis{BaseFee: big.NewInt(params.InitialBaseFee), Config: params.AllEthashProtocolChanges}).MustCommit(db)
 		engine  = ethash.NewFullFaker()
 		config  = &CacheConfig{
 			TrieCleanLimit: 256,
@@ -1907,11 +1907,11 @@ func TestIssue23496(t *testing.T) {
 			SnapshotWait:   true,
 		}
 	)
-	chain, err := NewBlockChain(db, config, params.AllPosaProtocolChanges, engine, vm.Config{}, nil, nil)
+	chain, err := NewBlockChain(db, config, params.AllEthashProtocolChanges, engine, vm.Config{}, nil, nil)
 	if err != nil {
 		t.Fatalf("Failed to create chain: %v", err)
 	}
-	blocks, _ := GenerateChain(params.TestChainConfig, genesis, engine, rawdb.NewMemoryDatabase(), 4, func(i int, b *BlockGen) {
+	blocks, _ := GenerateChain(params.AllEthashProtocolChanges, genesis, engine, rawdb.NewMemoryDatabase(), 4, func(i int, b *BlockGen) {
 		b.SetCoinbase(common.Address{0x02})
 		b.SetDifficulty(big.NewInt(1000000))
 	})
@@ -1951,7 +1951,7 @@ func TestIssue23496(t *testing.T) {
 	}
 	defer db.Close()
 
-	chain, err = NewBlockChain(db, nil, params.AllPosaProtocolChanges, engine, vm.Config{}, nil, nil)
+	chain, err = NewBlockChain(db, nil, params.AllEthashProtocolChanges, engine, vm.Config{}, nil, nil)
 	if err != nil {
 		t.Fatalf("Failed to recreate chain: %v", err)
 	}

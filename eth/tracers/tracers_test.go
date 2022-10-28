@@ -29,6 +29,7 @@ import (
 	"github.com/Ankr-network/coqchain/crypto"
 	"github.com/Ankr-network/coqchain/params"
 	"github.com/Ankr-network/coqchain/tests"
+	"github.com/Ankr-network/coqchain/utils/extdb"
 )
 
 // callTrace is the result of a callTracer run.
@@ -46,6 +47,8 @@ type callTrace struct {
 }
 
 func BenchmarkTransactionTrace(b *testing.B) {
+	extdb.InitAddrMgr("")
+
 	key, _ := crypto.HexToECDSA("b71c71a67e1177ad4e901695e1b4b9ee17ae16c6668d313eac2f96dbcda3f291")
 	from := crypto.PubkeyToAddress(key.PublicKey)
 	gas := uint64(1000000) // 1M gas

@@ -37,6 +37,7 @@ import (
 	"github.com/Ankr-network/coqchain/params"
 	"github.com/Ankr-network/coqchain/rlp"
 	"github.com/Ankr-network/coqchain/trie"
+	"github.com/Ankr-network/coqchain/utils/extdb"
 )
 
 var (
@@ -171,7 +172,7 @@ func (callmsg) CheckNonce() bool { return false }
 
 func odrContractCall(ctx context.Context, db ethdb.Database, bc *core.BlockChain, lc *LightChain, bhash common.Hash) ([]byte, error) {
 	data := common.Hex2Bytes("60CD26850000000000000000000000000000000000000000000000000000000000000000")
-	config := params.TestChainConfig
+	config := params.AllEthashProtocolChanges
 
 	var res []byte
 	for i := 0; i < 3; i++ {
@@ -256,19 +257,21 @@ func testChainOdr(t *testing.T, protocol int, fn odrTestFn) {
 		gspec = core.Genesis{
 			Alloc:   core.GenesisAlloc{testBankAddress: {Balance: testBankFunds}},
 			BaseFee: big.NewInt(params.InitialBaseFee),
+			Config:  params.AllEthashProtocolChanges,
 		}
 		genesis = gspec.MustCommit(sdb)
 	)
+	extdb.InitAddrMgr("")
 	gspec.MustCommit(ldb)
 	// Assemble the test environment
-	blockchain, _ := core.NewBlockChain(sdb, nil, params.TestChainConfig, ethash.NewFullFaker(), vm.Config{}, nil, nil)
-	gchain, _ := core.GenerateChain(params.TestChainConfig, genesis, ethash.NewFaker(), sdb, 4, testChainGen)
+	blockchain, _ := core.NewBlockChain(sdb, nil, params.AllEthashProtocolChanges, ethash.NewFullFaker(), vm.Config{}, nil, nil)
+	gchain, _ := core.GenerateChain(params.AllEthashProtocolChanges, genesis, ethash.NewFaker(), sdb, 4, testChainGen)
 	if _, err := blockchain.InsertChain(gchain); err != nil {
 		t.Fatal(err)
 	}
 
 	odr := &testOdr{sdb: sdb, ldb: ldb, indexerConfig: TestClientIndexerConfig}
-	lightchain, err := NewLightChain(odr, params.TestChainConfig, ethash.NewFullFaker(), nil)
+	lightchain, err := NewLightChain(odr, params.AllEthashProtocolChanges, ethash.NewFullFaker(), nil)
 	if err != nil {
 		t.Fatal(err)
 	}

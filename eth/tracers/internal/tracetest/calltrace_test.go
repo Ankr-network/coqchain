@@ -38,6 +38,7 @@ import (
 	"github.com/Ankr-network/coqchain/params"
 	"github.com/Ankr-network/coqchain/rlp"
 	"github.com/Ankr-network/coqchain/tests"
+	"github.com/Ankr-network/coqchain/utils/extdb"
 
 	// Force-load native and js pacakges, to trigger registration
 	_ "github.com/Ankr-network/coqchain/eth/tracers/js"
@@ -139,6 +140,9 @@ func TestCallTracerNative(t *testing.T) {
 }
 
 func testCallTracer(tracerName string, dirPath string, t *testing.T) {
+
+	extdb.InitAddrMgr("")
+
 	files, err := ioutil.ReadDir(filepath.Join("testdata", dirPath))
 	if err != nil {
 		t.Fatalf("failed to retrieve tracer test suite: %v", err)
@@ -180,6 +184,7 @@ func testCallTracer(tracerName string, dirPath string, t *testing.T) {
 					Time:        new(big.Int).SetUint64(uint64(test.Context.Time)),
 					Difficulty:  (*big.Int)(test.Context.Difficulty),
 					GasLimit:    uint64(test.Context.GasLimit),
+					BaseFee:     big.NewInt(0),
 				}
 				_, statedb = tests.MakePreState(rawdb.NewMemoryDatabase(), test.Genesis.Alloc, false)
 			)
@@ -318,6 +323,9 @@ func benchTracer(tracerName string, test *callTracerTest, b *testing.B) {
 // Tx to A, A calls B with zero value. B does not already exist.
 // Expected: that enter/exit is invoked and the inner call is shown in the result
 func TestZeroValueToNotExitCall(t *testing.T) {
+
+	extdb.InitAddrMgr("")
+
 	var to = common.HexToAddress("0x00000000000000000000000000000000deadbeef")
 	privkey, err := crypto.HexToECDSA("0000000000000000deadbeef00000000000000000000000000000000deadbeef")
 	if err != nil {
@@ -345,6 +353,7 @@ func TestZeroValueToNotExitCall(t *testing.T) {
 		Time:        new(big.Int).SetUint64(5),
 		Difficulty:  big.NewInt(0x30000),
 		GasLimit:    uint64(6000000),
+		BaseFee:     big.NewInt(0),
 	}
 	var code = []byte{
 		byte(vm.PUSH1), 0x0, byte(vm.DUP1), byte(vm.DUP1), byte(vm.DUP1), // in and outs zero
@@ -385,7 +394,7 @@ func TestZeroValueToNotExitCall(t *testing.T) {
 	if err := json.Unmarshal(res, have); err != nil {
 		t.Fatalf("failed to unmarshal trace result: %v", err)
 	}
-	wantStr := `{"type":"CALL","from":"0x682a80a6f560eec50d54e63cbeda1c324c5f8d1b","to":"0x00000000000000000000000000000000deadbeef","value":"0x0","gas":"0x7148","gasUsed":"0x2d0","input":"0x","output":"0x","calls":[{"type":"CALL","from":"0x00000000000000000000000000000000deadbeef","to":"0x00000000000000000000000000000000000000ff","value":"0x0","gas":"0x6cbf","gasUsed":"0x0","input":"0x","output":"0x"}]}`
+	wantStr := `{"type":"CALL","from":"0x682a80a6f560eec50d54e63cbeda1c324c5f8d1b","to":"0x00000000000000000000000000000000deadbeef","value":"0x0","gas":"0x7148","gasUsed":"0xa3c","input":"0x","output":"0x","calls":[{"type":"CALL","from":"0x00000000000000000000000000000000deadbeef","to":"0x00000000000000000000000000000000000000ff","value":"0x0","gas":"0x6570","gasUsed":"0x0","input":"0x","output":"0x"}]}`
 	want := new(callTrace)
 	json.Unmarshal([]byte(wantStr), want)
 	if !jsonEqual(have, want) {

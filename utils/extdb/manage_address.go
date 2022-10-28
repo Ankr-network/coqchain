@@ -22,7 +22,6 @@ import (
 	"github.com/Ankr-network/coqchain/core/contracts"
 	"github.com/Ankr-network/coqchain/log"
 	"go.etcd.io/bbolt"
-	"gopkg.in/urfave/cli.v1"
 )
 
 type AddrMgr struct {
@@ -32,11 +31,18 @@ type AddrMgr struct {
 	store      *bbolt.DB
 }
 
-func NewAddrMgr(ctx *cli.Context) *AddrMgr {
-	name := fmt.Sprintf("%s/%s", ctx.GlobalString("datadir"), extenddb)
-	db, err := bbolt.Open(name, 0644, nil)
-	if err != nil {
-		panic(err)
+func NewAddrMgr(datadir string) *AddrMgr {
+	var (
+		db  *bbolt.DB
+		err error
+	)
+
+	if datadir != "" {
+		name := fmt.Sprintf("%s/%s", datadir, extenddb)
+		db, err = bbolt.Open(name, 0644, nil)
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	am := &AddrMgr{
@@ -106,9 +112,12 @@ const (
 	slashAddr  = "slashaddress"
 )
 
-func InitAddrMgr(ctx *cli.Context) {
+func InitAddrMgr(datadir string) {
 	log.Info("init address extend data")
-	addrsMgr = NewAddrMgr(ctx)
+	addrsMgr = NewAddrMgr(datadir)
+	if addrsMgr.store == nil {
+		return
+	}
 	// load zero gas fee address
 	if err := addrsMgr.store.View(func(tx *bbolt.Tx) error {
 		b := tx.Bucket([]byte(zeroGasFee))
@@ -137,6 +146,10 @@ func InitAddrMgr(ctx *cli.Context) {
 }
 
 func Close() {
+
+	if addrsMgr.store == nil {
+		return
+	}
 
 	defer addrsMgr.store.Close()
 
