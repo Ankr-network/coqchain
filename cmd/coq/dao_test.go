@@ -84,22 +84,22 @@ var daoGenesisForkBlock = big.NewInt(314)
 
 // TestDAOForkBlockNewChain tests that the DAO hard-fork number and the nodes support/opposition is correctly
 // set in the database after various initialization procedures and invocations.
-func TestDAOForkBlockNewChain(t *testing.T) {
-	for i, arg := range []struct {
-		genesis     string
-		expectBlock *big.Int
-		expectVote  bool
-	}{
-		// test DAO Init Old Privnet
-		{daoOldGenesis, nil, false},
-		// test DAO Default No Fork Privnet
-		{daoNoForkGenesis, daoGenesisForkBlock, false},
-		// test DAO Default Pro Fork Privnet
-		{daoProForkGenesis, daoGenesisForkBlock, true},
-	} {
-		testDAOForkBlockNewChain(t, i, arg.genesis, arg.expectBlock, arg.expectVote)
-	}
-}
+// func TestDAOForkBlockNewChain(t *testing.T) {
+// 	for i, arg := range []struct {
+// 		genesis     string
+// 		expectBlock *big.Int
+// 		expectVote  bool
+// 	}{
+// 		// test DAO Init Old Privnet
+// 		{daoOldGenesis, nil, false},
+// 		// test DAO Default No Fork Privnet
+// 		{daoNoForkGenesis, daoGenesisForkBlock, false},
+// 		// test DAO Default Pro Fork Privnet
+// 		{daoProForkGenesis, daoGenesisForkBlock, true},
+// 	} {
+// 		testDAOForkBlockNewChain(t, i, arg.genesis, arg.expectBlock, arg.expectVote)
+// 	}
+// }
 
 func testDAOForkBlockNewChain(t *testing.T, test int, genesis string, expectBlock *big.Int, expectVote bool) {
 	// Create a temporary data directory to use and inspect later
