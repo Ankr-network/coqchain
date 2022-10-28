@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"os"
 	"path/filepath"
+	"syscall"
 
 	"github.com/Ankr-network/coqchain/ethdb"
 	"github.com/Ankr-network/coqchain/log"
@@ -28,9 +29,9 @@ func NewBoltDB(path string) (*BoltDB, error) {
 	d := &BoltDB{path: path, file: filepath.Join(path, "blockchain.dat")}
 
 	opt := &bolt.Options{
-		Timeout:    0,
-		NoGrowSync: false,
-		// MmapFlags:       syscall.MAP_POPULATE,
+		Timeout:         0,
+		NoGrowSync:      false,
+		MmapFlags:       syscall.MAP_POPULATE,
 		InitialMmapSize: 1 << 31,
 		FreelistType:    bolt.FreelistMapType,
 		Mlock:           true,
