@@ -110,7 +110,7 @@ func enable2200(jt *JumpTable) {
 }
 
 // enable2929 enables "EIP-2929: Gas cost increases for state access opcodes"
-// https://eips.coqchain.org/EIPS/eip-2929
+// https://eips.ethereum.org/EIPS/eip-2929
 func enable2929(jt *JumpTable) {
 	jt[SSTORE].dynamicGas = gasSStoreEIP2929
 
