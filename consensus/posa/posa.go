@@ -619,8 +619,8 @@ func (c *Posa) Prepare(chain consensus.ChainHeaderReader, header *types.Header) 
 	}
 
 	// Set the correct difficulty
-	// header.Difficulty = calcDifficulty(snap, c.signer)
-	header.Difficulty = diffInTurn
+	header.Difficulty = calcDifficulty(snap, c.signer)
+	// header.Difficulty = diffInTurn
 
 	// Ensure the extra data has all its components
 	if len(header.Extra) < extraVanity {
