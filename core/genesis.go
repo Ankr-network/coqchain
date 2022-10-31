@@ -320,6 +320,8 @@ func (g *Genesis) ToBlock(db ethdb.Database) *types.Block {
 	// 	}
 	// }
 
+	// test
+
 	initSystemContract(statedb, g)
 	root := statedb.IntermediateRoot()
 	head := &types.Header{
