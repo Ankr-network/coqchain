@@ -227,7 +227,7 @@ func CreateConsensusEngine(stack *node.Node, chainConfig *params.ChainConfig, co
 		}, notify, noverify)
 		engine.SetThreads(-1) // Disable CPU mining
 		return engine
-	} else if chainConfig.Posa == nil {
+	} else if chainConfig.Posa != nil {
 		return posa.New(chainConfig.Posa, db)
 	}
 	return nil
