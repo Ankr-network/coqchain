@@ -2,24 +2,20 @@ name: run all test case
 
 on:
   push:
-    branches: [dev] # dev分支上push触发部署
+    branches: ["dev"]
   pull_request:
-    branches: [dev] # merge到dev分支时触发部署
+    branches: ["dev"]
 
 jobs:
   build:
-    # 在ubuntu上进行构建操作
     runs-on: ubuntu-latest
     steps:
-      # 拉取代码
       - uses: actions/checkout@v3
 
-      # 设置你项目的golang版本
       - name: Set up Go
         uses: actions/setup-go@v3
         with:
           go-version: 1.18
 
-      # 执行单元测试
       - name: Test
         run: make test
