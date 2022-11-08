@@ -12,11 +12,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # 拉取代码
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       # 设置你项目的golang版本
       - name: Set up Go
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v3
         with:
           go-version: 1.18
 
