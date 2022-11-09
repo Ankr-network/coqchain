@@ -275,11 +275,33 @@ func getSignerBalance(statedb *state.StateDB, signer common.Address) *big.Int {
 
 func initSystemContract(statedb *state.StateDB, g *Genesis) {
 
-	statedb.AddBalance(contracts.SlashContract.Address, big.NewInt(0))
-	sc, _ := hex.DecodeString(contracts.SlashContract.Code)
-	statedb.SetCode(contracts.SlashContract.Address, sc)
-	statedb.SetNonce(contracts.SlashContract.Address, 0)
+	// initAccountState(statedb, g)
 
+	if g.Config != nil {
+		if g.Config.Posa != nil {
+			statedb.AddBalance(contracts.SlashContract.Address, big.NewInt(0))
+			sc, _ := hex.DecodeString(contracts.SlashContract.Code)
+			statedb.SetCode(contracts.SlashContract.Address, sc)
+			statedb.SetNonce(contracts.SlashContract.Address, 0)
+
+			initAccountState(statedb, g)
+
+			count := (len(g.ExtraData) - 32 - 65) / common.AddressLength
+			var validatorList Addrs = make([]common.Address, count)
+			for i := 0; i < count; i++ {
+				copy(validatorList[i][:], g.ExtraData[32+i*common.AddressLength:])
+			}
+			sort.Sort(validatorList)
+			staker.Constructor(statedb, validatorList, g.Config.Posa)
+		} else {
+			initAccountState(statedb, g)
+		}
+	} else {
+		initAccountState(statedb, g)
+	}
+}
+
+func initAccountState(statedb *state.StateDB, g *Genesis) {
 	for addr, account := range g.Alloc {
 		statedb.AddBalance(addr, account.Balance)
 		statedb.SetCode(addr, account.Code)
@@ -288,17 +310,6 @@ func initSystemContract(statedb *state.StateDB, g *Genesis) {
 			statedb.SetState(addr, key, value)
 		}
 	}
-
-	count := (len(g.ExtraData) - 32 - 65) / common.AddressLength
-	var validatorList Addrs = make([]common.Address, count)
-
-	for i := 0; i < count; i++ {
-		copy(validatorList[i][:], g.ExtraData[32+i*common.AddressLength:])
-	}
-
-	sort.Sort(validatorList)
-
-	staker.Constructor(statedb, validatorList, g.Config.Posa)
 }
 
 // ToBlock creates the genesis block and writes state of a genesis specification
@@ -311,16 +322,9 @@ func (g *Genesis) ToBlock(db ethdb.Database) *types.Block {
 	if err != nil {
 		panic(err)
 	}
-	// for addr, account := range g.Alloc {
-	// 	statedb.AddBalance(addr, account.Balance)
-	// 	statedb.SetCode(addr, account.Code)
-	// 	statedb.SetNonce(addr, account.Nonce)
-	// 	for key, value := range account.Storage {
-	// 		statedb.SetState(addr, key, value)
-	// 	}
-	// }
 
 	initSystemContract(statedb, g)
+
 	root := statedb.IntermediateRoot()
 	head := &types.Header{
 		Number:     new(big.Int).SetUint64(g.Number),
@@ -412,6 +416,13 @@ func DefaultGenesisBlock() *Genesis {
 		GasLimit:   5000,
 		Difficulty: big.NewInt(17179869184),
 		Alloc:      decodePrealloc(mainnetAllocData),
+	}
+}
+
+// GenesisForTest creates and writes a block in which addr has the given wei balance.
+func GenesisForTest() *Genesis {
+	return &Genesis{
+		Config: params.AllEthashProtocolChanges,
 	}
 }
 
